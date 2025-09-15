@@ -30,6 +30,7 @@ void Robot::RobotInit() {
   arm.Init();
   gripper.Init();
   extender.Init();
+  joint.Init();
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
 }

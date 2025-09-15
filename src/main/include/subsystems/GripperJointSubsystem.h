@@ -7,7 +7,7 @@
 
 #define JOINT_DOWN_ANGLE 0
 #define JOINT_MID_ANGLE 50
-#define JOINT_UP_ANGLE 75
+#define JOINT_UP_ANGLE -30
 
 
 class GripperJointSubsystem {
