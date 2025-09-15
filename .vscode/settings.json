@@ -16,6 +16,7 @@
   },
   "C_Cpp.default.configurationProvider": "vscode-wpilib",
   "files.associations": {
+    "*.embeddedhtml": "html",
     "array": "cpp",
     "atomic": "cpp",
     "hash_map": "cpp",
@@ -78,6 +79,21 @@
     "cinttypes": "cpp",
     "typeinfo": "cpp",
     "*.inc": "cpp",
-    "math": "cpp"
+    "math": "cpp",
+    "xiosbase": "cpp",
+    "bit": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp",
+    "ios": "cpp",
+    "stop_token": "cpp",
+    "xfacet": "cpp",
+    "xlocale": "cpp",
+    "xlocinfo": "cpp",
+    "xlocnum": "cpp",
+    "xmemory": "cpp",
+    "xstddef": "cpp",
+    "xstring": "cpp",
+    "xtr1common": "cpp",
+    "xutility": "cpp"
   }
 }
