@@ -10,6 +10,7 @@
 #include "subsystems/GripperSubsystem.h"
 #include "subsystems/ExtenderSubsystem.h"
 #include "subsystems/GripperJointSubsystem.h"
+#include "subsystems/UltrasonicSubsystem.h"
 
 
 constexpr int kWheelRadius = 50;
@@ -23,20 +24,23 @@ GripperSubsystem gripper;
 GripperJointSubsystem joint;
 ExtenderSubsystem extender;
 OI oi;
+UltrasonicSubsystem sonic;
 //StartStop StaSto(&lidar, &oi);
 AMCU amcu;
 
 void Robot::RobotInit() {
-  arm.Init();
-  gripper.Init();
-  extender.Init();
-  joint.Init();
+  //arm.Init();
+  //gripper.Init();
+  //extender.Init();
+  //joint.Init();
+  sonic.Init();
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
 }
 
 void Robot::RobotPeriodic() { 
-  frc2::CommandScheduler::GetInstance().Run(); 
+  frc2::CommandScheduler::GetInstance().Run();
+  sonic.Periodic();
 }
 
 void Robot::DisabledInit() {
@@ -81,7 +85,7 @@ void Robot::TeleopInit() {
 
 void Robot::TeleopPeriodic() {
   if (oi.GetDriveXButton()) {
-      arm.SetHomePosition();
+      sonic.GetDistance();
   }
   if (oi.GetDriveSquareButton()) {
       arm.SetDropApplePosition();
@@ -119,6 +123,9 @@ void Robot::TeleopPeriodic() {
   if(oi.GetDriveShareButton()) {
       joint.SetGripperUpAngle();
   }
+  
+
+  frc::SmartDashboard::PutNumber("Distance in cm", sonic.GetDistance());
 
 
 }
