@@ -34,6 +34,10 @@ void Robot::RobotInit() {
   // extender.Init();
   // joint.Init();
   ultrasonic.Init();
+  
+  // Register ultrasonic subsystem with SmartDashboard for Sendable widgets
+  frc::SmartDashboard::PutData("Ultrasonic Sensor", &ultrasonic);
+  
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
 }
@@ -66,8 +70,25 @@ void Robot::AutonomousInit() {
 
 void Robot::AutonomousPeriodic() {
   
+  // Get ultrasonic distance for autonomous navigation (in centimeters)
+  double distanceCm = ultrasonic.GetDistance();
+  bool wallDetected = ultrasonic.IsWallDetected(30.0); // 30cm threshold
+  
   //arm.IncreasePosition();
   
+  // Example autonomous logic using distance in centimeters
+  if (distanceCm > 0) { // Valid reading
+    if (wallDetected) {
+      std::cout << "WALL DETECTED! Distance: " << distanceCm << " cm - STOPPING" << std::endl;
+      amcu.stop();
+    } else {
+      std::cout << "Clear path. Distance: " << distanceCm << " cm - CONTINUING" << std::endl;
+      // Continue driving forward if path is clear
+    }
+  }
+  
+  // Display distance in SmartDashboard in centimeters
+  frc::SmartDashboard::PutNumber("Auto Distance (cm)", distanceCm);
 
   wpi::outs() << "example\n";
   std::cout << "test";
@@ -88,10 +109,23 @@ void Robot::TeleopInit() {
 }
 
 void Robot::TeleopPeriodic() {
+  // Get distance data in centimeters for manual control assistance
+  double distanceCm = ultrasonic.GetDistance();
+  
   if (oi.GetDriveXButton()) {
-      ultrasonic.GetDistance();
+      // Print current distance in centimeters when X button is pressed
+      std::cout << "Current ultrasonic distance: " << distanceCm << " cm" << std::endl;
       //arm.SetHomePosition();
   }
+  
+  // Example: Warning system based on distance in centimeters
+  if (distanceCm > 0 && distanceCm < 15.0) {
+    std::cout << "WARNING: Obstacle detected at " << distanceCm << " cm!" << std::endl;
+    frc::SmartDashboard::PutString("Status", "OBSTACLE DETECTED - " + std::to_string(distanceCm) + " cm");
+  } else if (distanceCm > 0) {
+    frc::SmartDashboard::PutString("Status", "Path Clear - " + std::to_string(distanceCm) + " cm");
+  }
+  
   // if (oi.GetDriveSquareButton()) {
   //     arm.SetDropApplePosition();
   // }
@@ -131,6 +165,10 @@ void Robot::TeleopPeriodic() {
   
 
   //frc::SmartDashboard::PutNumber("Distance in cm", ultrasonic.GetDistance());
+  
+  // Display distance in centimeters (reuse the existing distanceCm variable)
+  frc::SmartDashboard::PutNumber("Ultrasonic Distance (cm)", distanceCm);
+  frc::SmartDashboard::PutString("Distance Reading", std::to_string(distanceCm) + " cm");
 
 
 }
