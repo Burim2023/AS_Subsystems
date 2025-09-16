@@ -119,7 +119,7 @@ void Robot::TeleopPeriodic() {
   }
   
   // Example: Warning system based on distance in centimeters
-  if (distanceCm > 0 && distanceCm < 15.0) {
+  if (distanceCm > 5 && distanceCm < 15.0) {
     std::cout << "WARNING: Obstacle detected at " << distanceCm << " cm!" << std::endl;
     frc::SmartDashboard::PutString("Status", "OBSTACLE DETECTED - " + std::to_string(distanceCm) + " cm");
   } else if (distanceCm > 0) {
