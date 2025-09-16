@@ -7,7 +7,7 @@
 
 
 #define EXTENDER_PICK_ANGLE 300
-#define EXTENDER_DROP_ANGLE 150
+#define EXTENDER_DROP_ANGLE 50
 
 
 class ExtenderSubsystem {

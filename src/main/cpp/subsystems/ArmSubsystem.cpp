@@ -31,7 +31,7 @@ void ArmSubsystem::SetPickApplePosition() {
 void ArmSubsystem::UpdateDashboard() {
     frc::SmartDashboard::PutNumber("Arm Servo Position", servoAngleArm);
     if (ArmServo) {
-        frc::SmartDashboard::PutNumber("Arm Servo Raw Value", ArmServo->Get());
+        frc::SmartDashboard::PutNumber("Arm Servo Raw Value", ArmServo->GetAngle());
     } else {
         frc::SmartDashboard::PutNumber("Arm Servo Raw Value", -1);
     }

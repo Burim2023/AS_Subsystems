@@ -5,9 +5,9 @@
 
 #define ARM_SERVO_PORT 18
 
-#define HOME_ANGLE 0
-#define DROP_APPLE_ANGLE 30
-#define PICK_APPLE_ANGLE 156
+#define HOME_ANGLE 5
+#define DROP_APPLE_ANGLE 35
+#define PICK_APPLE_ANGLE 195
 
 class ArmSubsystem {
 public:

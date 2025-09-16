@@ -6,41 +6,45 @@
 #include <frc2/command/CommandScheduler.h>
 
 //subsystems
-#include "subsystems/ArmSubsystem.h"
-#include "subsystems/GripperSubsystem.h"
-#include "subsystems/ExtenderSubsystem.h"
-#include "subsystems/GripperJointSubsystem.h"
+// #include "subsystems/ArmSubsystem.h"
+// #include "subsystems/GripperSubsystem.h"
+// #include "subsystems/ExtenderSubsystem.h"
+// #include "subsystems/GripperJointSubsystem.h"
 #include "subsystems/UltrasonicSubsystem.h"
 
 
-constexpr int kWheelRadius = 50;
+constexpr int kWheelRadius = 55;
 constexpr int kRobotRadius = 162;
 constexpr Motor kMotorLeft  = MOTOR_0;
 constexpr Motor kMotorRight = MOTOR_2;
 constexpr Motor kMotorBack  = MOTOR_3;
 
-ArmSubsystem arm;
-GripperSubsystem gripper;
-GripperJointSubsystem joint;
-ExtenderSubsystem extender;
+// ArmSubsystem arm;
+// GripperSubsystem gripper;
+// GripperJointSubsystem joint;
+// ExtenderSubsystem extender;
 OI oi;
-UltrasonicSubsystem sonic;
+frc::UltrasonicSubsystem ultrasonic;
 //StartStop StaSto(&lidar, &oi);
 AMCU amcu;
 
 void Robot::RobotInit() {
-  //arm.Init();
-  //gripper.Init();
-  //extender.Init();
-  //joint.Init();
-  sonic.Init();
+  // arm.Init();
+  // gripper.Init();
+  // extender.Init();
+  // joint.Init();
+  ultrasonic.Init();
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
 }
 
 void Robot::RobotPeriodic() { 
   frc2::CommandScheduler::GetInstance().Run();
-  sonic.Periodic();
+  ultrasonic.Periodic();
+  // arm.Periodic();
+  // gripper.Periodic();
+  // joint.Periodic();
+  // extender.Periodic();
 }
 
 void Robot::DisabledInit() {
@@ -85,47 +89,48 @@ void Robot::TeleopInit() {
 
 void Robot::TeleopPeriodic() {
   if (oi.GetDriveXButton()) {
-      sonic.GetDistance();
+      ultrasonic.GetDistance();
+      //arm.SetHomePosition();
   }
-  if (oi.GetDriveSquareButton()) {
-      arm.SetDropApplePosition();
-  }
-  if (oi.GetDriveCircleButton()) {
-      arm.SetPickApplePosition();
-  }
-  if (oi.GetDriveTriangleButton()) {
-      //amcu.driveDistance(1,0,0);
-      joint.SetGripperUpAngle();
-  }
+  // if (oi.GetDriveSquareButton()) {
+  //     arm.SetDropApplePosition();
+  // }
+  // if (oi.GetDriveCircleButton()) {
+  //     arm.SetPickApplePosition();
+  // }
+  // if (oi.GetDriveTriangleButton()) {
+  //     //amcu.driveDistance(1,0,0);
+  //     joint.SetGripperUpAngle();
+  // }
 
-  if (oi.GetDriveRightBumper()) {
-      gripper.SetOpenGripper();
-  }
-  if (oi.GetDriveLeftBumper()) {
-      gripper.SetClosedGripper();
-  }
+  // if (oi.GetDriveRightBumper()) {
+  //     gripper.SetOpenGripper();
+  // }
+  // if (oi.GetDriveLeftBumper()) {
+  //     gripper.SetClosedGripper();
+  // }
 
-  if (oi.getDriveLeftTrigger()) {
-      extender.SetPickPostion();
-  }
-  if (oi.GetDriveRightTrigger()) {
-      extender.SetDropPostion();
-  }
+  // if (oi.getDriveLeftTrigger()) {
+  //     extender.SetPickPostion();
+  // }
+  // if (oi.GetDriveRightTrigger()) {
+  //     extender.SetDropPostion();
+  // }
 
-  if (oi.GetDriveLeftAnalogButton()) {
-      joint.SetGripperDownAngle();
-  }
+  // if (oi.GetDriveLeftAnalogButton()) {
+  //     joint.SetGripperDownAngle();
+  // }
 
-  if(oi.GetDriveRightAnalogButton()) {
-      joint.SetGripperMidAngle();
-  }
+  // if(oi.GetDriveRightAnalogButton()) {
+  //     joint.SetGripperMidAngle();
+  // }
 
-  if(oi.GetDriveShareButton()) {
-      joint.SetGripperUpAngle();
-  }
+  // if(oi.GetDriveShareButton()) {
+  //     joint.SetGripperUpAngle();}
+  
   
 
-  frc::SmartDashboard::PutNumber("Distance in cm", sonic.GetDistance());
+  //frc::SmartDashboard::PutNumber("Distance in cm", ultrasonic.GetDistance());
 
 
 }

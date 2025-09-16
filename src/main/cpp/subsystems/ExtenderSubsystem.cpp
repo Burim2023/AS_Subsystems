@@ -27,7 +27,7 @@ void ExtenderSubsystem::SetDropPostion() {
 void ExtenderSubsystem::UpdateDashboard() {
     frc::SmartDashboard::PutNumber("Arm Servo Position", servoAngleExtender);
     if (ExtenderServo) {
-        frc::SmartDashboard::PutNumber("Arm Servo Raw Value", ExtenderServo->Get());
+        frc::SmartDashboard::PutNumber("Arm Servo Raw Value", ExtenderServo->GetAngle());
     } else {
         frc::SmartDashboard::PutNumber("Arm Servo Raw Value", -1);
     }

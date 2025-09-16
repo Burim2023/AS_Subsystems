@@ -2,6 +2,7 @@
 #include <iostream>
 
 studica::Servo* GripperServo = nullptr;
+// frc::PWM* myServo;
 double servoAngleGripper = GRIPPER_OPEN_ANGLE;
 
 GripperSubsystem::GripperSubsystem() {}
@@ -9,10 +10,12 @@ GripperSubsystem::GripperSubsystem() {}
 void GripperSubsystem::Init() {
     if (GripperServo == nullptr) {
         GripperServo = new studica::Servo(GRIPPER_SERVO_PORT);
+        // myServo = new frc::PWM(19);
+        
         std::cout << "Servo initialized on port " << GRIPPER_SERVO_PORT << std::endl;
     }
-    GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);
-    servoAngleGripper = GRIPPER_OPEN_ANGLE;
+    // GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);
+    // servoAngleGripper = GRIPPER_OPEN_ANGLE;
 }
 
 
@@ -34,5 +37,6 @@ void GripperSubsystem::UpdateDashboard() {
 }
 
 void GripperSubsystem::Periodic() {
+    // myServo->SetSpeed(0.3);
     UpdateDashboard();
 }

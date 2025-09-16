@@ -11,8 +11,8 @@ void GripperJointSubsystem::Init() {
         GripperJointServo = new studica::Servo(JOINT_SERVO_PORT);
         std::cout << "Servo initialized on port " << JOINT_SERVO_PORT << std::endl;
     }
-    GripperJointServo->SetAngle(JOINT_DOWN_ANGLE);
-    servoAngleGripperJoint = JOINT_DOWN_ANGLE;
+    // GripperJointServo->SetAngle(JOINT_DOWN_ANGLE);
+    // servoAngleGripperJoint = JOINT_DOWN_ANGLE;
 }
 
 
