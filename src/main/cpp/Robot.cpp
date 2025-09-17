@@ -3,6 +3,9 @@
 #include "AMCU.h"
 #include "Constants.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+
+  
+  // if (oi.GetDriveSquareButton()) {d.h>
 #include <frc2/command/CommandScheduler.h>
 
 //subsystems
@@ -11,6 +14,7 @@
 // #include "subsystems/ExtenderSubsystem.h"
 // #include "subsystems/GripperJointSubsystem.h"
 #include "subsystems/UltrasonicSubsystem.h"
+#include "subsystems/IRRangeSubsystem.h"
 
 
 constexpr int kWheelRadius = 55;
@@ -25,6 +29,7 @@ constexpr Motor kMotorBack  = MOTOR_3;
 // ExtenderSubsystem extender;
 OI oi;
 frc::UltrasonicSubsystem ultrasonic;
+frc::IRRangeSubsystem irRange(3);  // Using analog port 0
 //StartStop StaSto(&lidar, &oi);
 AMCU amcu;
 
@@ -34,9 +39,11 @@ void Robot::RobotInit() {
   // extender.Init();
   // joint.Init();
   ultrasonic.Init();
+  irRange.Init();
   
-  // Register ultrasonic subsystem with SmartDashboard for Sendable widgets
+  // Register subsystems with SmartDashboard for Sendable widgets
   frc::SmartDashboard::PutData("Ultrasonic Sensor", &ultrasonic);
+  frc::SmartDashboard::PutData("IR Range Sensor", &irRange);
   
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
@@ -45,6 +52,7 @@ void Robot::RobotInit() {
 void Robot::RobotPeriodic() { 
   frc2::CommandScheduler::GetInstance().Run();
   ultrasonic.Periodic();
+  irRange.Periodic();
   // arm.Periodic();
   // gripper.Periodic();
   // joint.Periodic();
@@ -109,66 +117,37 @@ void Robot::TeleopInit() {
 }
 
 void Robot::TeleopPeriodic() {
-  // Get distance data in centimeters for manual control assistance
+  
+    // Get distance data in centimeters for manual control assistance
   double distanceCm = ultrasonic.GetDistance();
+  double irDistanceCm = irRange.GetDistance();
   
   if (oi.GetDriveXButton()) {
-      // Print current distance in centimeters when X button is pressed
-      std::cout << "Current ultrasonic distance: " << distanceCm << " cm" << std::endl;
+      // Print current distances when X button is pressed
+      std::cout << "Ultrasonic distance: " << distanceCm << " cm" << std::endl;
+      std::cout << "IR Range distance: " << irDistanceCm << " cm" << std::endl;
       //arm.SetHomePosition();
   }
   
-  // Example: Warning system based on distance in centimeters
-  if (distanceCm > 5 && distanceCm < 15.0) {
-    std::cout << "WARNING: Obstacle detected at " << distanceCm << " cm!" << std::endl;
-    frc::SmartDashboard::PutString("Status", "OBSTACLE DETECTED - " + std::to_string(distanceCm) + " cm");
+  // Example: Warning system based on both sensors
+  if (distanceCm > 0 && distanceCm < 15.0) {
+    std::cout << "WARNING: Ultrasonic obstacle at " << distanceCm << " cm!" << std::endl;
+    frc::SmartDashboard::PutString("Ultrasonic Status", "OBSTACLE - " + std::to_string(distanceCm) + " cm");
   } else if (distanceCm > 0) {
-    frc::SmartDashboard::PutString("Status", "Path Clear - " + std::to_string(distanceCm) + " cm");
+    frc::SmartDashboard::PutString("Ultrasonic Status", "Clear - " + std::to_string(distanceCm) + " cm");
   }
   
-  // if (oi.GetDriveSquareButton()) {
-  //     arm.SetDropApplePosition();
-  // }
-  // if (oi.GetDriveCircleButton()) {
-  //     arm.SetPickApplePosition();
-  // }
-  // if (oi.GetDriveTriangleButton()) {
-  //     //amcu.driveDistance(1,0,0);
-  //     joint.SetGripperUpAngle();
-  // }
-
-  // if (oi.GetDriveRightBumper()) {
-  //     gripper.SetOpenGripper();
-  // }
-  // if (oi.GetDriveLeftBumper()) {
-  //     gripper.SetClosedGripper();
-  // }
-
-  // if (oi.getDriveLeftTrigger()) {
-  //     extender.SetPickPostion();
-  // }
-  // if (oi.GetDriveRightTrigger()) {
-  //     extender.SetDropPostion();
-  // }
-
-  // if (oi.GetDriveLeftAnalogButton()) {
-  //     joint.SetGripperDownAngle();
-  // }
-
-  // if(oi.GetDriveRightAnalogButton()) {
-  //     joint.SetGripperMidAngle();
-  // }
-
-  // if(oi.GetDriveShareButton()) {
-  //     joint.SetGripperUpAngle();}
+  if (irRange.IsObjectDetected(25.0)) {
+    std::cout << "WARNING: IR sensor detects object at " << irDistanceCm << " cm!" << std::endl;
+    frc::SmartDashboard::PutString("IR Status", "OBJECT DETECTED - " + std::to_string(irDistanceCm) + " cm");
+  } else if (irRange.IsValidReading()) {
+    frc::SmartDashboard::PutString("IR Status", "Clear - " + std::to_string(irDistanceCm) + " cm");
+  }
   
-  
-
-  //frc::SmartDashboard::PutNumber("Distance in cm", ultrasonic.GetDistance());
   
   // Display distance in centimeters (reuse the existing distanceCm variable)
-  frc::SmartDashboard::PutNumber("Ultrasonic Distance (cm)", distanceCm);
-  frc::SmartDashboard::PutString("Distance Reading", std::to_string(distanceCm) + " cm");
+  // frc::SmartDashboard::PutNumber("Ultrasonic Distance (cm)", distanceCm);
+  // frc::SmartDashboard::PutString("Distance Reading", std::to_string(distanceCm) + " cm");
 
 
 }
