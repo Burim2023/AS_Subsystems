@@ -3,9 +3,6 @@
 #include "AMCU.h"
 #include "Constants.h"
 #include <frc/smartdashboard/SmartDashboard.h>
-
-  
-  // if (oi.GetDriveSquareButton()) {d.h>
 #include <frc2/command/CommandScheduler.h>
 
 //subsystems
@@ -15,6 +12,8 @@
 // #include "subsystems/GripperJointSubsystem.h"
 #include "subsystems/UltrasonicSubsystem.h"
 #include "subsystems/IRRangeSubsystem.h"
+#include "subsystems/Lidar.h"
+#include "utilities/LoggingSystem.h"
 
 
 constexpr int kWheelRadius = 55;
@@ -29,7 +28,8 @@ constexpr Motor kMotorBack  = MOTOR_3;
 // ExtenderSubsystem extender;
 OI oi;
 frc::UltrasonicSubsystem ultrasonic;
-frc::IRRangeSubsystem irRange(3);  // Using analog port 0
+frc::IRRangeSubsystem irRange(3);  // Using analog port 3
+frc::LidarSubsystem lidar(studica::Lidar::kUSB1);  // Using Studica USB1 port
 //StartStop StaSto(&lidar, &oi);
 AMCU amcu;
 
@@ -40,10 +40,14 @@ void Robot::RobotInit() {
   // joint.Init();
   ultrasonic.Init();
   irRange.Init();
+  lidar.Init();
+  lidar.StartScan();  // Start LiDAR scanning
+  SetupLogging();
   
   // Register subsystems with SmartDashboard for Sendable widgets
   frc::SmartDashboard::PutData("Ultrasonic Sensor", &ultrasonic);
   frc::SmartDashboard::PutData("IR Range Sensor", &irRange);
+  frc::SmartDashboard::PutData("LiDAR Sensor", &lidar);
   
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
@@ -53,6 +57,7 @@ void Robot::RobotPeriodic() {
   frc2::CommandScheduler::GetInstance().Run();
   ultrasonic.Periodic();
   irRange.Periodic();
+  lidar.Periodic();
   // arm.Periodic();
   // gripper.Periodic();
   // joint.Periodic();
@@ -61,6 +66,7 @@ void Robot::RobotPeriodic() {
 
 void Robot::DisabledInit() {
   amcu.stop();
+  lidar.StopScan();  // Stop LiDAR scanning when disabled
   
 }
 void Robot::DisabledPeriodic() {}
@@ -118,18 +124,26 @@ void Robot::TeleopInit() {
 
 void Robot::TeleopPeriodic() {
   
-    // Get distance data in centimeters for manual control assistance
+  // Get distance data in centimeters for manual control assistance
   double distanceCm = ultrasonic.GetDistance();
   double irDistanceCm = irRange.GetDistance();
+  double lidarFrontCm = lidar.GetFrontDistance();
   
   if (oi.GetDriveXButton()) {
       // Print current distances when X button is pressed
       std::cout << "Ultrasonic distance: " << distanceCm << " cm" << std::endl;
       std::cout << "IR Range distance: " << irDistanceCm << " cm" << std::endl;
+      std::cout << "LiDAR front distance: " << lidarFrontCm << " cm" << std::endl;
       //arm.SetHomePosition();
   }
   
-  // Example: Warning system based on both sensors
+  if (oi.GetDriveTriangleButton()) {
+      // Restart LiDAR when Triangle button is pressed
+      std::cout << "Manual LiDAR restart requested" << std::endl;
+      lidar.RestartScan();
+  }
+  
+  // Example: Warning system based on all sensors
   if (distanceCm > 0 && distanceCm < 15.0) {
     std::cout << "WARNING: Ultrasonic obstacle at " << distanceCm << " cm!" << std::endl;
     frc::SmartDashboard::PutString("Ultrasonic Status", "OBSTACLE - " + std::to_string(distanceCm) + " cm");
@@ -142,6 +156,23 @@ void Robot::TeleopPeriodic() {
     frc::SmartDashboard::PutString("IR Status", "OBJECT DETECTED - " + std::to_string(irDistanceCm) + " cm");
   } else if (irRange.IsValidReading()) {
     frc::SmartDashboard::PutString("IR Status", "Clear - " + std::to_string(irDistanceCm) + " cm");
+  }
+  
+  // LiDAR-based warnings and navigation assistance
+  if (!lidar.IsPathClear(100.0)) {
+    std::cout << "WARNING: LiDAR detects obstacle in path at " << lidarFrontCm << " cm!" << std::endl;
+    frc::SmartDashboard::PutString("LiDAR Status", "OBSTACLE IN PATH - " + std::to_string(lidarFrontCm) + " cm");
+  } else {
+    frc::SmartDashboard::PutString("LiDAR Status", "Path Clear - " + std::to_string(lidarFrontCm) + " cm");
+  }
+  
+  // Additional LiDAR directional information
+  if (oi.GetDriveSquareButton()) {
+    // Print all directional LiDAR readings when Square button is pressed
+    std::cout << "LiDAR Directions - Front: " << lidarFrontCm 
+              << ", Left: " << lidar.GetDistanceAtAngle(90) 
+              << ", Right: " << lidar.GetDistanceAtAngle(270)
+              << ", Rear: " << lidar.GetDistanceAtAngle(180) << " cm" << std::endl;
   }
   
   
