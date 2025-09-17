@@ -76,23 +76,72 @@ void LidarSubsystem::StopScan() {
 }
 
 void LidarSubsystem::RestartScan() {
-    if (m_lidar) {
-        try {
-            std::cout << "Restarting LiDAR scan..." << std::endl;
+    if (m_lidar && m_restartState == RestartState::None) {
+        // Check if enough time has passed since last restart attempt
+        if (m_periodicCounter - m_lastRestartTime >= kRestartCooldown) {
+            std::cout << "Initiating non-blocking LiDAR restart..." << std::endl;
             std::cout.flush();
-            
-            m_lidar->Stop();
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-            m_lidar->Start();
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            
-            m_consecutiveErrors = 0;  // Reset error count
-            std::cout << "LiDAR scan restarted successfully" << std::endl;
-            std::cout.flush();
-        } catch (const std::exception& e) {
-            std::cout << "LiDAR restart failed: " << e.what() << std::endl;
+            m_restartState = RestartState::Stopping;
+            m_restartTimer = 0;
+            m_lastRestartTime = m_periodicCounter;
+        } else {
+            std::cout << "LiDAR restart skipped - cooldown period active" << std::endl;
             std::cout.flush();
         }
+    }
+}
+
+void LidarSubsystem::ProcessRestartStateMachine() {
+    if (m_restartState == RestartState::None) {
+        return;
+    }
+    
+    m_restartTimer++;
+    
+    switch (m_restartState) {
+        case RestartState::Stopping:
+            if (m_restartTimer >= 2) {  // Small delay before stopping
+                try {
+                    m_lidar->Stop();
+                    std::cout << "LiDAR stopped for restart" << std::endl;
+                    std::cout.flush();
+                    m_restartState = RestartState::Waiting;
+                    m_restartTimer = 0;
+                } catch (const std::exception& e) {
+                    std::cout << "LiDAR stop failed during restart: " << e.what() << std::endl;
+                    std::cout.flush();
+                    m_restartState = RestartState::None;  // Abort restart
+                }
+            }
+            break;
+            
+        case RestartState::Waiting:
+            if (m_restartTimer >= kRestartStopDelay) {
+                m_restartState = RestartState::Starting;
+                m_restartTimer = 0;
+            }
+            break;
+            
+        case RestartState::Starting:
+            if (m_restartTimer >= 2) {  // Small delay before starting
+                try {
+                    m_lidar->Start();
+                    std::cout << "LiDAR restarted successfully" << std::endl;
+                    std::cout.flush();
+                    m_consecutiveErrors = 0;  // Reset error count
+                    m_restartState = RestartState::None;
+                    m_restartTimer = 0;
+                } catch (const std::exception& e) {
+                    std::cout << "LiDAR start failed during restart: " << e.what() << std::endl;
+                    std::cout.flush();
+                    m_restartState = RestartState::None;  // Abort restart
+                }
+            }
+            break;
+            
+        default:
+            m_restartState = RestartState::None;
+            break;
     }
 }
 
@@ -113,19 +162,11 @@ void LidarSubsystem::UpdateScanData() {
             
             m_hasValidData = false;
             
-            // Try to restart scanning after multiple consecutive errors
-            if (m_consecutiveErrors >= 10 && m_consecutiveErrors % 20 == 0) {
-                std::cout << "Attempting to restart LiDAR scanning..." << std::endl;
+            // Try to restart scanning after multiple consecutive errors (non-blocking)
+            if (m_consecutiveErrors >= 10 && m_consecutiveErrors % 20 == 0 && m_restartState == RestartState::None) {
+                std::cout << "Initiating automatic LiDAR restart..." << std::endl;
                 std::cout.flush();
-                try {
-                    m_lidar->Stop();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    m_lidar->Start();
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                } catch (const std::exception& restart_e) {
-                    std::cout << "LiDAR restart failed: " << restart_e.what() << std::endl;
-                    std::cout.flush();
-                }
+                RestartScan();  // This will use the non-blocking restart
             }
         }
     } else {
@@ -325,6 +366,8 @@ void LidarSubsystem::UpdateDashboard() {
 }
 
 void LidarSubsystem::Periodic() {
+    m_periodicCounter++;  // Track timing for restart cooldown
+    ProcessRestartStateMachine();  // Handle non-blocking restart
     UpdateDashboard();
 }
 

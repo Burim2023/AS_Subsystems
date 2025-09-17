@@ -198,6 +198,21 @@ class LidarSubsystem : public Sendable,
   // Error tracking for automatic recovery
   int m_consecutiveErrors = 0;
   
+  // Non-blocking restart state machine
+  enum class RestartState {
+    None,
+    Stopping,
+    Waiting,
+    Starting
+  };
+  RestartState m_restartState = RestartState::None;
+  int m_restartTimer = 0;
+  int m_periodicCounter = 0;  // Track total periodic calls for timing
+  int m_lastRestartTime = 0;  // Track when last restart was initiated
+  static constexpr int kRestartStopDelay = 10;   // 10 cycles (~200ms at 50Hz)
+  static constexpr int kRestartStartDelay = 25;  // 25 cycles (~500ms at 50Hz)
+  static constexpr int kRestartCooldown = 250;   // 250 cycles (~5 seconds at 50Hz)
+  
   // Constants
   static constexpr double kMinRange = 15.0;   // Minimum range in cm
   static constexpr double kMaxRange = 1200.0; // Maximum range in cm
@@ -207,6 +222,11 @@ class LidarSubsystem : public Sendable,
    * Update the current scan data from the LiDAR.
    */
   void UpdateScanData();
+  
+  /**
+   * Process non-blocking restart state machine.
+   */
+  void ProcessRestartStateMachine();
   
   /**
    * Convert millimeters to centimeters.
