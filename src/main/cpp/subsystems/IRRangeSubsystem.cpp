@@ -11,21 +11,19 @@
 
 using namespace frc;
 
-AnalogInput* irSensor = nullptr;
-
 IRRangeSubsystem::IRRangeSubsystem(int analogPort) : m_analogPort(analogPort) {}
 
 void IRRangeSubsystem::Init() {
-    if (!irSensor) {
-        irSensor = new AnalogInput(m_analogPort);
+    if (!m_analogInput) {
+        m_analogInput = std::make_unique<AnalogInput>(m_analogPort);
         std::cout << "IR Range sensor initialized on analog port " << m_analogPort << std::endl;
         std::cout.flush();
     }
 }
 
 double IRRangeSubsystem::GetVoltage() {
-    if (irSensor) {
-        return irSensor->GetVoltage();
+    if (m_analogInput) {
+        return m_analogInput->GetVoltage();
     }
     std::cout << "IR Range: Sensor not initialized!" << std::endl;
     std::cout.flush();
@@ -50,18 +48,12 @@ double IRRangeSubsystem::VoltageToDistance(double voltage) {
 }
 
 double IRRangeSubsystem::GetDistance() {
-    if (!irSensor) {
-        std::cout << "IR Range: Sensor not initialized!" << std::endl;
-        std::cout.flush();
+    if (!m_analogInput) {
         return -1.0;
     }
     
     double voltage = GetVoltage();
     double distance = VoltageToDistance(voltage);
-    
-    // Debug output
-    std::cout << "IR Range - Voltage: " << voltage << "V, Distance: " << distance << " cm" << std::endl;
-    std::cout.flush();
     
     return distance;
 }
@@ -80,18 +72,10 @@ void IRRangeSubsystem::UpdateDashboard() {
     double distance = GetDistance();
     double voltage = GetVoltage();
     
-    std::cout << "=== IR Range Distance: " << distance << " cm (Voltage: " << voltage << "V) ===" << std::endl;
-    std::cout.flush();
-    
     SmartDashboard::PutNumber("IR Range Distance (cm)", distance);
     SmartDashboard::PutNumber("IR Range Voltage (V)", voltage);
     SmartDashboard::PutBoolean("IR Object Detected", IsObjectDetected());
     SmartDashboard::PutBoolean("IR Valid Reading", IsValidReading());
-    
-    if (IsObjectDetected()) {
-        std::cout << "*** IR OBJECT DETECTED ***" << std::endl;
-        std::cout.flush();
-    }
 }
 
 void IRRangeSubsystem::Periodic() {

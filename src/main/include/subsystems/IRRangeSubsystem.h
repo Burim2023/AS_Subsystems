@@ -12,6 +12,7 @@
 #include <frc/smartdashboard/Sendable.h>
 #include <frc/smartdashboard/SendableHelper.h>
 #include <frc/smartdashboard/SendableBuilder.h>
+#include <memory>
 
 namespace frc {
 
@@ -100,6 +101,9 @@ class IRRangeSubsystem : public Sendable,
   void InitSendable(SendableBuilder& builder) override;
 
  private:
+  // Analog input for the IR sensor - proper member variable
+  std::unique_ptr<AnalogInput> m_analogInput;
+  
   // Analog input port for the IR sensor
   int m_analogPort;
   

@@ -13,6 +13,7 @@
 #include <frc/smartdashboard/Sendable.h>
 #include <frc/smartdashboard/SendableHelper.h>
 #include <frc/smartdashboard/SendableBuilder.h>
+#include <memory>
 
 namespace frc {
 
@@ -82,6 +83,9 @@ class UltrasonicSubsystem : public Sendable,
   void InitSendable(SendableBuilder& builder) override;
 
  private:
+  // Ultrasonic sensor - proper member variable
+  std::unique_ptr<Ultrasonic> m_ultrasonicSensor;
+  
   // Digital I/O port definitions
   static constexpr int TRIGGER_PORT = 8;
   static constexpr int ECHO_PORT = 9;
