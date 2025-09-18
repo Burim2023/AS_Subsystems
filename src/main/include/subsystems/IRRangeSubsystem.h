@@ -112,11 +112,11 @@ class IRRangeSubsystem : public Sendable,
   static constexpr double kMaxRange = 80.0;  // Maximum range in cm
   
   // Voltage to distance conversion constants (may need calibration)
-  static constexpr double kMaxVoltage = 3.1;  // Voltage at minimum distance
+  static constexpr double kMaxVoltage = 4.8;  // Voltage at minimum distance
   static constexpr double kMinVoltage = 0.4;  // Voltage at maximum distance
   
   // Default threshold for object detection in centimeters
-  static constexpr double kDefaultThreshold = 20.0;
+  static constexpr double kDefaultThreshold = 15.0;
   
   /**
    * Convert voltage reading to distance in centimeters.

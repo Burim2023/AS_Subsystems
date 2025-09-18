@@ -28,7 +28,7 @@ constexpr Motor kMotorBack  = MOTOR_3;
 // ExtenderSubsystem extender;
 OI oi;
 frc::UltrasonicSubsystem ultrasonic;
-frc::IRRangeSubsystem irRange(3);  // Using analog port 3
+frc::IRRangeSubsystem irRange(1);  // Using analog port 1
 frc::LidarSubsystem lidar(studica::Lidar::kUSB1);  // Using Studica USB1 port
 //StartStop StaSto(&lidar, &oi);
 AMCU amcu;
@@ -128,12 +128,14 @@ void Robot::TeleopPeriodic() {
   double distanceCm = ultrasonic.GetDistance();
   double irDistanceCm = irRange.GetDistance();
   double lidarFrontCm = lidar.GetFrontDistance();
+  double IRVoltage = irRange.GetVoltage();
   
   if (oi.GetDriveXButton()) {
       // Print current distances when X button is pressed
       std::cout << "Ultrasonic distance: " << distanceCm << " cm" << std::endl;
       std::cout << "IR Range distance: " << irDistanceCm << " cm" << std::endl;
       std::cout << "LiDAR front distance: " << lidarFrontCm << " cm" << std::endl;
+      std::cout << "IR range Voltage:" << IRVoltage << "cm" << std::endl;
       //arm.SetHomePosition();
   }
   
