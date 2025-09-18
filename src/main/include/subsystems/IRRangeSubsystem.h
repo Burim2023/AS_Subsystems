@@ -72,7 +72,7 @@ class IRRangeSubsystem : public Sendable,
    * @return True if a valid distance measurement is below the threshold,
    *         false otherwise.
    */
-  bool IsObjectDetected(double threshold = 20.0);
+  bool IsObjectDetected(double threshold = 15.0);
 
   /**
    * Check if the sensor reading is within the valid range.

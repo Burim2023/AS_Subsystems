@@ -28,7 +28,7 @@ constexpr Motor kMotorBack  = MOTOR_3;
 // ExtenderSubsystem extender;
 OI oi;
 frc::UltrasonicSubsystem ultrasonic;
-frc::IRRangeSubsystem irRange(1);  // Using analog port 1
+frc::IRRangeSubsystem irRange(0);  // Using analog port 1
 frc::LidarSubsystem lidar(studica::Lidar::kUSB1);  // Using Studica USB1 port
 //StartStop StaSto(&lidar, &oi);
 AMCU amcu;
@@ -86,7 +86,7 @@ void Robot::AutonomousPeriodic() {
   
   // Get ultrasonic distance for autonomous navigation (in centimeters)
   double distanceCm = ultrasonic.GetDistance();
-  bool wallDetected = ultrasonic.IsWallDetected(30.0); // 30cm threshold
+  bool wallDetected = ultrasonic.IsWallDetected(10.0); // 10cm threshold
   
   //arm.IncreasePosition();
   
@@ -104,11 +104,11 @@ void Robot::AutonomousPeriodic() {
   // Display distance in SmartDashboard in centimeters
   frc::SmartDashboard::PutNumber("Auto Distance (cm)", distanceCm);
 
-  wpi::outs() << "example\n";
-  std::cout << "test";
-  frc::SmartDashboard::PutNumber("Encoder Left", amcu.getEncoder(kMotorLeft));
-  frc::SmartDashboard::PutNumber("Encoder Right", amcu.getEncoder(kMotorRight));
-  frc::SmartDashboard::PutNumber("Encoder Back", amcu.getEncoder(kMotorBack));
+  // wpi::outs() << "example\n";
+  // std::cout << "test";
+  // frc::SmartDashboard::PutNumber("Encoder Left", amcu.getEncoder(kMotorLeft));
+  // frc::SmartDashboard::PutNumber("Encoder Right", amcu.getEncoder(kMotorRight));
+  // frc::SmartDashboard::PutNumber("Encoder Back", amcu.getEncoder(kMotorBack));
 }
 
 void Robot::TeleopInit() {
@@ -123,6 +123,11 @@ void Robot::TeleopInit() {
 }
 
 void Robot::TeleopPeriodic() {
+  if  (!lidar.IsScanning()) {
+    lidar.RestartScan();
+  }else {
+    lidar.StartScan();
+  }
   
   // Get distance data in centimeters for manual control assistance
   double distanceCm = ultrasonic.GetDistance();
@@ -139,11 +144,7 @@ void Robot::TeleopPeriodic() {
       //arm.SetHomePosition();
   }
   
-  if (oi.GetDriveTriangleButton()) {
-      // Restart LiDAR when Triangle button is pressed
-      std::cout << "Manual LiDAR restart requested" << std::endl;
-      lidar.RestartScan();
-  }
+  
   
   // Example: Warning system based on all sensors
   if (distanceCm > 0 && distanceCm < 15.0) {
@@ -168,14 +169,14 @@ void Robot::TeleopPeriodic() {
     frc::SmartDashboard::PutString("LiDAR Status", "Path Clear - " + std::to_string(lidarFrontCm) + " cm");
   }
   
-  // Additional LiDAR directional information
-  if (oi.GetDriveSquareButton()) {
-    // Print all directional LiDAR readings when Square button is pressed
-    std::cout << "LiDAR Directions - Front: " << lidarFrontCm 
-              << ", Left: " << lidar.GetDistanceAtAngle(90) 
-              << ", Right: " << lidar.GetDistanceAtAngle(270)
-              << ", Rear: " << lidar.GetDistanceAtAngle(180) << " cm" << std::endl;
-  }
+  // // Additional LiDAR directional information
+  // if (oi.GetDriveSquareButton()) {
+  //   // Print all directional LiDAR readings when Square button is pressed
+  //   std::cout << "LiDAR Directions - Front: " << lidarFrontCm 
+  //             << ", Left: " << lidar.GetDistanceAtAngle(90) 
+  //             << ", Right: " << lidar.GetDistanceAtAngle(270)
+  //             << ", Rear: " << lidar.GetDistanceAtAngle(180) << " cm" << std::endl;
+  // }
   
   
   // Display distance in centimeters (reuse the existing distanceCm variable)
