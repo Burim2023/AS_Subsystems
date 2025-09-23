@@ -27,6 +27,10 @@ void GripperSubsystem::SetClosedGripper() {
     GripperServo->SetAngle(GRIPPER_CLOSED_ANGLE);
 }
 
+void GripperSubsystem::SetServoAngleZero() {
+    GripperServo->SetAngle(0);
+}
+
 void GripperSubsystem::UpdateDashboard() {
     frc::SmartDashboard::PutNumber("Arm Servo Position", servoAngleGripper);
     if (GripperServo) {

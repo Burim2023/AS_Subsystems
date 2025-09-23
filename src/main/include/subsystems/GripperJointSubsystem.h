@@ -6,8 +6,8 @@
 #define JOINT_SERVO_PORT 21
 
 #define JOINT_DOWN_ANGLE 0
-#define JOINT_MID_ANGLE 150
-#define JOINT_UP_ANGLE -30
+#define JOINT_MID_ANGLE 95
+#define JOINT_UP_ANGLE 120
 
 
 class GripperJointSubsystem {
@@ -17,11 +17,12 @@ public:
     void SetGripperUpAngle();
     void SetGripperMidAngle();
     void SetGripperDownAngle();
+    void SetServoAngleZero();
     void UpdateDashboard();
     void Periodic();
 
 
 private:
-    double servoAngleGripperJoint = 5;
+    double servoAngleGripperJoint = 0;
     
 };

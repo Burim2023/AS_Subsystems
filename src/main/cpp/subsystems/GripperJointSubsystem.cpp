@@ -28,6 +28,10 @@ void GripperJointSubsystem::SetGripperDownAngle() {
     GripperJointServo->SetAngle(JOINT_DOWN_ANGLE);
 }
 
+void GripperJointSubsystem::SetServoAngleZero(){
+    GripperJointServo->SetAngle(0);
+}
+
 void GripperJointSubsystem::UpdateDashboard() {
     frc::SmartDashboard::PutNumber("Arm Servo Position", servoAngleGripperJoint);
     if (GripperJointServo) {

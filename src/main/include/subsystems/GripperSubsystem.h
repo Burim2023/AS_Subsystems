@@ -5,8 +5,8 @@
 
 #define GRIPPER_SERVO_PORT 19
 
-#define GRIPPER_CLOSED_ANGLE 10
-#define GRIPPER_OPEN_ANGLE 0
+#define GRIPPER_CLOSED_ANGLE 0
+#define GRIPPER_OPEN_ANGLE 25
 
 
 class GripperSubsystem {
@@ -15,6 +15,7 @@ public:
     void Init();
     void SetOpenGripper();
     void SetClosedGripper();
+    void SetServoAngleZero();
     void UpdateDashboard();
     void Periodic();
 
