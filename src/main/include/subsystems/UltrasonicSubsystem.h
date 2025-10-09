@@ -8,7 +8,6 @@
 #pragma once
 
 #include <frc/Ultrasonic.h>
-#include <frc/Timer.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/smartdashboard/Sendable.h>
 #include <frc/smartdashboard/SendableHelper.h>
@@ -18,80 +17,89 @@
 namespace frc {
 
 /**
- * Ultrasonic rangefinder subsystem class.
- *
- * This subsystem wraps the WPILib Ultrasonic sensor functionality
- * to provide distance measurement and wall detection capabilities
- * for autonomous robot navigation. The subsystem handles sensor
- * initialization, periodic updates, and dashboard integration.
+ * UltrasonicSubsystem
+ * --------------------
+ * This subsystem manages **two ultrasonic sensors** (left and right).
+ * Each sensor measures distance to nearby objects independently.
+ * 
+ * The subsystem:
+ * - Initializes both sensors
+ * - Continuously updates distances
+ * - Publishes readings and wall detection info to SmartDashboard
  */
 class UltrasonicSubsystem : public Sendable,
                            public SendableHelper<UltrasonicSubsystem> {
  public:
   /**
-   * Create an instance of the UltrasonicSubsystem.
-   *
-   * Initializes the subsystem but does not create the sensor hardware
-   * until Init() is called.
+   * Constructor for UltrasonicSubsystem.
+   * 
+   * @param leftTrigger  DIO port number for the left sensor trigger.
+   * @param leftEcho     DIO port number for the left sensor echo.
+   * @param rightTrigger DIO port number for the right sensor trigger.
+   * @param rightEcho    DIO port number for the right sensor echo.
    */
-  UltrasonicSubsystem();
+  UltrasonicSubsystem(int leftTrigger, int leftEcho, int rightTrigger, int rightEcho);
 
   /**
-   * Initialize the ultrasonic sensor hardware.
-   *
-   * Creates and configures the WPILib Ultrasonic sensor with the
-   * specified trigger and echo ports. Enables automatic mode for
-   * continuous measurements.
+   * Initializes both ultrasonic sensors and enables automatic mode.
+   * Must be called before reading distances.
    */
   void Init();
 
   /**
-   * Get the current distance measurement from the ultrasonic sensor.
-   *
-   * @return Distance in centimeters to the nearest object. Returns 0.0
-   *         if the range is not valid yet, or -1.0 if the sensor is
-   *         not initialized.
+   * Returns the distance measured by the left ultrasonic sensor.
+   * @return Distance in centimeters (returns 0 if invalid).
    */
-  double GetDistance();
+  double GetLeftDistance();
 
   /**
-   * Update the SmartDashboard with current sensor readings.
-   *
-   * Publishes distance measurement and wall detection status to the
-   * dashboard for monitoring and debugging purposes.
+   * Returns the distance measured by the right ultrasonic sensor.
+   * @return Distance in centimeters (returns 0 if invalid).
+   */
+  double GetRightDistance();
+
+  /**
+   * Updates the SmartDashboard with the latest distance readings and
+   * wall detection status for both sensors.
    */
   void UpdateDashboard();
 
   /**
-   * Periodic function called by the robot framework.
-   *
-   * Updates the dashboard with current sensor readings on each
-   * robot cycle.
+   * Called automatically by the robot framework each cycle.
+   * Simply calls UpdateDashboard().
    */
   void Periodic();
 
   /**
-   * Check if a wall is detected within the specified threshold distance.
-   *
-   * @param threshold Maximum distance in centimeters to consider as
-   *                  wall detected. Default is 10.0 cm.
-   * @return True if a valid distance measurement is below the threshold,
-   *         false otherwise.
+   * Checks if an object (wall) is detected by the left sensor.
+   * @return true if distance < 15 cm, false otherwise.
    */
-  bool IsWallDetected(double threshold = 10.0);
+  bool IsLeftWallDetected();
 
+  /**
+   * Checks if an object (wall) is detected by the right sensor.
+   * @return true if distance < 15 cm, false otherwise.
+   */
+  bool IsRightWallDetected();
+
+  /**
+   * Adds properties for live SmartDashboard monitoring.
+   */
   void InitSendable(SendableBuilder& builder) override;
 
  private:
-  // Ultrasonic sensor - proper member variable
-  std::unique_ptr<Ultrasonic> m_ultrasonicSensor;
-  
-  // Digital I/O port definitions
-  static constexpr int TRIGGER_PORT = 8;
-  static constexpr int ECHO_PORT = 9;
-  
-  // Default threshold for wall detection in centimeters
-  static constexpr double kDefaultThreshold = 10.0;
+  // Smart pointers to the two ultrasonic sensors
+  std::unique_ptr<Ultrasonic> m_leftSensor;
+  std::unique_ptr<Ultrasonic> m_rightSensor;
+
+  // DIO port numbers for each sensor
+  int m_leftTriggerPort;
+  int m_leftEchoPort;
+  int m_rightTriggerPort;
+  int m_rightEchoPort;
+
+  // Default wall detection threshold (in cm)
+  static constexpr double kDefaultThreshold = 15.0;
 };
 
 }  // namespace frc
