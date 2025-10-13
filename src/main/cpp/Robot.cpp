@@ -45,10 +45,6 @@ void Robot::RobotPeriodic() {
 
   //irRange.Periodic();
   //lidar.Periodic();
-  // arm.Periodic();
-  // gripper.Periodic();
-  // joint.Periodic();
-  // extender.Periodic();
   // lf.update();
   // lf.getVoltage();
   // lf.isLineDetected();
@@ -94,10 +90,6 @@ void Robot::AutonomousPeriodic() {
       //SimpleDrive(amcu, 0.5, 0.0, 0.0);  // Forward at 50%
     }
   }
-  
-  // Display distance in SmartDashboard in centimeters
-  frc::SmartDashboard::PutNumber("Auto Left Distance (cm)", leftDistanceCm);
-  frc::SmartDashboard::PutNumber("Auto Right Distance (cm)", rightDistanceCm);
 }
 
 void Robot::TeleopInit() {

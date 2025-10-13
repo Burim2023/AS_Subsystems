@@ -17,6 +17,7 @@
 #include "commands/ExtendForDuration.h"
 #include "commands/DriveForDuration.h"
 #include "commands/SimpleDrive.h"
+#include "commands/GripperOperate.h"
 #include "commands/FullPickSequence.h"
 #include "commands/RetractAndLift.h"
 #include "commands/TestCommandSequence.h"
@@ -62,6 +63,9 @@ class RobotContainer {
   
   // Simple Commands
   SimpleDrive m_simpleDrive;
+  GripperOperate m_gripperOperateUp;
+  GripperOperate m_gripperOperateDown;
+  GripperOperate m_gripperPickup;
 
   void ConfigureButtonBindings();
 };

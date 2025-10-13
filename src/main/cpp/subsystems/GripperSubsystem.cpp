@@ -14,7 +14,7 @@ void GripperSubsystem::Init() {
         
         std::cout << "Servo initialized on port " << GRIPPER_SERVO_PORT << std::endl;
     }
-    // GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);
+    GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);
     // servoAngleGripper = GRIPPER_OPEN_ANGLE;
 }
 

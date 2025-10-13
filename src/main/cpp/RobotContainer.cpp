@@ -7,7 +7,10 @@ RobotContainer::RobotContainer()
       m_autoPickSequence(&m_arm, &m_extender, &m_gripperJoint),
       m_autoRetractAndLift(&m_arm, &m_extender),
       m_testSequence(m_amcu, &m_arm, &m_extender),
-      m_simpleDrive(nullptr, 0.3, 0.0, 0.0) {
+      m_simpleDrive(nullptr, 0.3, 0.0, 0.0),
+      m_gripperOperateUp(&m_gripperJoint, &m_gripper, GripperOperate::Position::UP, true, 2.0),
+      m_gripperOperateDown(&m_gripperJoint, &m_gripper, GripperOperate::Position::DOWN, false, 2.0),
+      m_gripperPickup(&m_gripperJoint, &m_gripper, GripperOperate::Position::MID, false, 2.0) {
   
   // Initialize all subsystems
   m_arm.Init();
@@ -15,12 +18,16 @@ RobotContainer::RobotContainer()
   m_gripper.Init();
   m_gripperJoint.Init();
   
+  
   // Configure the button bindings
   ConfigureButtonBindings();
   
   // Setup autonomous chooser
   m_chooser.SetDefaultOption("Test Command Sequence", &m_testSequence);
   m_chooser.AddOption("Simple Drive Forward", &m_simpleDrive);
+  m_chooser.AddOption("Gripper Up & Open", &m_gripperOperateUp);
+  m_chooser.AddOption("Gripper Down & Close", &m_gripperOperateDown);
+  m_chooser.AddOption("Gripper Pickup (Mid & Close)", &m_gripperPickup);
   //m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);

@@ -6,14 +6,14 @@
 #include <frc2/command/WaitCommand.h>
 #include <frc2/command/PrintCommand.h>
 
-FullPickSequence::FullPickSequence(ArmSubsystem* arm, ExtenderSubsystem* extender, GripperJointSubsystem* gripper) {
+FullPickSequence::FullPickSequence(ArmSubsystem* arm, ExtenderSubsystem* extender, GripperJointSubsystem* gripperJoint) {
     // Build the sequence of commands
     AddCommands(
         // Start message
         frc2::PrintCommand("Starting Full Pick Sequence..."),
 
-        // 1. Open the gripper to prepare for pickup
-        MoveGripperToPosition(gripper, JOINT_UP_ANGLE), // Assuming UP is "open"
+        // 1. Open the gripperJoint to prepare for pickup
+        MoveGripperToPosition(gripperJoint, JOINT_UP_ANGLE), // Assuming UP is "open"
 
         // 2. Move the arm to the pick-up position
         MoveArmToPosition(arm, PICK_APPLE_ANGLE),
@@ -21,8 +21,8 @@ FullPickSequence::FullPickSequence(ArmSubsystem* arm, ExtenderSubsystem* extende
         // 3. Extend the arm for 1.2 seconds
         ExtendForDuration(extender, 1.2, true), // true = clockwise (extend)
 
-        // 4. Close the gripper to grab the object
-        MoveGripperToPosition(gripper, JOINT_DOWN_ANGLE), // Assuming DOWN is "closed"
+        // 4. tilt the gripper to grab the object
+        MoveGripperToPosition(gripperJoint, JOINT_DOWN_ANGLE), // Assuming DOWN is "closed"
 
         // 5. Wait for half a second to ensure a firm grip
         frc2::WaitCommand(0.5_s),
