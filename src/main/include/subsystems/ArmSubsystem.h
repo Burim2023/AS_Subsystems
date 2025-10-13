@@ -2,6 +2,7 @@
 
 #include "studica/Servo.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/SubsystemBase.h>
 #include <memory>
 #include <cmath>
 
@@ -24,7 +25,7 @@
  * Controls the main arm servo for apple picking operations.
  * Supports variable speed control for smooth movement between positions.
  */
-class ArmSubsystem {
+class ArmSubsystem : public frc2::SubsystemBase {
 public:
     explicit ArmSubsystem();
     
@@ -109,7 +110,7 @@ public:
     /**
      * Periodic function - handles gradual servo movement
      */
-    void Periodic();
+    void Periodic() override;
 
 private:
     studica::Servo* ArmServo = nullptr;

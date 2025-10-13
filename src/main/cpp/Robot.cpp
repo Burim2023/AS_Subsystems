@@ -1,190 +1,117 @@
-#include "frc/TimedRobot.h"
 #include "Robot.h"
+#include <frc2/command/CommandScheduler.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+
+// Optional includes for non-command-based subsystems if needed
 #include "AMCU.h"
 #include "Constants.h"
-#include <frc/smartdashboard/SmartDashboard.h>
-#include <frc2/command/CommandScheduler.h>
-
-//subsystems
-// #include "subsystems/ArmSubsystem.h"
-// #include "subsystems/GripperSubsystem.h"
-// #include "subsystems/ExtenderSubsystem.h"
-// #include "subsystems/GripperJointSubsystem.h"
-#include "subsystems/UltrasonicSubsystem.h"
-#include "subsystems/IRRangeSubsystem.h"
-#include "subsystems/Lidar.h"
 #include "utilities/LoggingSystem.h"
+#include "subsystems/UltrasonicSubsystem.h"
 
-
+// Global instances for non-command-based subsystems
 constexpr int kWheelRadius = 55;
 constexpr int kRobotRadius = 162;
-constexpr Motor kMotorLeft  = MOTOR_0;
+constexpr Motor kMotorLeft  = MOTOR_1;
 constexpr Motor kMotorRight = MOTOR_2;
 constexpr Motor kMotorBack  = MOTOR_3;
 
-// ArmSubsystem arm;
-// GripperSubsystem gripper;
-// GripperJointSubsystem joint;
-// ExtenderSubsystem extender;
-OI oi;
-frc::UltrasonicSubsystem ultrasonic;
-frc::IRRangeSubsystem irRange(0);  // Using analog port 1
-frc::LidarSubsystem lidar(studica::Lidar::kUSB1);  // Using Studica USB1 port
-//StartStop StaSto(&lidar, &oi);
 AMCU amcu;
+frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
+
+
 
 void Robot::RobotInit() {
-  // arm.Init();
-  // gripper.Init();
-  // extender.Init();
-  // joint.Init();
-  ultrasonic.Init();
-  irRange.Init();
-  lidar.Init();
-  lidar.StartScan();  // Start LiDAR scanning
+  // Initialize logging system
   SetupLogging();
   
-  // Register subsystems with SmartDashboard for Sendable widgets
-  frc::SmartDashboard::PutData("Ultrasonic Sensor", &ultrasonic);
-  frc::SmartDashboard::PutData("IR Range Sensor", &irRange);
-  frc::SmartDashboard::PutData("LiDAR Sensor", &lidar);
-  
+  // Initialize AMCU drivetrain (non-command-based)
   amcu.initOmniDriveBase(kWheelRadius, kRobotRadius, kMotorLeft, kMotorRight, kMotorBack);
   
+  // Initialize ultrasonic subsystem (non-command-based)
+  m_ultrasonic.Init();
+  
+  // Pass AMCU instance to RobotContainer
+  m_container.SetAMCU(&amcu);
+  
+  // All command-based subsystems are initialized in RobotContainer constructor
 }
-
 void Robot::RobotPeriodic() { 
+  // This is the most important call - it runs all command-based subsystems and commands
   frc2::CommandScheduler::GetInstance().Run();
-  ultrasonic.Periodic();
-  irRange.Periodic();
-  lidar.Periodic();
+  
+  // Update non-command-based subsystems
+  m_ultrasonic.Periodic();
+
+
+  //irRange.Periodic();
+  //lidar.Periodic();
   // arm.Periodic();
   // gripper.Periodic();
   // joint.Periodic();
   // extender.Periodic();
+  // lf.update();
+  // lf.getVoltage();
+  // lf.isLineDetected();
 }
 
 void Robot::DisabledInit() {
   amcu.stop();
-  lidar.StopScan();  // Stop LiDAR scanning when disabled
+  
+  //lidar.StopScan();  // Stop LiDAR scanning when disabled
   
 }
 void Robot::DisabledPeriodic() {}
 
 void Robot::AutonomousInit() {
+  // Get the autonomous command from the container
+  m_autonomousCommand = m_container.GetAutonomousCommand();
 
-  
-
-  //amcu.setSpeed(MOTOR_1, 10);
-
-  
-
-  amcu.driveDistance(1, 0, 0); // Example: drive 2 meters in x
+  // Schedule the autonomous command (if one was selected)
+  if (m_autonomousCommand != nullptr) {
+    m_autonomousCommand->Schedule();
+  }
 }
 
 void Robot::AutonomousPeriodic() {
+  // The CommandScheduler (called in RobotPeriodic) handles running the autonomous command
+  // Add any additional autonomous logic here if needed
   
   // Get ultrasonic distance for autonomous navigation (in centimeters)
-  double distanceCm = ultrasonic.GetDistance();
-  bool wallDetected = ultrasonic.IsWallDetected(10.0); // 10cm threshold
-  
-  //arm.IncreasePosition();
+  double leftDistanceCm = m_ultrasonic.GetLeftDistance();
+  double rightDistanceCm = m_ultrasonic.GetRightDistance();
+  bool leftWallDetected = m_ultrasonic.IsLeftWallDetected(); // 10cm threshold
+  bool rightWallDetected = m_ultrasonic.IsRightWallDetected();
   
   // Example autonomous logic using distance in centimeters
-  if (distanceCm > 0) { // Valid reading
-    if (wallDetected) {
-      std::cout << "WALL DETECTED! Distance: " << distanceCm << " cm - STOPPING" << std::endl;
+  if (leftDistanceCm > 0 && rightDistanceCm > 0) { // Valid reading
+    if (rightWallDetected || leftWallDetected) {
+      std::cout << "WALL DETECTED! Left: " << leftDistanceCm << " cm, Right: " << rightDistanceCm << " cm - STOPPING" << std::endl;
       amcu.stop();
     } else {
-      std::cout << "Clear path. Distance: " << distanceCm << " cm - CONTINUING" << std::endl;
-      // Continue driving forward if path is clear
+      std::cout << "Clear path. Left: " << leftDistanceCm << " cm, Right: " << rightDistanceCm << " cm - CONTINUING" << std::endl;
+      // Create different drive patterns
+      
+      //SimpleDrive(amcu, 0.5, 0.0, 0.0);  // Forward at 50%
     }
   }
   
   // Display distance in SmartDashboard in centimeters
-  frc::SmartDashboard::PutNumber("Auto Distance (cm)", distanceCm);
-
-  // wpi::outs() << "example\n";
-  // std::cout << "test";
-  // frc::SmartDashboard::PutNumber("Encoder Left", amcu.getEncoder(kMotorLeft));
-  // frc::SmartDashboard::PutNumber("Encoder Right", amcu.getEncoder(kMotorRight));
-  // frc::SmartDashboard::PutNumber("Encoder Back", amcu.getEncoder(kMotorBack));
+  frc::SmartDashboard::PutNumber("Auto Left Distance (cm)", leftDistanceCm);
+  frc::SmartDashboard::PutNumber("Auto Right Distance (cm)", rightDistanceCm);
 }
 
 void Robot::TeleopInit() {
-  // If you use command-based, make sure to stop auto commands here
-  /*
+  // Cancel any autonomous commands when teleop starts
   if (m_autonomousCommand != nullptr) {
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
   }
-  */
-
 }
 
 void Robot::TeleopPeriodic() {
-  if  (!lidar.IsScanning()) {
-    lidar.RestartScan();
-  }else {
-    lidar.StartScan();
-  }
-  
-  // Get distance data in centimeters for manual control assistance
-  double distanceCm = ultrasonic.GetDistance();
-  double irDistanceCm = irRange.GetDistance();
-  double lidarFrontCm = lidar.GetFrontDistance();
-  double IRVoltage = irRange.GetVoltage();
-  
-  if (oi.GetDriveXButton()) {
-      // Print current distances when X button is pressed
-      std::cout << "Ultrasonic distance: " << distanceCm << " cm" << std::endl;
-      std::cout << "IR Range distance: " << irDistanceCm << " cm" << std::endl;
-      std::cout << "LiDAR front distance: " << lidarFrontCm << " cm" << std::endl;
-      std::cout << "IR range Voltage:" << IRVoltage << "cm" << std::endl;
-      //arm.SetHomePosition();
-  }
-  
-  
-  
-  // Example: Warning system based on all sensors
-  if (distanceCm > 0 && distanceCm < 15.0) {
-    std::cout << "WARNING: Ultrasonic obstacle at " << distanceCm << " cm!" << std::endl;
-    frc::SmartDashboard::PutString("Ultrasonic Status", "OBSTACLE - " + std::to_string(distanceCm) + " cm");
-  } else if (distanceCm > 0) {
-    frc::SmartDashboard::PutString("Ultrasonic Status", "Clear - " + std::to_string(distanceCm) + " cm");
-  }
-  
-  if (irRange.IsObjectDetected(25.0)) {
-    std::cout << "WARNING: IR sensor detects object at " << irDistanceCm << " cm!" << std::endl;
-    frc::SmartDashboard::PutString("IR Status", "OBJECT DETECTED - " + std::to_string(irDistanceCm) + " cm");
-  } else if (irRange.IsValidReading()) {
-    frc::SmartDashboard::PutString("IR Status", "Clear - " + std::to_string(irDistanceCm) + " cm");
-  }
-  
-  // LiDAR-based warnings and navigation assistance
-  if (!lidar.IsPathClear(100.0)) {
-    std::cout << "WARNING: LiDAR detects obstacle in path at " << lidarFrontCm << " cm!" << std::endl;
-    frc::SmartDashboard::PutString("LiDAR Status", "OBSTACLE IN PATH - " + std::to_string(lidarFrontCm) + " cm");
-  } else {
-    frc::SmartDashboard::PutString("LiDAR Status", "Path Clear - " + std::to_string(lidarFrontCm) + " cm");
-  }
-  
-  // // Additional LiDAR directional information
-  // if (oi.GetDriveSquareButton()) {
-  //   // Print all directional LiDAR readings when Square button is pressed
-  //   std::cout << "LiDAR Directions - Front: " << lidarFrontCm 
-  //             << ", Left: " << lidar.GetDistanceAtAngle(90) 
-  //             << ", Right: " << lidar.GetDistanceAtAngle(270)
-  //             << ", Rear: " << lidar.GetDistanceAtAngle(180) << " cm" << std::endl;
-  // }
-  
-  
-  // Display distance in centimeters (reuse the existing distanceCm variable)
-  // frc::SmartDashboard::PutNumber("Ultrasonic Distance (cm)", distanceCm);
-  // frc::SmartDashboard::PutString("Distance Reading", std::to_string(distanceCm) + " cm");
-
-
+ 
 }
+
 void Robot::TestPeriodic() {}
 
 #ifndef RUNNING_FRC_TESTS

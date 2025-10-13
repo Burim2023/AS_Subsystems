@@ -2,6 +2,7 @@
 
 #include "studica/Servo.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/SubsystemBase.h>
 #include <memory>
 #include <cmath>
 
@@ -24,7 +25,7 @@
  * Controls the servo that moves the gripper joint up, down, and to mid position.
  * Supports variable speed control for smooth movement.
  */
-class GripperJointSubsystem {
+class GripperJointSubsystem : public frc2::SubsystemBase {
 public:
     explicit GripperJointSubsystem();
     
@@ -109,7 +110,7 @@ public:
     /**
      * Periodic function - handles gradual servo movement
      */
-    void Periodic();
+    void Periodic() override;
 
 private:
     studica::Servo* GripperJointServo = nullptr;

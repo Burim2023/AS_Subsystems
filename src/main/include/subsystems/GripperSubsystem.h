@@ -2,6 +2,7 @@
 
 #include "studica/Servo.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/SubsystemBase.h>
 
 #define GRIPPER_SERVO_PORT 20
 
@@ -9,7 +10,7 @@
 #define GRIPPER_OPEN_ANGLE 25
 
 
-class GripperSubsystem {
+class GripperSubsystem : public frc2::SubsystemBase {
 public:
     explicit GripperSubsystem();
     void Init();
@@ -17,7 +18,7 @@ public:
     void SetClosedGripper();
     void SetServoAngleZero();
     void UpdateDashboard();
-    void Periodic();
+    void Periodic() override;
 
 
 private:

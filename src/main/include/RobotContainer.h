@@ -1,18 +1,28 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
-
-
 #pragma once
 
 #include <frc2/command/Command.h>
+#include <frc2/command/SequentialCommandGroup.h>
+#include <frc/smartdashboard/SendableChooser.h>
 
+// Subsystem includes
+#include "subsystems/ArmSubsystem.h"
+#include "subsystems/ExtenderSubsystem.h"
+#include "subsystems/GripperSubsystem.h"
+#include "subsystems/GripperJointSubsystem.h"
 #include "gamepad/OI.h"
 
+// Command includes
+#include "commands/MoveArmToPosition.h"
+#include "commands/MoveGripperToPosition.h"
+#include "commands/ExtendForDuration.h"
+#include "commands/DriveForDuration.h"
+#include "commands/SimpleDrive.h"
+#include "commands/FullPickSequence.h"
+#include "commands/RetractAndLift.h"
+#include "commands/TestCommandSequence.h"
+
+// Non-command-based subsystems
+#include "AMCU.h"
 
 /**
  * This class is where the bulk of the robot should be declared.  Since
@@ -26,13 +36,32 @@ class RobotContainer {
   RobotContainer();
 
   frc2::Command* GetAutonomousCommand();
+  
+  void SetAMCU(AMCU* amcu);
 
  private:
-  // The robot's subsystems and commands are defined here...
-  //ExampleSubsystem m_subsystem;
-  //ExampleCommand m_autonomousCommand;
+  // Subsystems
+  ArmSubsystem m_arm;
+  ExtenderSubsystem m_extender;
+  GripperSubsystem m_gripper;
+  GripperJointSubsystem m_gripperJoint;
+
+  // Operator Interface
+  OI m_oi;
+
+  // Autonomous Chooser
+  frc::SendableChooser<frc2::Command*> m_chooser;
+
+  // Non-command-based subsystems
+  AMCU* m_amcu;
+
+  // Autonomous Command Groups
+  FullPickSequence m_autoPickSequence;
+  RetractAndLift m_autoRetractAndLift;
+  TestCommandSequence m_testSequence;
   
-  OI oi;
+  // Simple Commands
+  SimpleDrive m_simpleDrive;
 
   void ConfigureButtonBindings();
 };
