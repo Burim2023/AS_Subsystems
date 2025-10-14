@@ -14,7 +14,7 @@ constexpr int kRobotRadius = 162;
 constexpr Motor kMotorLeft  = MOTOR_1;
 constexpr Motor kMotorRight = MOTOR_2;
 constexpr Motor kMotorBack  = MOTOR_3;
-
+OI oi;
 AMCU amcu;
 frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
 
@@ -98,10 +98,38 @@ void Robot::TeleopInit() {
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
   }
+  
 }
 
 void Robot::TeleopPeriodic() {
- 
+  // Use the existing subsystem from RobotContainer instead of creating new one
+  auto& gripperJoint = m_container.GetGripperJoint();
+  auto& gripper = m_container.GetGripper();
+  
+  // Different buttons for different actions
+  if(oi.GetDriveXButton()) {           // X button
+    gripperJoint.SetSpeedNormal();
+    gripperJoint.SetServoAngleZero();
+  }
+  if(oi.GetDriveSquareButton()) {      // Square button
+    gripperJoint.SetSpeedNormal();
+    gripperJoint.SetGripperDownAngle();
+    gripper.SetOpenGripper();
+    
+  }
+  if(oi.GetDriveCircleButton()) {      // Circle button
+    gripperJoint.SetSpeedNormal();
+    gripperJoint.SetGripperMidAngle();
+    gripper.SetClosedGripper();
+  }
+  if(oi.GetDriveTriangleButton()) {    // Triangle button
+    gripperJoint.SetSpeedNormal();
+    gripperJoint.SetGripperUpAngle();
+    gripper.SetOpenGripper();
+  }
+  
+  // Call Periodic() to actually move the servo
+  gripperJoint.Periodic();
 }
 
 void Robot::TestPeriodic() {}

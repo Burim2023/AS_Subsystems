@@ -6,7 +6,7 @@
 #include <memory>
 #include <cmath>
 
-#define JOINT_SERVO_PORT 21
+#define JOINT_SERVO_PORT 20
 
 #define JOINT_DOWN_ANGLE 0
 #define JOINT_MID_ANGLE 95

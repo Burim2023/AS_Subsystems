@@ -1,20 +1,18 @@
 #pragma once
 
-#include <AMCU.h>
+#include "AMCU.h"
 #include <atomic>
 
-#define ELEVATOR_HEIGHT 20.0f
+#define ELEVATOR_HEIGHT 100.f  // Maximum elevator height in mm
 
-namespace gripper {
-    namespace elevator {
-        extern std::atomic<float> currentPos;
+namespace elevator {
+    extern std::atomic<float> currentPos;
 
-        void init(AMCU* acmu);
-        void destroy();
+    void init(AMCU* acmu);
+    void destroy();
 
-        void moveTo(const float targetPos);
+    void moveTo(const float targetPos);
 
-        void calibrate();
-        void limitswitchcallback(uint8_t motorNr, uint8_t high);
-    }
+    void calibrate();
+    void limitswitchcallback(uint8_t motorNr, uint8_t high);
 }

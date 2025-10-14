@@ -23,6 +23,6 @@ public:
     void End(bool interrupted) override;
 
 private:
-    GripperJointSubsystem* m_gripper;
+    GripperJointSubsystem* m_gripperJoint;
     double m_targetAngle;
 };

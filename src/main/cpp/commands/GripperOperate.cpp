@@ -19,14 +19,17 @@ void GripperOperate::Initialize() {
     // Set the target joint position
     switch(m_targetPos) {
         case Position::DOWN:
+            m_joint->SetSpeedNormal();
             m_joint->SetGripperDownAngle();
             std::cout << "GripperOperate: moving joint to DOWN position" << std::endl;
             break;
         case Position::MID:
+            m_joint->SetSpeedNormal();
             m_joint->SetGripperMidAngle();
             std::cout << "GripperOperate: moving joint to MID position" << std::endl;
             break;
         case Position::UP:
+            m_joint->SetSpeedNormal();
             m_joint->SetGripperUpAngle();
             std::cout << "GripperOperate: moving joint to UP position" << std::endl;
             break;

@@ -10,13 +10,21 @@ RobotContainer::RobotContainer()
       m_simpleDrive(nullptr, 0.3, 0.0, 0.0),
       m_gripperOperateUp(&m_gripperJoint, &m_gripper, GripperOperate::Position::UP, true, 2.0),
       m_gripperOperateDown(&m_gripperJoint, &m_gripper, GripperOperate::Position::DOWN, false, 2.0),
-      m_gripperPickup(&m_gripperJoint, &m_gripper, GripperOperate::Position::MID, false, 2.0) {
+      m_gripperPickup(&m_gripperJoint, &m_gripper, GripperOperate::Position::MID, false, 2.0),
+      m_gripperPickupSequence(&m_gripperJoint, &m_gripper),
+      m_calibrateElevator(&m_elevator, 15.0),
+      m_elevatorGround(&m_elevator, ElevatorPresets::Position::GROUND),
+      m_elevatorLow(&m_elevator, ElevatorPresets::Position::LOW),
+      m_elevatorHigh(&m_elevator, ElevatorPresets::Position::HIGH),
+      m_elevatorCustom(&m_elevator, 60.0f, 2.0f),
+      m_elevatorTestSequence(&m_elevator) {
   
   // Initialize all subsystems
   m_arm.Init();
   m_extender.Init();
   m_gripper.Init();
   m_gripperJoint.Init();
+  // Note: Elevator will be initialized in SetAMCU() method
   
   
   // Configure the button bindings
@@ -28,7 +36,17 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Gripper Up & Open", &m_gripperOperateUp);
   m_chooser.AddOption("Gripper Down & Close", &m_gripperOperateDown);
   m_chooser.AddOption("Gripper Pickup (Mid & Close)", &m_gripperPickup);
-  //m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
+  m_chooser.AddOption("Gripper Pickup Sequence", &m_gripperPickupSequence);
+  m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
+  
+  // Elevator commands
+  m_chooser.AddOption("Calibrate Elevator", &m_calibrateElevator);
+  m_chooser.AddOption("Elevator to Ground", &m_elevatorGround);
+  m_chooser.AddOption("Elevator to Low", &m_elevatorLow);
+  m_chooser.AddOption("Elevator to High", &m_elevatorHigh);
+  m_chooser.AddOption("Elevator Custom 60mm", &m_elevatorCustom);
+  m_chooser.AddOption("Elevator Test Sequence", &m_elevatorTestSequence);
+  
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }
@@ -46,6 +64,10 @@ void RobotContainer::ConfigureButtonBindings() {
 
 void RobotContainer::SetAMCU(AMCU* amcu) {
   m_amcu = amcu;
+  
+  // Initialize elevator with AMCU
+  m_elevator.Init(amcu);
+  
   // Update SimpleDrive command with the actual AMCU instance
   m_simpleDrive = SimpleDrive(amcu, 0.3, 0.0, 0.0); // Forward at 30% speed
   // Reinitialize the test sequence with the actual AMCU instance

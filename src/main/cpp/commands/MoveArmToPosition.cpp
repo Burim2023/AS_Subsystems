@@ -12,10 +12,13 @@ void MoveArmToPosition::Initialize() {
     // We'll simulate SetCustomAngle by directly setting the target
     // This would need a proper method in ArmSubsystem, but for now we'll use a workaround
     if (m_targetAngle == HOME_ANGLE) {
+        m_arm->SetServoSpeed(1.0);
         m_arm->SetHomePosition();
     } else if (m_targetAngle == PICK_APPLE_ANGLE) {
+        m_arm->SetServoSpeed(1.0);
         m_arm->SetPickApplePosition();
     } else if (m_targetAngle == DROP_APPLE_ANGLE) {
+        m_arm->SetServoSpeed(1.0);
         m_arm->SetDropApplePosition();
     }
     std::cout << "MoveArmToPosition: Starting movement to " << m_targetAngle << " degrees" << std::endl;
