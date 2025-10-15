@@ -4,10 +4,10 @@
 
 RobotContainer::RobotContainer() 
     : m_amcu(nullptr),
-      m_autoPickSequence(&m_arm, &m_extender, &m_gripperJoint),
+      m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
-      m_testSequence(m_amcu, &m_arm, &m_extender),
       m_simpleDrive(nullptr, 0.3, 0.0, 0.0),
+      m_testSequence(m_amcu, &m_arm, &m_extender),
       m_gripperOperateUp(&m_gripperJoint, &m_gripper, GripperOperate::Position::UP, true, 2.0),
       m_gripperOperateDown(&m_gripperJoint, &m_gripper, GripperOperate::Position::DOWN, false, 2.0),
       m_gripperPickup(&m_gripperJoint, &m_gripper, GripperOperate::Position::MID, false, 2.0),

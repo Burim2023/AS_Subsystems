@@ -33,7 +33,7 @@ void ElevatorSubsystem::MoveTo(float position) {
 void ElevatorSubsystem::Calibrate() {
     if (m_isInitialized) {
         elevator::calibrate();
-        m_lastTargetPosition = -10.0f; // Calibration moves to zero
+        m_lastTargetPosition = 0.0f; // Calibration moves to zero
         frc::SmartDashboard::PutString("Elevator Status", "Calibrating");
     }
 }

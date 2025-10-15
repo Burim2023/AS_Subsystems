@@ -3,7 +3,7 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc2/command/WaitCommand.h>
 #include <frc2/command/InstantCommand.h>
-#include "commands/MoveGripperToPosition.h"
+#include "commands/MoveGripperJointToPosition.h"
 #include "subsystems/GripperJointSubsystem.h"
 #include "subsystems/GripperSubsystem.h"
 

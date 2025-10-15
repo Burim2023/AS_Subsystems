@@ -17,6 +17,9 @@
 // 🔁 Direction correction (set to -1 if gears reverse direction)
 #define GEAR_DIRECTION -1.f
 
+// ⚙️ Elevator movement limits
+#define CALIBRATION_OFFSET_MM 15.f  // Offset below zero after calibration
+
 AMCU* acmu;
 
 std::thread* motorHandlerThread;
@@ -68,12 +71,12 @@ void motorHandler() {
         prevEncoderSteps += newEncoderSteps;
 
         if(driveFromLimitSwitchToZero) {
-            if(elevator::currentPos >= 0) {
+            if(elevator::currentPos >= CALIBRATION_OFFSET_MM) {
                 acmu->setRPM(MOTOR_0, 0);
                 driveFromLimitSwitchToZero.store(false);
             }else if(newEncoderSteps < 5) {
                 // ⚙️ Apply direction correction for recovery movement
-                acmu->setRPM(MOTOR_0, 30 * GEAR_DIRECTION);
+                acmu->setRPM(MOTOR_0, -15 * GEAR_DIRECTION);
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
@@ -113,8 +116,9 @@ void elevator::calibrate() {
 void elevator::limitswitchcallback(uint8_t motorNr, uint8_t high) {
     if(calibrating.load()) {
         // ⚙️ Apply direction correction for recovery movement
+        
+        currentPos.store(0.0f);
         acmu->setRPM(MOTOR_0, -15 * GEAR_DIRECTION);
-        currentPos.store(10.0f);  // Set to -10.0mm to match reference
         calibrating.store(false);
         driveFromLimitSwitchToZero.store(true);
     }

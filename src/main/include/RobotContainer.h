@@ -14,7 +14,7 @@
 
 // Command includes
 #include "commands/MoveArmToPosition.h"
-#include "commands/MoveGripperToPosition.h"
+#include "commands/MoveGripperJointToPosition.h"
 #include "commands/ExtendForDuration.h"
 #include "commands/DriveForDuration.h"
 #include "commands/SimpleDrive.h"

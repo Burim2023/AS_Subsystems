@@ -3,7 +3,7 @@
 #include "AMCU.h"
 #include <atomic>
 
-#define ELEVATOR_HEIGHT 100.f  // Maximum elevator height in mm
+#define ELEVATOR_HEIGHT 200.f  // Maximum elevator height in mm
 
 namespace elevator {
     extern std::atomic<float> currentPos;

@@ -2,8 +2,9 @@
 
 #include <frc2/command/SequentialCommandGroup.h>
 #include "subsystems/ArmSubsystem.h"
-#include "subsystems/ExtenderSubsystem.h"
 #include "subsystems/GripperJointSubsystem.h"
+#include "subsystems/GripperSubsystem.h"
+#include "subsystems/ElevatorSubsystem.h"
 
 /**
  * A complete sequence to pick up an object:
@@ -19,8 +20,9 @@ public:
     /**
      * Constructor
      * @param arm Pointer to the ArmSubsystem
-     * @param extender Pointer to the ExtenderSubsystem
-     * @param gripper Pointer to the GripperJointSubsystem
+     * @param gripper Pointer to the ExtenderSubsystem
+     * @param gripperJoint Pointer to the GripperJointSubsystem
+     * @param elevator Pointer to the ElevatorSubsystem
      */
-    FullPickSequence(ArmSubsystem* arm, ExtenderSubsystem* extender, GripperJointSubsystem* gripper);
+    FullPickSequence(ArmSubsystem* arm, GripperSubsystem* gripper, GripperJointSubsystem* gripperJoint, ElevatorSubsystem* elevator);
 };

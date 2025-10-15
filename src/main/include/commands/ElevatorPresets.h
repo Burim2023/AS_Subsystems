@@ -12,9 +12,9 @@ public:
     enum class Position {
         GROUND = 10,      // 10mm - ground level
         LOW = 30,        // 30mm - low position
-        MEDIUM = 40,     // 40mm - medium position
+        MEDIUM = 60,     // 60mm - medium position
         HIGH = 180,       //200mm - high position
-        MAX = 205        // 205mm - maximum safe height
+        MAX = 200        // 200mm - maximum safe height
     };
 
     /**

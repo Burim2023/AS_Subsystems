@@ -10,7 +10,7 @@ GripperPickupSequence::GripperPickupSequence(GripperJointSubsystem* gripperJoint
     AddCommands(
         // === PHASE 1: DOWN POSITION ===
         // Move gripper joint to down position
-        MoveGripperToPosition(gripperJoint, JOINT_DOWN_ANGLE),
+        MoveGripperJointToPosition(gripperJoint, JOINT_DOWN_ANGLE),
         
         // Open gripper
         frc2::InstantCommand([gripper] { 
@@ -29,7 +29,7 @@ GripperPickupSequence::GripperPickupSequence(GripperJointSubsystem* gripperJoint
         
         // === PHASE 2: MID POSITION ===
         // Move gripper joint to mid position
-        MoveGripperToPosition(gripperJoint, JOINT_MID_ANGLE),
+        MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
         
         // Open gripper
         frc2::InstantCommand([gripper] { 
@@ -48,7 +48,7 @@ GripperPickupSequence::GripperPickupSequence(GripperJointSubsystem* gripperJoint
         
         // === PHASE 3: UP POSITION ===
         // Move gripper joint to up position
-        MoveGripperToPosition(gripperJoint, JOINT_UP_ANGLE),
+        MoveGripperJointToPosition(gripperJoint, JOINT_UP_ANGLE),
         
         // Open gripper
         frc2::InstantCommand([gripper] { 
