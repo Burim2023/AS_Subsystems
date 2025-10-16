@@ -38,13 +38,13 @@ void UltrasonicSubsystem::Init() {
     // Enable automatic background pinging for all Ultrasonic objects
     Ultrasonic::SetAutomaticMode(true);
 
-    // Console output for debugging
-    std::cout << "Ultrasonic sensors initialized:" << std::endl;
-    std::cout << " Left  -> Trigger: " << m_leftTriggerPort 
-              << ", Echo: " << m_leftEchoPort << std::endl;
-    std::cout << " Right -> Trigger: " << m_rightTriggerPort 
-              << ", Echo: " << m_rightEchoPort << std::endl;
-    std::cout.flush();
+    // // Console output for debugging
+    // std::cout << "Ultrasonic sensors initialized:" << std::endl;
+    // std::cout << " Left  -> Trigger: " << m_leftTriggerPort 
+    //           << ", Echo: " << m_leftEchoPort << std::endl;
+    // std::cout << " Right -> Trigger: " << m_rightTriggerPort 
+    //           << ", Echo: " << m_rightEchoPort << std::endl;
+    // std::cout.flush();
 }
 
 /**

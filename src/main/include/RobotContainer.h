@@ -27,7 +27,8 @@
 #include "commands/RetractAndLift.h"
 #include "commands/TestCommandSequence.h"
 #include "commands/GripperPickupSequence.h"
-
+#include "commands/ExtenderCalibrationSequence.h"
+#include "commands/CalibrateExtender.h"
 // Non-command-based subsystems
 #include "AMCU.h"
 
@@ -49,6 +50,7 @@ class RobotContainer {
   GripperJointSubsystem& GetGripperJoint() { return m_gripperJoint; }
   GripperSubsystem& GetGripper() { return m_gripper; }
   ElevatorSubsystem& GetElevator() { return m_elevator; }
+  ExtenderSubsystem& GetExtender() { return m_extender; }
 
  private:
   // Subsystems
@@ -72,7 +74,12 @@ class RobotContainer {
   GripperOperate m_gripperOperateUp;
   GripperOperate m_gripperOperateDown;
   GripperOperate m_gripperPickup;
-  
+  //TestCommandSequence m_testSequence;
+
+  // Extender Commands
+  ExtenderCalibrationSequence m_demoExtender;
+  CalibrateExtender m_calibrateExtenderOnly;
+
   // Autonomous Command Groups
   FullPickSequence m_autoPickSequence;
   RetractAndLift m_autoRetractAndLift;
@@ -86,6 +93,8 @@ class RobotContainer {
   ElevatorPresets m_elevatorHigh;
   MoveElevatorToPosition m_elevatorCustom;
   ElevatorTestSequence m_elevatorTestSequence;
+
+
 
   void ConfigureButtonBindings();
 };

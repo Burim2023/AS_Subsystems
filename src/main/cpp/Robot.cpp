@@ -81,10 +81,10 @@ void Robot::AutonomousPeriodic() {
   // Example autonomous logic using distance in centimeters
   if (leftDistanceCm > 0 && rightDistanceCm > 0) { // Valid reading
     if (rightWallDetected || leftWallDetected) {
-      std::cout << "WALL DETECTED! Left: " << leftDistanceCm << " cm, Right: " << rightDistanceCm << " cm - STOPPING" << std::endl;
+      //std::cout << "WALL DETECTED! Left: " << leftDistanceCm << " cm, Right: " << rightDistanceCm << " cm - STOPPING" << std::endl;
       amcu.stop();
     } else {
-      std::cout << "Clear path. Left: " << leftDistanceCm << " cm, Right: " << rightDistanceCm << " cm - CONTINUING" << std::endl;
+      //std::cout << "Clear path. Left: " << leftDistanceCm << " cm, Right: " << rightDistanceCm << " cm - CONTINUING" << std::endl;
       // Create different drive patterns
       
       //SimpleDrive(amcu, 0.5, 0.0, 0.0);  // Forward at 50%

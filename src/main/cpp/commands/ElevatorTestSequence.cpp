@@ -3,7 +3,7 @@
 
 ElevatorTestSequence::ElevatorTestSequence(ElevatorSubsystem* elevator) {
     // Set requirements for the elevator subsystem
-    AddRequirements({elevator});
+    AddRequirements(elevator);
     
     // Build the command sequence
     AddCommands(

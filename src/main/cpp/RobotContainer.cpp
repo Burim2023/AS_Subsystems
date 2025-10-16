@@ -6,6 +6,8 @@ RobotContainer::RobotContainer()
     : m_amcu(nullptr),
       m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
+      m_calibrateExtenderOnly(&m_extender),
+      m_demoExtender(&m_extender, 2.0),
       m_simpleDrive(nullptr, 0.3, 0.0, 0.0),
       m_testSequence(m_amcu, &m_arm, &m_extender),
       m_gripperOperateUp(&m_gripperJoint, &m_gripper, GripperOperate::Position::UP, true, 2.0),
@@ -46,6 +48,10 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Elevator to High", &m_elevatorHigh);
   m_chooser.AddOption("Elevator Custom 60mm", &m_elevatorCustom);
   m_chooser.AddOption("Elevator Test Sequence", &m_elevatorTestSequence);
+
+  // Extender commands
+  m_chooser.AddOption("Extender DEMO", &m_demoExtender);
+  m_chooser.AddOption("Calibrate Extender", &m_calibrateExtenderOnly);
   
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
