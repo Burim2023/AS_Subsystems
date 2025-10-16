@@ -14,8 +14,9 @@ public:
      * Constructor
      * @param subsystem Pointer to the GripperJointSubsystem
      * @param targetAngle Target angle in degrees
+     * @param holdPosition If true, keeps holding position until interrupted
      */
-    MoveGripperJointToPosition(GripperJointSubsystem* subsystem, double targetAngle);
+    MoveGripperJointToPosition(GripperJointSubsystem* subsystem, double targetAngle, bool holdPosition = false);
     
     void Initialize() override;
     void Execute() override;
@@ -25,4 +26,5 @@ public:
 private:
     GripperJointSubsystem* m_gripperJoint;
     double m_targetAngle;
+    bool m_holdPosition;
 };

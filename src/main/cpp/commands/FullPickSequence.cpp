@@ -10,6 +10,7 @@
 #include <frc2/command/WaitCommand.h>
 #include <frc2/command/PrintCommand.h>
 #include <frc2/command/ParallelCommandGroup.h>
+#include <frc2/command/ParallelDeadlineGroup.h>
 
 FullPickSequence::FullPickSequence(ArmSubsystem* arm, GripperSubsystem* gripper, GripperJointSubsystem* gripperJoint, ElevatorSubsystem* elevator) {
     // Build the sequence of commands
@@ -25,24 +26,22 @@ FullPickSequence::FullPickSequence(ArmSubsystem* arm, GripperSubsystem* gripper,
 
         frc2::WaitCommand(1.5_s),
 
-        frc2::ParallelCommandGroup(
-            // Move the gripperJoint to MID position while calibrating the elevator
-            
-            CalibrateElevator(elevator, 10.0),
-            MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE)
+        frc2::ParallelDeadlineGroup(
+            CalibrateElevator(elevator, 10.0),                               // DEADLINE - when this ends, group ends
+            MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE, true)  // INTERRUPTED when deadline finishes
         ),
         // 3. Extend the arm for 1.2 seconds
         //ExtendForDuration(extender, 1.2, true), // true = clockwise (extend)
 
         // 4. tilt the gripper to grab the object
         
-
+        MoveElevatorToPosition(elevator, 25.0f, 1.0f),
         // 5. Wait for half a second to ensure a firm grip
         frc2::WaitCommand(0.5_s),
 
         MoveGripperJointToPosition(gripperJoint, JOINT_DOWN_ANGLE),
 
-        MoveElevatorToPosition(elevator, 60.0f, 2.0f),
+        
         
         frc2::WaitCommand(0.5_s),
 
@@ -60,7 +59,7 @@ FullPickSequence::FullPickSequence(ArmSubsystem* arm, GripperSubsystem* gripper,
 
         frc2::WaitCommand(2.0_s),
 
-        MoveElevatorToPosition(elevator, 175.0f, 1.0f),
+        MoveElevatorToPosition(elevator, 170.0f, 1.0f),
 
         // 6. Retract the arm for 1.0 second
         //ExtendForDuration(extender, 1.0, false), // false = counter-clockwise (retract)
