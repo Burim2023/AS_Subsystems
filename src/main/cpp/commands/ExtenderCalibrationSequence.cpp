@@ -16,13 +16,17 @@ ExtenderCalibrationSequence::ExtenderCalibrationSequence(ExtenderSubsystem* exte
         
                             
         
-        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.50, 2.0),
+        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.25, 2.0),
         frc2::WaitCommand(3.0_s),                       
         
-        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.30, 2.0),
+        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.25, 2.0),
         frc2::WaitCommand(3.0_s),                       
         
-        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.20, 2.0)
+        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.25, 2.0),
+        frc2::WaitCommand(2.0_s),
+
+        ExtendForDuration(extender, ExtendForDuration::Direction::EXTEND, 0.5, 2.0)
+
     );
     
     std::cout << "ExtenderCalibrationSequence: Complete sequence built" << std::endl;
