@@ -10,6 +10,7 @@
 #include "subsystems/GripperSubsystem.h"
 #include "subsystems/GripperJointSubsystem.h"
 #include "subsystems/ElevatorSubsystem.h"
+#include "subsystems/CameraSubsystem.h"
 #include "gamepad/OI.h"
 
 // Command includes
@@ -51,6 +52,7 @@ class RobotContainer {
   GripperSubsystem& GetGripper() { return m_gripper; }
   ElevatorSubsystem& GetElevator() { return m_elevator; }
   ExtenderSubsystem& GetExtender() { return m_extender; }
+  CameraSubsystem& GetCamera() {return m_camera; }
 
  private:
   // Subsystems
@@ -59,6 +61,7 @@ class RobotContainer {
   GripperSubsystem m_gripper;
   GripperJointSubsystem m_gripperJoint;
   ElevatorSubsystem m_elevator;
+  CameraSubsystem m_camera;
 
   // Operator Interface
   OI m_oi;
