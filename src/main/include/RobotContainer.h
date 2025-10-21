@@ -31,6 +31,7 @@
 #include "commands/ExtenderCalibrationSequence.h"
 #include "commands/CalibrateExtender.h"
 #include "commands/AppleGripperCheckCommand.h"
+#include "commands/SmartPickSequence.h"
 // Non-command-based subsystems
 #include "AMCU.h"
 
@@ -94,6 +95,7 @@ class RobotContainer {
   RetractAndLift m_autoRetractAndLift;
   TestCommandSequence m_testSequence;
   GripperPickupSequence m_gripperPickupSequence;
+  SmartPickSequence m_smartPickSequence;
   
   // Elevator Commands
   CalibrateElevator m_calibrateElevator;

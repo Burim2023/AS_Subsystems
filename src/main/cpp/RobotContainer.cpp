@@ -20,6 +20,8 @@ RobotContainer::RobotContainer()
       m_elevatorHigh(&m_elevator, ElevatorPresets::Position::HIGH),
       m_elevatorCustom(&m_elevator, 60.0f, 2.0f),
       m_elevatorTestSequence(&m_elevator),
+      //picksequence with camera apple detection
+      m_smartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
       m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
@@ -47,6 +49,8 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Gripper Pickup (Mid & Close)", &m_gripperPickup);
   m_chooser.AddOption("Gripper Pickup Sequence", &m_gripperPickupSequence);
   m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
+  m_chooser.AddOption("Smart Pick Sequence", &m_smartPickSequence);
+
   
   // Elevator commands
   m_chooser.AddOption("Calibrate Elevator", &m_calibrateElevator);
