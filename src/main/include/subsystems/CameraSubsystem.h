@@ -35,6 +35,11 @@ public:
   void InitDashboard();
   void Periodic() override;
 
+  double GetAppleDistance();
+  
+  // Add this getter method for the namespace
+  const std::string& GetNamespace() const { return m_ns; }
+
 private:
   // Configuration
   Settings m_cfg;

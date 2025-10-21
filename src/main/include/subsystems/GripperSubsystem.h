@@ -20,7 +20,8 @@ public:
     void UpdateDashboard();
     void Periodic() override;
 
-
+    double GetServoAngle();
+    double GetGripperPosition();
 private:
     double servoAngleGripper = 0;
     

@@ -185,6 +185,7 @@ void CameraSubsystem::Start() {
   }
 }
 
+
 void CameraSubsystem::Stop() {
   if (!m_running.exchange(false)) return;
   
@@ -316,10 +317,14 @@ void CameraSubsystem::VisionThread_() {
       frc::SmartDashboard::PutNumber(m_ns + "Apple/Cx", center.x);
       frc::SmartDashboard::PutNumber(m_ns + "Apple/Cy", center.y);
       frc::SmartDashboard::PutNumber(m_ns + "Apple/Radius", radius);
-      frc::SmartDashboard::PutString(m_ns + "Apple/Color", std::to_string(largestApple.color)); // Show color number
+      frc::SmartDashboard::PutString(m_ns + "Apple/Color", std::to_string(largestApple.color));
       
-      frc::SmartDashboard::PutString(m_ns + "Debug", largestApple.colorName + " apple detected!");
-
+      // Calculate and store distance
+      double distance = GetAppleDistance();
+      
+      frc::SmartDashboard::PutString(m_ns + "Debug", largestApple.colorName + " apple detected at " + 
+                                   (distance > 0 ? std::to_string(distance) + "cm" : "unknown distance"));
+      
       // Choose drawing color based on apple color
       cv::Scalar drawColor;
       switch(largestApple.color) {
@@ -376,4 +381,48 @@ void CameraSubsystem::VisionThread_() {
   }
   
   frc::SmartDashboard::PutString(m_ns + "Debug", "Vision thread stopped");
+}
+
+double CameraSubsystem::GetAppleDistance() {
+    // Get apple detection status
+    bool appleFound = frc::SmartDashboard::GetBoolean(m_ns + "Apple/Found", false);
+    
+    if (!appleFound) {
+        return -1.0; // No apple detected
+    }
+    
+    // Get apple center coordinates
+    double appleCx = frc::SmartDashboard::GetNumber(m_ns + "Apple/Cx", -1);
+    double appleCy = frc::SmartDashboard::GetNumber(m_ns + "Apple/Cy", -1);
+    
+    if (appleCx < 0 || appleCy < 0) {
+        return -1.0; // Invalid coordinates
+    }
+    
+    // TODO: Replace this with actual depth camera access
+    // For Orbbec Gemini E, you would access the depth frame here
+    // Example: depth_value = depth_frame.at<uint16_t>(appleCy, appleCx);
+    
+    // Temporary: Use the existing radius-based calculation converted to mm
+    double appleRadius = frc::SmartDashboard::GetNumber(m_ns + "Apple/Radius", -1);
+    
+    if (appleRadius > 0) {
+        // Camera calibration constants for depth estimation
+        const double FOCAL_LENGTH_PIXELS = 320.0;
+        const double REAL_APPLE_DIAMETER_MM = 70.0; // 7cm in mm
+        
+        double applePixelDiameter = appleRadius * 2.0;
+        double distanceMM = (REAL_APPLE_DIAMETER_MM * FOCAL_LENGTH_PIXELS) / applePixelDiameter;
+        
+        // Clamp to valid depth range
+        if (distanceMM < 200.0) distanceMM = 200.0;
+        if (distanceMM > 2500.0) distanceMM = 2500.0;
+        
+        // Put distance on SmartDashboard
+        frc::SmartDashboard::PutNumber(m_ns + "Apple/Distance_MM", distanceMM);
+        
+        return distanceMM;
+    }
+    
+    return -1.0;
 }

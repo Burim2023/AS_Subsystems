@@ -18,6 +18,18 @@ void GripperSubsystem::Init() {
     // servoAngleGripper = GRIPPER_OPEN_ANGLE;
 }
 
+double GripperSubsystem::GetServoAngle() {
+    if (GripperServo) {
+        return GripperServo->GetAngle();
+    }
+}
+
+double GripperSubsystem::GetGripperPosition() {
+    if (GripperServo) {
+        return GripperServo->GetAngle();
+    }
+    return 0.0;
+}
 
 void GripperSubsystem::SetOpenGripper(){
     GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);

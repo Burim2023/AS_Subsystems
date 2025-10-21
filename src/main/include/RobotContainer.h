@@ -30,6 +30,7 @@
 #include "commands/GripperPickupSequence.h"
 #include "commands/ExtenderCalibrationSequence.h"
 #include "commands/CalibrateExtender.h"
+#include "commands/AppleGripperCheckCommand.h"
 // Non-command-based subsystems
 #include "AMCU.h"
 
@@ -82,6 +83,11 @@ class RobotContainer {
   // Extender Commands
   ExtenderCalibrationSequence m_demoExtender;
   CalibrateExtender m_calibrateExtenderOnly;
+
+  //Apple Gripper Check Command
+  AppleGripperCheckCommand m_checkAppleGrip;
+  AppleGripperCheckCommand m_waitForGrip;
+  AppleGripperCheckCommand m_monitorGrip;
 
   // Autonomous Command Groups
   FullPickSequence m_autoPickSequence;

@@ -19,7 +19,12 @@ RobotContainer::RobotContainer()
       m_elevatorLow(&m_elevator, ElevatorPresets::Position::LOW),
       m_elevatorHigh(&m_elevator, ElevatorPresets::Position::HIGH),
       m_elevatorCustom(&m_elevator, 60.0f, 2.0f),
-      m_elevatorTestSequence(&m_elevator) {
+      m_elevatorTestSequence(&m_elevator),
+      // Apple detection commands - simplified
+      m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
+      m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
+      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0)
+       {
   
   // Initialize all subsystems
   m_arm.Init();
@@ -54,6 +59,11 @@ RobotContainer::RobotContainer()
   // Extender commands
   m_chooser.AddOption("Extender DEMO", &m_demoExtender);
   m_chooser.AddOption("Calibrate Extender", &m_calibrateExtenderOnly);
+
+  // Apple grip check commands
+  m_chooser.AddOption("Quick Apple Check", &m_checkAppleGrip);        // Quick check (1s)
+  m_chooser.AddOption("Monitor Apple (5s)", &m_waitForGrip);        // Wait for successful grip (5s)
+  m_chooser.AddOption("Monitor Apple (10s)", &m_monitorGrip);
   
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
