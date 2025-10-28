@@ -1,79 +1,88 @@
 #include "gamepad/OI.h"
-#include <frc/Joystick.h>
+#include "AMCU.h"
+#include <cmath>
 
-// The joystick object for the driver controller
-static frc::Joystick driveJoystick(DRIVE_USB_PORT);
+// Constructor - initialize the joystick
+OI::OI() : m_driveJoystick(DRIVE_USB_PORT) {
+    // Constructor initializes the joystick on the specified USB port
+}
+
+// ADD THIS FUNCTION DEFINITION
+frc::Joystick& OI::GetDriveJoystick() {
+    return m_driveJoystick;
+}
 
 // Axis methods
-double OI::GetRightDriveY(void) {
-    return driveJoystick.GetRawAxis(RIGHT_ANALOG_Y);
+double OI::GetRightDriveY() const {
+    return -m_driveJoystick.GetRawAxis(RIGHT_ANALOG_Y);
 }
 
-double OI::GetRightDriveX(void) {
-    return driveJoystick.GetRawAxis(RIGHT_ANALOG_X);
+double OI::GetRightDriveX() const {
+    return m_driveJoystick.GetRawAxis(RIGHT_ANALOG_X);
 }
 
-double OI::GetLeftDriveY(void) {
-    return driveJoystick.GetRawAxis(LEFT_ANALOG_Y);
+double OI::GetLeftDriveY() const {
+    return -m_driveJoystick.GetRawAxis(LEFT_ANALOG_Y);
 }
 
-double OI::GetLeftDriveX(void) {
-    return driveJoystick.GetRawAxis(LEFT_ANALOG_X);
+double OI::GetLeftDriveX() const {
+    return m_driveJoystick.GetRawAxis(LEFT_ANALOG_X);
 }
 
-// Button methods
-bool OI::GetDriveRightTrigger(void) {
-    return driveJoystick.GetRawButton(RIGHT_TRIGGER);
+
+// Button methods - updated to use renamed constants
+bool OI::GetDriveRightTrigger() const {
+    return m_driveJoystick.GetRawButton(RIGHT_TRIGGER);
 }
 
-bool OI::GetDriveRightBumper(void) {
-    return driveJoystick.GetRawButton(RIGHT_BUMPER);
+bool OI::GetDriveRightShoulder() const {
+    return m_driveJoystick.GetRawButton(RIGHT_SHOULDER);
 }
 
-bool OI::getDriveLeftTrigger(void) {
-    return driveJoystick.GetRawButton(LEFT_TRIGGER);
+bool OI::GetDriveLeftTrigger() const {
+    return m_driveJoystick.GetRawButton(LEFT_TRIGGER);
 }
 
-bool OI::GetDriveLeftBumper(void) {
-    return driveJoystick.GetRawButton(LEFT_BUMPER);
+bool OI::GetDriveLeftShoulder() const {
+    return m_driveJoystick.GetRawButton(LEFT_SHOULDER);
 }
 
-bool OI::GetDriveXButton(void) {
-    return driveJoystick.GetRawButton(X_BUTTON);
+bool OI::GetDriveAButton() const {
+    return m_driveJoystick.GetRawButton(A_BUTTON);
 }
 
-bool OI::GetDriveSquareButton(void) {
-    return driveJoystick.GetRawButton(SQUARE_BUTTON);
+bool OI::GetDriveBButton() const {
+    return m_driveJoystick.GetRawButton(B_BUTTON);
 }
 
-bool OI::GetDriveCircleButton(void) {
-    return driveJoystick.GetRawButton(CIRCLE_BUTTON);
+bool OI::GetDriveXButton() const {
+    return m_driveJoystick.GetRawButton(X_BUTTON);
 }
 
-bool OI::GetDriveTriangleButton(void) {
-    return driveJoystick.GetRawButton(TRIANGLE_BUTTON);
+bool OI::GetDriveYButton() const {
+    return m_driveJoystick.GetRawButton(Y_BUTTON);
 }
 
-bool OI::GetDriveOptionsButton(void) {
-    return driveJoystick.GetRawButton(OPTIONS_BUTTON);
+bool OI::GetDriveStartButton() const {
+    return m_driveJoystick.GetRawButton(START_BUTTON);
 }
 
-bool OI::GetDriveShareButton(void) {
-    return driveJoystick.GetRawButton(SHARE_BUTTON);
+bool OI::GetDriveBackSelectButton() const {
+    return m_driveJoystick.GetRawButton(BACK_SELECT_BUTTON);
 }
 
-bool OI::GetDriveRightAnalogButton(void) {
-    return driveJoystick.GetRawButton(RIGHT_ANALOG_BUTTON);
+bool OI::GetDriveRightStickPress() const {
+    return m_driveJoystick.GetRawButton(RIGHT_STICK_PRESS);
 }
 
-bool OI::GetDriveLeftAnalogButton(void) {
-    return driveJoystick.GetRawButton(LEFT_ANALOG_BUTTON);
+bool OI::GetDriveLeftStickPress() const {
+    return m_driveJoystick.GetRawButton(LEFT_STICK_PRESS);
 }
 
-bool OI::GetDrivePS4Button(void) {
-    return driveJoystick.GetRawButton(PS4_BUTTON);
+bool OI::GetDriveHomeGuideButton() const {
+    return m_driveJoystick.GetRawButton(HOME_GUIDE_BUTTON);
 }
 
-bool OI::GetDriveTouchpadButton(void) {
-    return driveJoystick.GetRawButton(TOUCHPAD_BUTTON);
+bool OI::GetDriveExtraButton() const {
+    return m_driveJoystick.GetRawButton(EXTRA_BUTTON);
 }

@@ -30,7 +30,7 @@ bool ElevatorPresets::IsFinished() {
     if (!m_elevator->IsInitialized()) {
         return true; // End immediately if not initialized
     }
-    return m_elevator->IsAtTarget(2.0f); // 2mm tolerance for presets
+    return m_elevator->IsAtTarget(5.0f); // 2mm tolerance for presets
 }
 
 void ElevatorPresets::End(bool interrupted) {

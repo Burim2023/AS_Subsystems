@@ -9,7 +9,7 @@ ArmSubsystem::ArmSubsystem() {
     ArmServo = nullptr;
     servoAngleArm = HOME_ANGLE;
     targetAngle = HOME_ANGLE;
-    servoSpeed = 2.0;
+    servoSpeed = 7.0;
 }
 
 void ArmSubsystem::Init() {

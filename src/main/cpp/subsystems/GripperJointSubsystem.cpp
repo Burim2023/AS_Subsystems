@@ -27,6 +27,10 @@ void GripperJointSubsystem::SetGripperMidAngle() {
     targetAngle = JOINT_MID_ANGLE;
 }
 
+void GripperJointSubsystem::SetGripperCamAngle() {
+    targetAngle = JOINT_CAM_ANGLE;
+}
+
 void GripperJointSubsystem::SetGripperDownAngle() {
     targetAngle = JOINT_DOWN_ANGLE;
 }

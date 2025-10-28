@@ -10,7 +10,7 @@
 
 #define HOME_ANGLE 5
 #define DROP_APPLE_ANGLE 35
-#define PICK_APPLE_ANGLE 195
+#define PICK_APPLE_ANGLE 215
 
 // Preset speed constants for testing
 #define ARM_SPEED_VERY_SLOW 0.5

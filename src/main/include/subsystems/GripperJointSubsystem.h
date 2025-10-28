@@ -9,8 +9,10 @@
 #define JOINT_SERVO_PORT 20
 
 #define JOINT_DOWN_ANGLE 0
+#define JOINT_CAM_ANGLE 75
 #define JOINT_MID_ANGLE 95
 #define JOINT_UP_ANGLE 120
+
 
 // Preset speed constants for testing
 #define SPEED_VERY_SLOW 0.5
@@ -43,7 +45,12 @@ public:
      * Move gripper to middle position (95 degrees)
      */
     void SetGripperMidAngle();
-    
+
+    /**
+     * Move gripper to Camera Search position (75 degrees)
+     */
+    void SetGripperCamAngle();
+
     /**
      * Move gripper to down position (0 degrees)
      */

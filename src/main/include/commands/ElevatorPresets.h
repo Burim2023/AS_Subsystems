@@ -11,9 +11,9 @@ class ElevatorPresets : public frc2::CommandHelper<frc2::CommandBase, ElevatorPr
 public:
     enum class Position {
         GROUND = 10,      // 10mm - ground level
-        LOW = 30,        // 30mm - low position
+        LOW = 45,        // 30mm - low position
         MEDIUM = 60,     // 60mm - medium position
-        HIGH = 180,       //200mm - high position
+        HIGH = 170,       //200mm - high position
         MAX = 200        // 200mm - maximum safe height
     };
 

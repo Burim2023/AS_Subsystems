@@ -8,7 +8,7 @@
 #pragma once
 
 #include "studica/Servo.h"
-//#include "subsystems/AMCU.h"
+#include "AMCU.h"
 
 namespace Constants
 {
@@ -16,14 +16,14 @@ namespace Constants
     // inline constexpr const char* FILE_PATH = "/home/lvuser/deploy/robot.log";
     // // widget logfile - matches what the website expects
     // inline constexpr const char* WIDGET_FILE_PATH = "/home/lvuser/deploy/status.json";
-    // // amcu constants
-    // inline constexpr int kWheelRadius = 50;
-    // inline constexpr int kRobotRadius = 150;
+    //amcu constants
+    inline constexpr int kWheelRadius = 50;
+    inline constexpr int kRobotRadius = 162;
 
-    // inline constexpr Motor kMotorLeft = MOTOR_0;
-    // inline constexpr Motor kMotorRight = MOTOR_2;
-    // inline constexpr Motor kMotorBack = MOTOR_3;
-    // inline constexpr Motor kMotorElevator = MOTOR_1;
+    inline constexpr Motor kMotorLeft = MOTOR_1;
+    inline constexpr Motor kMotorRight = MOTOR_2;
+    inline constexpr Motor kMotorBack = MOTOR_3;
+    inline constexpr Motor kMotorElevator = MOTOR_0;
 
     // // ultra sonic right
     // inline constexpr int RIGHT_TRIG_PORT = 2;
