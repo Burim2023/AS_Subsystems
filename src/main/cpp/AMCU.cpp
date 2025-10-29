@@ -1,4 +1,5 @@
 #include "AMCU.h"
+#include <iostream>
 
 // Constructor starts thread for CAN
 AMCU::AMCU()
@@ -52,6 +53,7 @@ void AMCU::registerDriveActionCallback(void (*pCallback)())
 // adds a TLV-frame to the queue, which sets the robot base to a given speed in x-, y- or w-direction
 void AMCU::speedDrive(uint8_t xSpeed_cms, uint8_t ySpeed_cms, uint8_t wSpeed_degs)
 {
+  std::cout << "AMCU::speedDrive called: x=" << (int)xSpeed_cms << " y=" << (int)ySpeed_cms << " w=" << (int)wSpeed_degs << std::endl;
   addTLVToList(TAG_DR_SPEED,3,{xSpeed_cms, ySpeed_cms, wSpeed_degs});
 }
 

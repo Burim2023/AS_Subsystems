@@ -1,11 +1,13 @@
 #pragma once
 
 #include <frc2/command/SequentialCommandGroup.h>
+#include "commands/SpeedDriveCommand.h"
+#include "commands/SimpleDrive.h"
 
 // Forward declarations to avoid multiple includes
 class AMCU;
-class ArmSubsystem;
-class ExtenderSubsystem;
+//class ArmSubsystem;
+//class ExtenderSubsystem;
 
 /**
  * Simple test sequence to verify the AMCU drive commands are working:
@@ -21,8 +23,13 @@ public:
     /**
      * Constructor - Only requires AMCU for drive testing
      * @param amcu Pointer to the AMCU drivetrain
-     * @param arm Pointer to the ArmSubsystem (unused in this test)
-     * @param extender Pointer to the ExtenderSubsystem (unused in this test)
+     * Pointer to the ArmSubsystem (unused in this test)
+     * Pointer to the ExtenderSubsystem (unused in this test)
      */
-    TestCommandSequence(AMCU* amcu, ArmSubsystem* arm, ExtenderSubsystem* extender);
+    //TestCommandSequence(AMCU* amcu, ArmSubsystem* arm, ExtenderSubsystem* extender);
+    TestCommandSequence(AMCU* amcu);
+    void SetAMCU(AMCU* amcu);
+
+private: 
+    AMCU* m_amcu;
 };

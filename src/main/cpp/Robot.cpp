@@ -10,6 +10,8 @@
 #include "utilities/LoggingSystem.h"
 #include "subsystems/UltrasonicSubsystem.h"
 
+#include "commands/SpeedDriveCommand.h"
+
 // Global instances for non-command-based subsystems
 OI oi;
 AMCU amcu;
@@ -21,9 +23,14 @@ void Robot::RobotInit() {
   
   // Initialize ultrasonic subsystem (non-command-based)
   m_ultrasonic.Init();
+  //amcu.init();
   
   // Pass AMCU instance to RobotContainer
   m_container.SetAMCU(&amcu);
+
+  
+  amcu.initOmniDriveBase(Constants::kWheelRadius, Constants::kRobotRadius, Constants::kMotorLeft, Constants::kMotorRight, Constants::kMotorBack);
+  
   
   // All command-based subsystems are initialized in RobotContainer constructor
 }
@@ -31,10 +38,10 @@ void Robot::RobotInit() {
 void Robot::RobotPeriodic() { 
   // CRITICAL FIX: Only run command scheduler during autonomous and disabled
   // NOT during teleop to prevent conflicts
-  // if (IsAutonomous()) {
-  //   frc2::CommandScheduler::GetInstance().Run();
-  // }
-  frc2::CommandScheduler::GetInstance().Run();
+  if (IsAutonomous()) {
+    frc2::CommandScheduler::GetInstance().Run();
+  }
+  //frc2::CommandScheduler::GetInstance().Run();
   // Update non-command-based subsystems
   m_ultrasonic.Periodic();
 }
@@ -123,6 +130,10 @@ void Robot::TeleopInit() {
 }
 
 void Robot::TeleopPeriodic() {
+  
+  amcu.speedDrive(25, 0, 0);
+  
+  
   try {
     // Get joystick values with safety checks
     double leftY = 0.0;

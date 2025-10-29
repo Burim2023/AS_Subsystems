@@ -2,8 +2,9 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc/Timer.h>
-#include <memory>  // Add this include
+#include <memory>
 #include "subsystems/ExtenderSubsystem.h"
+#include <frc2/command/WaitCommand.h>
 
 class CalibrateExtender : public frc2::CommandBase {
 public:

@@ -4,6 +4,7 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc/smartdashboard/SendableChooser.h>
 
+
 // Subsystem includes
 #include "subsystems/ArmSubsystem.h"
 #include "subsystems/ExtenderSubsystem.h"
@@ -12,6 +13,7 @@
 #include "subsystems/ElevatorSubsystem.h"
 #include "subsystems/CameraSubsystem.h"
 #include "gamepad/OI.h"
+//#include "subsystems/Drivetrain.h"
 
 // Command includes
 #include "commands/MoveArmToPosition.h"
@@ -32,6 +34,9 @@
 #include "commands/CalibrateExtender.h"
 #include "commands/AppleGripperCheckCommand.h"
 #include "commands/SmartPickSequence.h"
+#include "commands/PickupAndDeliverSequence.h"
+
+#include "commands/DriveSmartPickupGround.h"
 // Non-command-based subsystems
 #include "AMCU.h"
 
@@ -64,9 +69,11 @@ class RobotContainer {
   GripperJointSubsystem m_gripperJoint;
   ElevatorSubsystem m_elevator;
   CameraSubsystem m_camera;
-
-  // Operator Interface
+  //Drivetrain m_drivetrain;
+  // 
   OI m_oi;
+
+ 
 
   // Autonomous Chooser
   frc::SendableChooser<frc2::Command*> m_chooser;
@@ -74,36 +81,29 @@ class RobotContainer {
   // Non-command-based subsystems
   AMCU* m_amcu;
 
-  // Simple Commands (moved up to match initialization order)
+ // Commands (Reordered to match initialization in .cpp)
+  FullPickSequence m_autoPickSequence;
+  RetractAndLift m_autoRetractAndLift;
+  CalibrateExtender m_calibrateExtenderOnly;
+  ExtenderCalibrationSequence m_demoExtender;
   SimpleDrive m_simpleDrive;
+  TestCommandSequence m_testSequence;
   GripperOperate m_gripperOperateUp;
   GripperOperate m_gripperOperateDown;
   GripperOperate m_gripperPickup;
-  //TestCommandSequence m_testSequence;
-
-  // Extender Commands
-  ExtenderCalibrationSequence m_demoExtender;
-  CalibrateExtender m_calibrateExtenderOnly;
-
-  //Apple Gripper Check Command
-  AppleGripperCheckCommand m_checkAppleGrip;
-  AppleGripperCheckCommand m_waitForGrip;
-  AppleGripperCheckCommand m_monitorGrip;
-
-  // Autonomous Command Groups
-  FullPickSequence m_autoPickSequence;
-  RetractAndLift m_autoRetractAndLift;
-  TestCommandSequence m_testSequence;
   GripperPickupSequence m_gripperPickupSequence;
-  SmartPickSequence m_smartPickSequence;
-  
-  // Elevator Commands
   CalibrateElevator m_calibrateElevator;
   ElevatorPresets m_elevatorGround;
   ElevatorPresets m_elevatorLow;
   ElevatorPresets m_elevatorHigh;
   MoveElevatorToPosition m_elevatorCustom;
   ElevatorTestSequence m_elevatorTestSequence;
+  SmartPickSequence m_smartPickSequence;
+  DriveSmartPickupGround m_driveSmartPickupGround;
+  AppleGripperCheckCommand m_checkAppleGrip;
+  AppleGripperCheckCommand m_waitForGrip;
+  AppleGripperCheckCommand m_monitorGrip;
+  PickupAndDeliverSequence m_pickupAndDerliverSequence;
 
 
 

@@ -16,6 +16,9 @@ void MoveGripperJointToPosition::Initialize() {
     } else if (m_targetAngle == JOINT_MID_ANGLE) {
         m_gripperJoint->SetSpeedNormal();
         m_gripperJoint->SetGripperMidAngle();
+    } else if (m_targetAngle == JOINT_CAM_ANGLE) {
+        m_gripperJoint->SetSpeedNormal();
+        m_gripperJoint->SetGripperCamAngle();
     } else if (m_targetAngle == JOINT_DOWN_ANGLE) {
         m_gripperJoint->SetSpeedNormal();
         m_gripperJoint->SetGripperDownAngle();
@@ -31,6 +34,8 @@ void MoveGripperJointToPosition::Execute() {
             m_gripperJoint->SetGripperUpAngle();
         } else if (m_targetAngle == JOINT_MID_ANGLE) {
             m_gripperJoint->SetGripperMidAngle();
+        } else if (m_targetAngle == JOINT_CAM_ANGLE) {
+            m_gripperJoint->SetGripperCamAngle();
         } else if (m_targetAngle == JOINT_DOWN_ANGLE) {
             m_gripperJoint->SetGripperDownAngle();
         }

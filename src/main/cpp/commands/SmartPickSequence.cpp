@@ -4,7 +4,9 @@
 #include "commands/MoveElevatorToPosition.h"
 #include "commands/CalibrateElevator.h"
 #include "commands/ElevatorPresets.h"
+#include "commands/AppleGripperCheckCommand.h"
 #include "Constants.h"
+#include <frc/smartdashboard/SmartDashboard.h>
 
 SmartPickSequence::SmartPickSequence(ArmSubsystem* arm, 
                                    GripperSubsystem* gripper, 
@@ -13,11 +15,6 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
                                    ElevatorSubsystem* elevator) {
     
     SetName("SmartPickSequence");
-    
-    // THIS WAS THE ORIGINAL WORKING VERSION - using WasAppleDetected()
-    auto* appleCheck = new AppleGripperCheckCommand(camera, 
-                                                   AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 
-                                                   5.0);
 
     AddCommands(
         // === PHASE 1: PREPARATION ===
@@ -38,63 +35,57 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
 
         frc2::PrintCommand("🔧 Starting elevator calibration..."),
 
-        // === PHASE 2: CALIBRATE ELEVATOR WHILE HOLDING GRIPPER ===
-        frc2::ParallelDeadlineGroup(
-            CalibrateElevator(elevator, 10.0),                               // DEADLINE
-            MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE, true)  // HOLD at mid during calibration
-        ),
+        // === PHASE 2: CALIBRATE ELEVATOR ===
+        // CRITICAL FIX: Remove ParallelDeadlineGroup - this was causing communication issues
+        CalibrateElevator(elevator, 10.0),
 
         frc2::PrintCommand("✅ Calibration complete - positioning for detection"),
 
         // === PHASE 3: POSITION FOR DETECTION ===
-        MoveElevatorToPosition(elevator, 60.0f, 1.0f),
-        
-        frc2::WaitCommand(2.0_s),
+        frc2::PrintCommand("Moving elevator to apple pickup position..."),
+        MoveElevatorToPosition(elevator, 60.0f, 5.0f),
+        frc2::WaitCommand(3.0_s),
 
         MoveGripperJointToPosition(gripperJoint, JOINT_DOWN_ANGLE),
-        
         frc2::WaitCommand(2.0_s),
 
         frc2::InstantCommand([gripper] { 
             gripper->SetOpenGripper(); 
             std::cout << "SmartPick: Opening gripper for apple detection" << std::endl;
         }, {gripper}),
-
         frc2::WaitCommand(2.0_s),
+
+        MoveElevatorToPosition(elevator, 45.0f, 5.0f),
+
+        frc2::WaitCommand(3.0_s),
         
         frc2::PrintCommand("🎯 Robot positioned - starting apple detection"),
-        frc2::PrintCommand("🔍 Checking for apple presence..."),
-        *appleCheck,
+        
+        // CRITICAL FIX: Create AppleGripperCheckCommand directly without shared_ptr
+        AppleGripperCheckCommand(camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 5.0),
+        
         frc2::PrintCommand("🐛 DEBUG: Apple detection completed - checking results..."),
         
+        // CRITICAL FIX: Simplified conditional logic
         frc2::ConditionalCommand(
             // IF APPLE DETECTED: Execute grip sequence
             frc2::SequentialCommandGroup(
                 frc2::PrintCommand("✅ Apple detected! Executing grip sequence..."),
                 
-                MoveElevatorToPosition(elevator, 45.0f, 1.0f),
-                
-                frc2::WaitCommand(3.0_s),
-                
                 frc2::InstantCommand([gripper] { 
                     gripper->SetClosedGripper(); 
                     std::cout << "SmartPick: Closing gripper to grab apple" << std::endl;
                 }, {gripper}),
-
                 frc2::WaitCommand(2.0_s),
 
                 MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
-                
                 frc2::WaitCommand(2.0_s),
 
-                MoveElevatorToPosition(elevator, 170.0f, 1.0f),
+                MoveElevatorToPosition(elevator, 170.0f, 5.0f),
+                frc2::WaitCommand(3.0_s),
                 
-                frc2::WaitCommand(2.0_s),
-
                 MoveArmToPosition(arm, HOME_ANGLE),
-                
-                frc2::WaitCommand(1.0_s),
-                MoveGripperJointToPosition(gripperJoint, JOINT_DOWN_ANGLE),
+                frc2::WaitCommand(5.0_s),
                 
                 frc2::PrintCommand("✅ Smart Pick Complete - Apple Secured!")
             ),
@@ -104,22 +95,19 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
                 frc2::PrintCommand("❌ No apple detected - Aborting sequence"),
                 
                 MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
-                frc2::WaitCommand(1.5_s),
+                frc2::WaitCommand(2.0_s),
 
-                MoveElevatorToPosition(elevator, 170.0f, 1.0f),
-                frc2::WaitCommand(1.0_s),
+                MoveElevatorToPosition(elevator, 170.0f, 5.0f),
+                frc2::WaitCommand(3.0_s),
                 
                 MoveArmToPosition(arm, HOME_ANGLE),
-                frc2::WaitCommand(1.0_s),
-                
-                frc2::PrintCommand("🔄 Final gripper position reset..."),
-                MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
+                frc2::WaitCommand(7.0_s),
                 
                 frc2::PrintCommand("🏠 Sequence aborted - returned to safe position")
             ),
             
-            // THIS WAS THE ORIGINAL CONDITIONAL LOGIC THAT WORKED ONCE
-            [appleCheck]() { 
+            // CRITICAL FIX: Simplified lambda without shared_ptr capture
+            []() { 
                 bool detected = frc::SmartDashboard::GetBoolean("Camera/Apple/Found", false);
                 double distance = frc::SmartDashboard::GetNumber("Camera/Apple/Distance_MM", -1);
                 bool validDetection = detected && (distance >= 200.0 && distance <= 2500.0);

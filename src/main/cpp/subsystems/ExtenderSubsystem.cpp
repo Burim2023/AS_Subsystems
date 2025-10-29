@@ -115,6 +115,7 @@ void ExtenderSubsystem::ExtenderSubsystemCurrentState() {
 }
 
 void ExtenderSubsystem::Periodic(){
+    //ExtenderSubsystemCurrentState();
     // CRITICAL SAFETY: Check limit switches every periodic cycle
     bool frontPressed = IsFrontLimitPressed();
     bool backPressed = IsBackLimitPressed();

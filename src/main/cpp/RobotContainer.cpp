@@ -9,7 +9,8 @@ RobotContainer::RobotContainer()
       m_calibrateExtenderOnly(&m_extender),
       m_demoExtender(&m_extender, 2.0),
       m_simpleDrive(nullptr, 0.3, 0.0, 0.0),
-      m_testSequence(m_amcu, &m_arm, &m_extender),
+      //m_testSequence(m_amcu, &m_arm, &m_extender),
+      m_testSequence(m_amcu),
       m_gripperOperateUp(&m_gripperJoint, &m_gripper, GripperOperate::Position::UP, true, 2.0),
       m_gripperOperateDown(&m_gripperJoint, &m_gripper, GripperOperate::Position::DOWN, false, 2.0),
       m_gripperPickup(&m_gripperJoint, &m_gripper, GripperOperate::Position::MID, false, 2.0),
@@ -22,10 +23,12 @@ RobotContainer::RobotContainer()
       m_elevatorTestSequence(&m_elevator),
       //picksequence with camera apple detection
       m_smartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
+      m_driveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu),
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
       m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
-      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0)
+      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0),
+      m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
        {
   
   // Initialize all subsystems
@@ -37,7 +40,7 @@ RobotContainer::RobotContainer()
   m_camera.Start();
   // Note: Elevator will be initialized in SetAMCU() method
   
-  
+
   // Configure the button bindings
   ConfigureButtonBindings();
   
@@ -49,7 +52,20 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Gripper Pickup (Mid & Close)", &m_gripperPickup);
   m_chooser.AddOption("Gripper Pickup Sequence", &m_gripperPickupSequence);
   m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
+  //m_chooser.AddOption("Smart Pick Sequence", new SmartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator));
   m_chooser.AddOption("Smart Pick Sequence", &m_smartPickSequence);
+  //m_chooser.AddOption("Drive to Apple And Pick off Ground!", &m_driveSmartPickupGround);
+  m_chooser.AddOption("Drive Smart Pickup", new frc2::InstantCommand([this] {
+        if (!m_amcu) {
+            std::cout << "RobotContainer: AMCU is null - cannot start DriveSmartPickupGround" << std::endl;
+            return;
+        }
+        // construct and schedule a fresh command instance
+        frc2::CommandScheduler::GetInstance().Schedule(
+            new DriveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu)
+        );
+    }));
+  m_chooser.AddOption("Pickup&Deliver", &m_pickupAndDerliverSequence);
 
   
   // Elevator commands
@@ -68,6 +84,8 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Quick Apple Check", &m_checkAppleGrip);        // Quick check (1s)
   m_chooser.AddOption("Monitor Apple (5s)", &m_waitForGrip);        // Wait for successful grip (5s)
   m_chooser.AddOption("Monitor Apple (10s)", &m_monitorGrip);
+
+  
   
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
@@ -90,10 +108,20 @@ void RobotContainer::SetAMCU(AMCU* amcu) {
   // Initialize elevator with AMCU
   m_elevator.Init(amcu);
   
+  m_testSequence.SetAMCU(amcu);
+
+  //m_simpleDrive.SetAMCU(amcu);
   // Update SimpleDrive command with the actual AMCU instance
-  m_simpleDrive = SimpleDrive(amcu, 0.3, 0.0, 0.0); // Forward at 30% speed
+  //m_simpleDrive = SimpleDrive(amcu, 0.3, 0.0, 0.0); // Forward at 30% speed
   // Reinitialize the test sequence with the actual AMCU instance
   // Note: This is a bit of a hack - ideally we'd pass AMCU in the constructor
+
+  // // Example: Use bumpers to change speed
+  // frc2::JoystickButton(&m_oi.GetDriveJoystick(), OI::LEFT_SHOULDER)
+  //     .WhenPressed(frc2::InstantCommand([this] { m_teleopDrive.SetSpeedMultiplier(0.4); }, {})); // 40% speed
+
+  // frc2::JoystickButton(&m_oi.GetDriveJoystick(), OI::RIGHT_SHOULDER)
+  //     .WhenPressed(frc2::InstantCommand([this] { m_teleopDrive.SetSpeedMultiplier(0.6); }, {})); // 80% speed
 }
 
 frc2::Command* RobotContainer::GetAutonomousCommand() {

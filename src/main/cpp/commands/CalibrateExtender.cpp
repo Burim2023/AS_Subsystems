@@ -26,6 +26,7 @@ void CalibrateExtender::Initialize() {
 }
 
 void CalibrateExtender::Execute() {
+    //m_extender->ExtenderSubsystemCurrentState();
     bool frontPressed = m_extender->IsFrontLimitPressed();
     bool backPressed = m_extender->IsBackLimitPressed();
     
@@ -52,6 +53,8 @@ void CalibrateExtender::Execute() {
             m_timer.Reset();
             m_timer.Start();
             m_startTime = m_timer.Get();
+
+            //frc2::WaitCommand(0.5_s);
             
             // Start moving toward front limit
             m_extender->SetExtendState();
