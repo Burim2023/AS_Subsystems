@@ -1,0 +1,6 @@
+[submodule "src/main/deploy/web-ds-logger"]
+	path = src/main/deploy/web-ds-logger
+	url = https://github.com/quentintyr/web-ds-logger.git
+[submodule "src/main/deploy/web-ds"]
+	path = src/main/deploy/web-ds
+	url = https://github.com/quentintyr/web-ds.git
