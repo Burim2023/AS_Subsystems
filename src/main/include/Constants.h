@@ -25,6 +25,11 @@ namespace Constants
     inline constexpr Motor kMotorBack = MOTOR_3;
     inline constexpr Motor kMotorElevator = MOTOR_0;
 
+    static constexpr int kLeftTriggerPort = 0;
+    static constexpr int kLeftEchoPort = 1;
+    static constexpr int kRightTriggerPort = 2;
+    static constexpr int kRightEchoPort = 3;
+
     // // ultra sonic right
     // inline constexpr int RIGHT_TRIG_PORT = 2;
     // inline constexpr int RIGHT_ECHO_PORT = 3;

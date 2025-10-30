@@ -1,9 +1,13 @@
 #include "RobotContainer.h"
 #include <frc2/command/button/JoystickButton.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include "Constants.h"
 
 RobotContainer::RobotContainer() 
     : m_amcu(nullptr),
+      m_ultrasonic(Constants::kLeftTriggerPort, Constants::kLeftEchoPort, Constants::kRightTriggerPort, Constants::kRightEchoPort),
+      m_lidar(),
+      m_wallAlignDriveCommand(nullptr, &m_ultrasonic, &m_lidar, 15.0, 15, 30),
       m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
       m_calibrateExtenderOnly(&m_extender),
@@ -85,6 +89,8 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Monitor Apple (5s)", &m_waitForGrip);        // Wait for successful grip (5s)
   m_chooser.AddOption("Monitor Apple (10s)", &m_monitorGrip);
 
+  //Drive with Sensors
+  m_chooser.AddOption("Drive with Sensor", &m_wallAlignDriveCommand);
   
   
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
@@ -109,6 +115,8 @@ void RobotContainer::SetAMCU(AMCU* amcu) {
   m_elevator.Init(amcu);
   
   m_testSequence.SetAMCU(amcu);
+
+  m_wallAlignDriveCommand.SetAMCU(amcu);
 
   //m_simpleDrive.SetAMCU(amcu);
   // Update SimpleDrive command with the actual AMCU instance

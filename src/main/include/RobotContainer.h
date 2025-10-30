@@ -13,6 +13,8 @@
 #include "subsystems/ElevatorSubsystem.h"
 #include "subsystems/CameraSubsystem.h"
 #include "gamepad/OI.h"
+#include "subsystems/UltrasonicSubsystem.h"
+#include "subsystems/Lidar.h"
 //#include "subsystems/Drivetrain.h"
 
 // Command includes
@@ -35,9 +37,11 @@
 #include "commands/AppleGripperCheckCommand.h"
 #include "commands/SmartPickSequence.h"
 #include "commands/PickupAndDeliverSequence.h"
+#include "commands/WallAlignDriveCommand.h"
 
 #include "commands/DriveSmartPickupGround.h"
 // Non-command-based subsystems
+#include "Constants.h"
 #include "AMCU.h"
 
 /**
@@ -60,17 +64,20 @@ class RobotContainer {
   ElevatorSubsystem& GetElevator() { return m_elevator; }
   ExtenderSubsystem& GetExtender() { return m_extender; }
   CameraSubsystem& GetCamera() {return m_camera; }
+  frc::UltrasonicSubsystem& GetUltrasonic() {return m_ultrasonic;}
+  frc::LidarSubsystem& GetLidar() { return m_lidar; }
 
  private:
-  // Subsystems
+ AMCU* m_amcu; 
+ // Subsystems
   ArmSubsystem m_arm;
   ExtenderSubsystem m_extender;
   GripperSubsystem m_gripper;
   GripperJointSubsystem m_gripperJoint;
   ElevatorSubsystem m_elevator;
   CameraSubsystem m_camera;
-  //Drivetrain m_drivetrain;
-  // 
+  frc::UltrasonicSubsystem m_ultrasonic{Constants::kLeftTriggerPort, Constants::kLeftEchoPort, Constants::kRightTriggerPort, Constants::kRightEchoPort};  // Add UltrasonicSubsystem
+  frc::LidarSubsystem m_lidar;
   OI m_oi;
 
  
@@ -79,7 +86,7 @@ class RobotContainer {
   frc::SendableChooser<frc2::Command*> m_chooser;
 
   // Non-command-based subsystems
-  AMCU* m_amcu;
+  
 
  // Commands (Reordered to match initialization in .cpp)
   FullPickSequence m_autoPickSequence;
@@ -104,6 +111,7 @@ class RobotContainer {
   AppleGripperCheckCommand m_waitForGrip;
   AppleGripperCheckCommand m_monitorGrip;
   PickupAndDeliverSequence m_pickupAndDerliverSequence;
+  WallAlignDriveCommand m_wallAlignDriveCommand;
 
 
 
