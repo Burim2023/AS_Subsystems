@@ -9,20 +9,22 @@
 #include "Constants.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"
-#include <networktables/NetworkTableInstance.h>
+#include "subsystems/sensor/SensorManager.h"
 
 #include "commands/SpeedDriveCommand.h"
 
 // Global instances for non-command-based subsystems
-OI oi;
+Gamepad gamepad;
 AMCU amcu;
 frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
+SensorManager sensormanager;
 
 
 void Robot::RobotInit() {
   // Initialize logging system
-  InitLogging();
+  InitLogging(&sensormanager);
   SetupLogging();
+  sensormanager.SensorManagerStartThread();
   
   // Initialize ultrasonic subsystem (non-command-based)
   m_ultrasonic.Init();
@@ -39,7 +41,7 @@ void Robot::RobotInit() {
 }
 
 void Robot::RobotPeriodic() {
-  UpdateLogging();
+  UpdateLogging(&sensormanager);
   // CRITICAL FIX: Only run command scheduler during autonomous and disabled
   // NOT during teleop to prevent conflicts
   if (IsAutonomous()) {
@@ -47,7 +49,6 @@ void Robot::RobotPeriodic() {
   }
   //frc2::CommandScheduler::GetInstance().Run();
   // Update non-command-based subsystems
-  m_ultrasonic.Periodic();
 }
 
 void Robot::DisabledInit() {
@@ -143,16 +144,14 @@ void Robot::TeleopPeriodic() {
     double leftY = 0.0;
     double leftX = 0.0;
     double rightY = 0.0;
+    double rightX = 0.0;
     
-    try { leftY = oi.GetLeftDriveY(); } catch (...) { leftY = 0.0; }
-    try { leftX = oi.GetLeftDriveX(); } catch (...) { leftX = 0.0; }
-    try { rightY = oi.GetRightDriveY(); } catch (...) { rightY = 0.0; }
+    try { leftY = gamepad.GetLeftStickY(); } catch (...) { leftY = 0.0; }
+    try { leftX = gamepad.GetLeftStickX(); } catch (...) { leftX = 0.0; }
+    try { rightY = gamepad.GetRightStickY(); } catch (...) { rightY = 0.0; }
+    try { rightY = gamepad.GetRightStickX(); } catch (...) { rightX = 0.0; }
     
-    // Apply deadband to prevent joystick drift
-    const double DEADBAND = 0.2;
-    if (std::abs(leftY) < DEADBAND) leftY = 0.0;
-    if (std::abs(leftX) < DEADBAND) leftX = 0.0;
-    if (std::abs(rightY) < DEADBAND) rightY = 0.0;
+
     
     // CRITICAL: Check if ALL inputs are zero first
     if (leftY == 0.0 && leftX == 0.0 && rightY == 0.0) {

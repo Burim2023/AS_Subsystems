@@ -59,4 +59,6 @@ namespace Constants
     inline constexpr double EXTENDER_DRIVE_BACKWARD = 0.4;  // Was 1.0, now 0.0
     inline constexpr double EXTENDER_DRIVE_STOP = 0.5;
 
+    inline constexpr int SENSOR_UPDATE_RATE = 25;
+
 }
