@@ -4,11 +4,13 @@ plugins {
     id "com.kauailabs.first.GradleRIO" version "2020.3.2.30"
 }
 
+toolchainsPlugin.withRaspbian()
+
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project EmbeddedTools.
 deploy {
     targets {
-        vmxpi("roborio") {
+        vmxpi("vmxpi") {
             // Team number is loaded either from the .wpilib/wpilib_preferences.json
             // or from command line. If not found an exception will be thrown.
             // You can use getTeamOrDefault(team) instead of getTeamNumber if you
@@ -18,7 +20,7 @@ deploy {
     }
     artifacts {
         frcNativeArtifact('frcCpp') {
-            targets << "roborio"
+            targets << "vmxpi"
             component = 'frcUserProgram'
             // Debug can be overridden by command line, for use with VSCode
             debug = frc.getDebugOrDefault(false)
@@ -28,7 +30,7 @@ deploy {
             // The directory below is the local directory to deploy
             files = fileTree(dir: 'src/main/deploy')
             // Deploy to RoboRIO target, into /home/lvuser/deploy
-            targets << "roborio"
+            targets << "vmxpi"
             directory = '/home/lvuser/deploy'
         }
     }
@@ -59,13 +61,17 @@ model {
 
             sources.cpp {
                 source {
-                    srcDir 'src/main/cpp'
+                    srcDirs 'src/main/cpp', 'src/main/deploy/web-ds-logger/cpp/NetworkTables'
                     include '**/*.cpp', '**/*.cc'
                 }
                 exportedHeaders {
-                    srcDir 'src/main/include'
+                    srcDirs = [
+                        'src/main/include',
+                        'src/main/deploy'
+                    ]
+
                     if (includeSrcInIncludeRoot) {
-                        srcDir 'src/main/cpp'
+                        srcDirs += 'src/main/cpp'
                     }
                 }
             }

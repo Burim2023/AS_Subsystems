@@ -31,8 +31,8 @@ RobotContainer::RobotContainer()
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
       m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
-      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0),
-      m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
+      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0)
+      // m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
        {
   
   // Initialize all subsystems
@@ -69,7 +69,7 @@ RobotContainer::RobotContainer()
             new DriveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu)
         );
     }));
-  m_chooser.AddOption("Pickup&Deliver", &m_pickupAndDerliverSequence);
+  // m_chooser.AddOption("Pickup&Deliver", &m_pickupAndDerliverSequence);
 
   
   // Elevator commands

@@ -7,8 +7,9 @@
 // Optional includes for non-command-based subsystems if needed
 #include "AMCU.h"
 #include "Constants.h"
-#include "utilities/LoggingSystem.h"
+#include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/UltrasonicSubsystem.h"
+#include <networktables/NetworkTableInstance.h>
 
 #include "commands/SpeedDriveCommand.h"
 
@@ -17,8 +18,10 @@ OI oi;
 AMCU amcu;
 frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
 
+
 void Robot::RobotInit() {
   // Initialize logging system
+  InitLogging();
   SetupLogging();
   
   // Initialize ultrasonic subsystem (non-command-based)
@@ -35,7 +38,8 @@ void Robot::RobotInit() {
   // All command-based subsystems are initialized in RobotContainer constructor
 }
 
-void Robot::RobotPeriodic() { 
+void Robot::RobotPeriodic() {
+  UpdateLogging();
   // CRITICAL FIX: Only run command scheduler during autonomous and disabled
   // NOT during teleop to prevent conflicts
   if (IsAutonomous()) {
@@ -94,17 +98,17 @@ void Robot::AutonomousPeriodic() {
   // The CommandScheduler (called in RobotPeriodic) handles running the autonomous command
   
   // Get ultrasonic distance for autonomous navigation (in centimeters)
-  double leftDistanceCm = m_ultrasonic.GetLeftDistance();
-  double rightDistanceCm = m_ultrasonic.GetRightDistance();
-  bool leftWallDetected = m_ultrasonic.IsLeftWallDetected();
-  bool rightWallDetected = m_ultrasonic.IsRightWallDetected();
+  // double leftDistanceCm = m_ultrasonic.GetLeftDistance();
+  // double rightDistanceCm = m_ultrasonic.GetRightDistance();
+  // bool leftWallDetected = m_ultrasonic.IsLeftWallDetected();
+  // bool rightWallDetected = m_ultrasonic.IsRightWallDetected();
   
-  // Example autonomous logic using distance in centimeters
-  if (leftDistanceCm > 0 && rightDistanceCm > 0) { // Valid reading
-    if (rightWallDetected || leftWallDetected) {
-      amcu.stop();
-    }
-  }
+  // // Example autonomous logic using distance in centimeters
+  // if (leftDistanceCm > 0 && rightDistanceCm > 0) { // Valid reading
+  //   if (rightWallDetected || leftWallDetected) {
+  //     amcu.stop();
+  //   }
+  // }
 }
 
 void Robot::TeleopInit() {
@@ -131,7 +135,7 @@ void Robot::TeleopInit() {
 
 void Robot::TeleopPeriodic() {
   
-  amcu.speedDrive(25, 0, 0);
+  // amcu.speedDrive(25, 0, 0);
   
   
   try {
