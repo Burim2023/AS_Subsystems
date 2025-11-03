@@ -6,8 +6,9 @@
 RobotContainer::RobotContainer() 
     : m_amcu(nullptr),
       m_ultrasonic(Constants::kLeftTriggerPort, Constants::kLeftEchoPort, Constants::kRightTriggerPort, Constants::kRightEchoPort),
-      m_lidar(),
+      //m_lidar(studica::Lidar::kUSB0),
       m_wallAlignDriveCommand(nullptr, &m_ultrasonic, &m_lidar, 15.0, 15, 30),
+      m_driveUntilWallCommand(nullptr, &m_ultrasonic, &m_lidar, 15.0, 28.0, 15),
       m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
       m_calibrateExtenderOnly(&m_extender),
@@ -43,7 +44,9 @@ RobotContainer::RobotContainer()
   m_camera.InitDashboard();
   m_camera.Start();
   // Note: Elevator will be initialized in SetAMCU() method
-  
+  m_ultrasonic.Init();
+  m_lidar.Init();      // create studica::Lidar instance
+  m_lidar.StartScan(); // start scanning (non-blocking)
 
   // Configure the button bindings
   ConfigureButtonBindings();
@@ -91,6 +94,7 @@ RobotContainer::RobotContainer()
 
   //Drive with Sensors
   m_chooser.AddOption("Drive with Sensor", &m_wallAlignDriveCommand);
+  m_chooser.AddOption("Drive Until Wall", &m_driveUntilWallCommand);
   
   
   //m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
@@ -118,6 +122,8 @@ void RobotContainer::SetAMCU(AMCU* amcu) {
 
   m_wallAlignDriveCommand.SetAMCU(amcu);
 
+  m_driveUntilWallCommand.SetAMCU(amcu);
+
   //m_simpleDrive.SetAMCU(amcu);
   // Update SimpleDrive command with the actual AMCU instance
   //m_simpleDrive = SimpleDrive(amcu, 0.3, 0.0, 0.0); // Forward at 30% speed
@@ -130,6 +136,12 @@ void RobotContainer::SetAMCU(AMCU* amcu) {
 
   // frc2::JoystickButton(&m_oi.GetDriveJoystick(), OI::RIGHT_SHOULDER)
   //     .WhenPressed(frc2::InstantCommand([this] { m_teleopDrive.SetSpeedMultiplier(0.6); }, {})); // 80% speed
+}
+
+RobotContainer::~RobotContainer() {
+  // Stop LiDAR scanning cleanly when RobotContainer is destroyed
+  std::cout << "RobotContainer: Stopping LiDAR scan on shutdown..." << std::endl;
+  m_lidar.StopScan();
 }
 
 frc2::Command* RobotContainer::GetAutonomousCommand() {

@@ -15,14 +15,14 @@
 // Global instances for non-command-based subsystems
 OI oi;
 AMCU amcu;
-frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
+//frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
 
 void Robot::RobotInit() {
   // Initialize logging system
   SetupLogging();
   
   // Initialize ultrasonic subsystem (non-command-based)
-  m_ultrasonic.Init();
+  //m_ultrasonic.Init();
   //amcu.init();
   
   // Pass AMCU instance to RobotContainer
@@ -38,12 +38,14 @@ void Robot::RobotInit() {
 void Robot::RobotPeriodic() { 
   // CRITICAL FIX: Only run command scheduler during autonomous and disabled
   // NOT during teleop to prevent conflicts
-  if (IsAutonomous()) {
-    frc2::CommandScheduler::GetInstance().Run();
-  }
+  
+  frc2::CommandScheduler::GetInstance().Run();
+  
+  m_container.GetLidar().Periodic();
+  m_container.GetUltrasonic().Periodic();
   //frc2::CommandScheduler::GetInstance().Run();
   // Update non-command-based subsystems
-  m_ultrasonic.Periodic();
+  //m_ultrasonic.Periodic();
 }
 
 void Robot::DisabledInit() {
@@ -94,17 +96,17 @@ void Robot::AutonomousPeriodic() {
   // The CommandScheduler (called in RobotPeriodic) handles running the autonomous command
   
   // Get ultrasonic distance for autonomous navigation (in centimeters)
-  double leftDistanceCm = m_ultrasonic.GetLeftDistance();
-  double rightDistanceCm = m_ultrasonic.GetRightDistance();
-  bool leftWallDetected = m_ultrasonic.IsLeftWallDetected();
-  bool rightWallDetected = m_ultrasonic.IsRightWallDetected();
+  // double leftDistanceCm = m_ultrasonic.GetLeftDistance();
+  // double rightDistanceCm = m_ultrasonic.GetRightDistance();
+  // bool leftWallDetected = m_ultrasonic.IsLeftWallDetected();
+  // bool rightWallDetected = m_ultrasonic.IsRightWallDetected();
   
-  // Example autonomous logic using distance in centimeters
-  if (leftDistanceCm > 0 && rightDistanceCm > 0) { // Valid reading
-    if (rightWallDetected || leftWallDetected) {
-      amcu.stop();
-    }
-  }
+  // // Example autonomous logic using distance in centimeters
+  // if (leftDistanceCm > 0 && rightDistanceCm > 0) { // Valid reading
+  //   if (rightWallDetected || leftWallDetected) {
+  //     amcu.stop();
+  //   }
+  // }
 }
 
 void Robot::TeleopInit() {
@@ -131,7 +133,7 @@ void Robot::TeleopInit() {
 
 void Robot::TeleopPeriodic() {
   
-  amcu.speedDrive(25, 0, 0);
+  
   
   
   try {

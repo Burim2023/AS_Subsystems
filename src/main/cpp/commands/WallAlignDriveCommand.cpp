@@ -1,61 +1,68 @@
 #include "commands/WallAlignDriveCommand.h"
 #include "commands/SpeedDriveCommand.h"
+#include "commands/Drive/DriveUntilWallCommand.h"
+
 #include <frc2/command/InstantCommand.h>
+#include <frc2/command/WaitUntilCommand.h>
+#include <frc2/command/WaitCommand.h>
+#include <frc2/command/ParallelRaceGroup.h>
+#include <frc2/command/SequentialCommandGroup.h>
+#include <frc2/command/PerpetualCommand.h>
 #include <iostream>
 
-WallAlignDriveCommand::WallAlignDriveCommand(AMCU* amcu, frc::UltrasonicSubsystem* ultrasonic, frc::LidarSubsystem* lidar, 
-                                             double wallThresholdCm, uint8_t driveSpeed, uint8_t turnSpeed) {
+WallAlignDriveCommand::WallAlignDriveCommand(
+    AMCU* amcu,
+    frc::UltrasonicSubsystem* ultrasonic,
+    frc::LidarSubsystem* lidar,
+    double wallThresholdCm,
+    uint8_t driveSpeed,
+    uint8_t turnSpeed /* unused – we always send 30 as requested */) {
+
     SetName("WallAlignDriveCommand");
-
-    // store the provided pointer (may be nullptr; RobotContainer should call SetAMCU later)
     m_amcu = amcu;
-    m_turnLeft = false;
+    m_turnLeft = true;
 
-    // Phase 1: Check sensors and decide turn direction, then create & append the SpeedDriveCommands at runtime
     AddCommands(
-        frc2::InstantCommand([this, ultrasonic, lidar, wallThresholdCm, driveSpeed, turnSpeed]() {
-            // decide turn direction
+        // Build the repeating cycle at runtime so we use the live m_amcu
+        frc2::InstantCommand([this, ultrasonic, lidar, wallThresholdCm, driveSpeed]() {
             if (!ultrasonic || !lidar) {
-                std::cout << "WallAlignDriveCommand: sensors missing, defaulting to no turn\n";
-                m_turnLeft = false;
-            } else {
-                double leftDist = ultrasonic->GetLeftDistance();
-                double rightDist = ultrasonic->GetRightDistance();
-                double frontDist = lidar->GetFrontDistance();
-
-                bool leftWall = leftDist > 0 && leftDist < wallThresholdCm;
-                bool rightWall = rightDist > 0 && rightDist < wallThresholdCm;
-                bool frontWall = frontDist > 0 && frontDist < wallThresholdCm;
-
-                if (frontWall) {
-                    m_turnLeft = leftWall && !rightWall;
-                } else if (leftWall && rightWall) {
-                    m_turnLeft = true;
-                } else {
-                    m_turnLeft = false;
-                }
-
-                std::cout << "WallAlignDriveCommand: Left=" << leftDist << " Right=" << rightDist
-                          << " Front=" << frontDist << " => turnLeft=" << m_turnLeft << std::endl;
+                std::cout << "[WallAlign] sensors missing\n";
+                return;
             }
 
-            // Build SpeedDriveCommand objects now that turn decision is known and (hopefully) m_amcu is set
-            if (!m_amcu) {
-                std::cout << "WallAlignDriveCommand: warning: AMCU is null when creating SpeedDriveCommand\n";
-            }
+            // Use DriveUntilWallCommand for the forward phase (uses US + LiDAR)
+            // lidarThreshold is left adjustable (use 28cm here as a good default)
+            auto forwardCmd = DriveUntilWallCommand(m_amcu, ultrasonic, lidar,
+                                                   wallThresholdCm, 28.0, static_cast<uint8_t>(driveSpeed));
 
-            int16_t rot = m_turnLeft ? -static_cast<int16_t>(turnSpeed) : static_cast<int16_t>(turnSpeed);
+            // short stop command (tiny duration) implemented with SpeedDriveCommand(0)
+            auto stopShort = SpeedDriveCommand(m_amcu, 0.2, 0, 0, 0);
 
-            // Append the turn command then forward command to this SequentialCommandGroup
-            this->AddCommands(
-                SpeedDriveCommand(m_amcu, 3.0, 0, 0, rot),           // timed turn
-                SpeedDriveCommand(m_amcu, 10.0, static_cast<int16_t>(driveSpeed), 0, static_cast<int16_t>(0)) // forward
+            // fixed left turn: 3s at w=30deg/s -> 90deg
+            auto turnCmd = SpeedDriveCommand(m_amcu, 3.0, 0, 0, static_cast<uint8_t>(30));
+            //auto stopAfterTurn = SpeedDriveCommand(m_amcu, 0.2, 0, 0, 0);
+
+            frc2::SequentialCommandGroup cycle(
+                // drive until wall detected
+                forwardCmd,
+
+                // stop briefly
+                stopShort,
+
+                // execute 90° left turn (timed)
+                turnCmd,
+
+                
+                // stop after turn
+                stopAfterTurn
             );
+
+            // Repeat the cycle while scheduled
+            this->AddCommands(frc2::PerpetualCommand(std::move(cycle)));
         })
     );
 }
 
-// Method to set the AMCU instance (can be called after construction)
 void WallAlignDriveCommand::SetAMCU(AMCU* amcu) {
     m_amcu = amcu;
 }

@@ -38,6 +38,7 @@
 #include "commands/SmartPickSequence.h"
 #include "commands/PickupAndDeliverSequence.h"
 #include "commands/WallAlignDriveCommand.h"
+#include "commands/Drive/DriveUntilWallCommand.h"
 
 #include "commands/DriveSmartPickupGround.h"
 // Non-command-based subsystems
@@ -54,6 +55,7 @@
 class RobotContainer {
  public:
   RobotContainer();
+  ~RobotContainer();
 
   frc2::Command* GetAutonomousCommand();
   
@@ -112,6 +114,7 @@ class RobotContainer {
   AppleGripperCheckCommand m_monitorGrip;
   PickupAndDeliverSequence m_pickupAndDerliverSequence;
   WallAlignDriveCommand m_wallAlignDriveCommand;
+  DriveUntilWallCommand m_driveUntilWallCommand;
 
 
 
