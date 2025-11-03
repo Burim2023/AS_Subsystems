@@ -5,7 +5,7 @@
 #include <frc2/command/PrintCommand.h>
 #include "commands/CalibrateElevator.h"
 #include "commands/ElevatorPresets.h"
-#include "subsystems/ElevatorSubsystem.h"
+#include "subsystems/elevator/ElevatorSubsystem.h"
 
 /**
  * Command sequence that demonstrates elevator operation:

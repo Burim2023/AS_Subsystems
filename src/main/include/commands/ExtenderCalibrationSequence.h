@@ -2,7 +2,7 @@
 
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc2/command/WaitCommand.h>
-#include "subsystems/ExtenderSubsystem.h"
+#include "subsystems/elevator/ExtenderSubsystem.h"
 #include "commands/ExtendForDuration.h"
 #include "commands/CalibrateExtender.h"  // Add this include
 

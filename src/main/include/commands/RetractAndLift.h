@@ -1,8 +1,8 @@
 #pragma once
 
 #include <frc2/command/ParallelCommandGroup.h>
-#include "subsystems/ArmSubsystem.h"
-#include "subsystems/ExtenderSubsystem.h"
+#include "subsystems/elevator/ArmSubsystem.h"
+#include "subsystems/elevator/ExtenderSubsystem.h"
 
 /**
  * A parallel command group that retracts the extender while moving the arm to home.

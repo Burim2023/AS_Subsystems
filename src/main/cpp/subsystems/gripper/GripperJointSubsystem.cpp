@@ -1,4 +1,4 @@
-#include "subsystems/GripperJointSubsystem.h"
+#include "subsystems/gripper/GripperJointSubsystem.h"
 #include <iostream>
 #include <algorithm>
 

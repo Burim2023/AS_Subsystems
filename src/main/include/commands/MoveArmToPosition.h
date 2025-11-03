@@ -2,7 +2,7 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
-#include "subsystems/ArmSubsystem.h"
+#include "subsystems/elevator/ArmSubsystem.h"
 
 /**
  * Command to move the arm to a specific angle position.

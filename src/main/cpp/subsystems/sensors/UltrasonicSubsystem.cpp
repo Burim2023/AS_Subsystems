@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-#include "subsystems/UltrasonicSubsystem.h"
+#include "subsystems/sensor/UltrasonicSubsystem.h"
 #include <iostream>
 
 using namespace frc;

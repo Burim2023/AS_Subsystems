@@ -3,8 +3,8 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc2/command/ParallelRaceGroup.h>
 #include <frc2/command/InstantCommand.h>
-#include "subsystems/UltrasonicSubsystem.h"
-#include "subsystems/Lidar.h"
+#include "subsystems/sensor/UltrasonicSubsystem.h"
+#include "subsystems/sensor/Lidar.h"
 #include "AMCU.h"
 
 // Forward-declare WPILib sensors to avoid heavy includes

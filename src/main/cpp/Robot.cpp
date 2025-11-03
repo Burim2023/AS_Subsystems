@@ -8,7 +8,7 @@
 #include "AMCU.h"
 #include "Constants.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
-#include "subsystems/UltrasonicSubsystem.h"
+#include "subsystems/sensor/UltrasonicSubsystem.h"
 #include <networktables/NetworkTableInstance.h>
 
 #include "commands/SpeedDriveCommand.h"

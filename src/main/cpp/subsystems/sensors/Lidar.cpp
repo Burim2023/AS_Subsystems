@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-#include "subsystems/Lidar.h"
+#include "subsystems/sensor/Lidar.h"
 #include <iostream>
 #include <cmath>
 #include <algorithm>

@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-#include "subsystems/IRRangeSubsystem.h"
+#include "subsystems/sensor/IRRangeSubsystem.h"
 #include <iostream>
 #include <cmath>
 

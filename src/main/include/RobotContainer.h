@@ -6,15 +6,15 @@
 
 
 // Subsystem includes
-#include "subsystems/ArmSubsystem.h"
-#include "subsystems/ExtenderSubsystem.h"
-#include "subsystems/GripperSubsystem.h"
-#include "subsystems/GripperJointSubsystem.h"
-#include "subsystems/ElevatorSubsystem.h"
-#include "subsystems/CameraSubsystem.h"
+#include "subsystems/elevator/ArmSubsystem.h"
+#include "subsystems/elevator/ExtenderSubsystem.h"
+#include "subsystems/gripper/GripperSubsystem.h"
+#include "subsystems/gripper/GripperJointSubsystem.h"
+#include "subsystems/elevator/ElevatorSubsystem.h"
+#include "subsystems/vision/CameraSubsystem.h"
 #include "gamepad/OI.h"
-#include "subsystems/UltrasonicSubsystem.h"
-#include "subsystems/Lidar.h"
+#include "subsystems/sensor/UltrasonicSubsystem.h"
+#include "subsystems/sensor/Lidar.h"
 //#include "subsystems/Drivetrain.h"
 
 // Command includes

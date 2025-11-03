@@ -1,4 +1,4 @@
-#include "subsystems/GripperSubsystem.h"
+#include "subsystems/gripper/GripperSubsystem.h"
 #include <iostream>
 
 studica::Servo* GripperServo = nullptr;

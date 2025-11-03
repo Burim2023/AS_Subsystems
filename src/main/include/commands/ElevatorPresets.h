@@ -2,7 +2,7 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
-#include "subsystems/ElevatorSubsystem.h"
+#include "subsystems/elevator/ElevatorSubsystem.h"
 
 /**
  * Command to move elevator to predefined preset positions

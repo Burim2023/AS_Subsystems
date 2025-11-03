@@ -4,8 +4,8 @@
 #include <frc2/command/WaitCommand.h>
 #include <frc2/command/InstantCommand.h>
 #include "commands/MoveGripperJointToPosition.h"
-#include "subsystems/GripperJointSubsystem.h"
-#include "subsystems/GripperSubsystem.h"
+#include "subsystems/gripper/GripperJointSubsystem.h"
+#include "subsystems/gripper/GripperSubsystem.h"
 
 /**
  * Command sequence that demonstrates gripper operation at different levels:

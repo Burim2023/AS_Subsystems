@@ -3,7 +3,7 @@
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc/Timer.h>
-#include "subsystems/ElevatorSubsystem.h"
+#include "subsystems/elevator/ElevatorSubsystem.h"
 
 /**
  * Command to calibrate the elevator using limit switches.

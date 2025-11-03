@@ -3,7 +3,7 @@
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc/Timer.h>
-#include "subsystems/CameraSubsystem.h"
+#include "subsystems/vision/CameraSubsystem.h"
 
 /**
  * Simplified command to detect apple presence using Orbbec 3D depth camera

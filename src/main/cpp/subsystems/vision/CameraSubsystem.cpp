@@ -1,4 +1,4 @@
-#include "subsystems/CameraSubsystem.h"
+#include "subsystems/vision/CameraSubsystem.h"
 
 #include <networktables/NetworkTableInstance.h>
 

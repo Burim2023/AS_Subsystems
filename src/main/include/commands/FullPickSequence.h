@@ -1,10 +1,10 @@
 #pragma once
 
 #include <frc2/command/SequentialCommandGroup.h>
-#include "subsystems/ArmSubsystem.h"
-#include "subsystems/GripperJointSubsystem.h"
-#include "subsystems/GripperSubsystem.h"
-#include "subsystems/ElevatorSubsystem.h"
+#include "subsystems/elevator/ArmSubsystem.h"
+#include "subsystems/gripper/GripperJointSubsystem.h"
+#include "subsystems/gripper/GripperSubsystem.h"
+#include "subsystems/elevator/ElevatorSubsystem.h"
 
 /**
  * A complete sequence to pick up an object:

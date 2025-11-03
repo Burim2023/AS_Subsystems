@@ -2,7 +2,7 @@
 
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
-#include "subsystems/GripperJointSubsystem.h"
+#include "subsystems/gripper/GripperJointSubsystem.h"
 
 /**
  * Command to move the gripper joint to a specific angle position.

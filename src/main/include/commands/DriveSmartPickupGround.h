@@ -12,11 +12,11 @@
 #include <iostream>
 
 // Subsystem includes
-#include "subsystems/ArmSubsystem.h"
-#include "subsystems/GripperSubsystem.h"
-#include "subsystems/GripperJointSubsystem.h"
-#include "subsystems/CameraSubsystem.h"
-#include "subsystems/ElevatorSubsystem.h"
+#include "subsystems/elevator/ArmSubsystem.h"
+#include "subsystems/gripper/GripperSubsystem.h"
+#include "subsystems/gripper/GripperJointSubsystem.h"
+#include "subsystems/vision/CameraSubsystem.h"
+#include "subsystems/elevator/ElevatorSubsystem.h"
 
 // Command includes
 #include "commands/AppleGripperCheckCommand.h"

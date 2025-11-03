@@ -1,7 +1,7 @@
 #pragma once
 
 #include <frc2/command/SubsystemBase.h>
-#include "subsystems/elevator.h"
+#include "subsystems/elevator/elevator.h"
 #include "AMCU.h"
 
 /**

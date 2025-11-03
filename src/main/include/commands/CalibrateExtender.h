@@ -3,7 +3,7 @@
 #include <frc2/command/CommandBase.h>
 #include <frc/Timer.h>
 #include <memory>
-#include "subsystems/ExtenderSubsystem.h"
+#include "subsystems/elevator/ExtenderSubsystem.h"
 #include <frc2/command/WaitCommand.h>
 
 class CalibrateExtender : public frc2::CommandBase {
