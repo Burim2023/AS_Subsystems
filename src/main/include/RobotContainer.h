@@ -36,7 +36,7 @@
 #include "commands/CalibrateExtender.h"
 #include "commands/AppleGripperCheckCommand.h"
 #include "commands/SmartPickSequence.h"
-#include "commands/PickupAndDeliverSequence.h"
+// #include "commands/PickupAndDeliverSequence.h"
 #include "commands/WallAlignDriveCommand.h"
 
 #include "commands/DriveSmartPickupGround.h"
@@ -110,7 +110,7 @@ class RobotContainer {
   AppleGripperCheckCommand m_checkAppleGrip;
   AppleGripperCheckCommand m_waitForGrip;
   AppleGripperCheckCommand m_monitorGrip;
-  PickupAndDeliverSequence m_pickupAndDerliverSequence;
+  // PickupAndDeliverSequence m_pickupAndDerliverSequence;
   WallAlignDriveCommand m_wallAlignDriveCommand;
 
 
