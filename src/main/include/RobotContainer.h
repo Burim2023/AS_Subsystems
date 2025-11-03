@@ -12,7 +12,7 @@
 #include "subsystems/gripper/GripperJointSubsystem.h"
 #include "subsystems/elevator/ElevatorSubsystem.h"
 #include "subsystems/vision/CameraSubsystem.h"
-#include "gamepad/OI.h"
+#include "subsystems/joystick/Gamepad.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"
 #include "subsystems/sensor/Lidar.h"
 //#include "subsystems/Drivetrain.h"
