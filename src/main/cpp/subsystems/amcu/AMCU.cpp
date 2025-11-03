@@ -1,4 +1,4 @@
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 #include <iostream>
 
 // Constructor starts thread for CAN

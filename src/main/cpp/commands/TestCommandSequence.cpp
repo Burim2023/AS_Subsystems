@@ -1,6 +1,6 @@
 #include "commands/TestCommandSequence.h"
 //#include "commands/DriveForDuration.h"
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 #include <frc2/command/WaitCommand.h>
 #include <frc2/command/PrintCommand.h>
 

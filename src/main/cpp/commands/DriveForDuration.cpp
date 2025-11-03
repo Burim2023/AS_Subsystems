@@ -1,5 +1,5 @@
 #include "commands/DriveForDuration.h"
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 #include <iostream>
 
 DriveForDuration::DriveForDuration(AMCU* amcu, double x, double y, double rotation, double duration)

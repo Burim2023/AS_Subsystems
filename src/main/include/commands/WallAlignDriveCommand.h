@@ -5,7 +5,7 @@
 #include <frc2/command/InstantCommand.h>
 #include "subsystems/sensor/UltrasonicSubsystem.h"
 #include "subsystems/sensor/Lidar.h"
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 
 // Forward-declare WPILib sensors to avoid heavy includes
 namespace frc { class UltrasonicSubsystem; class LidarSubsystem; }

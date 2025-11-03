@@ -42,7 +42,7 @@
 #include "commands/DriveSmartPickupGround.h"
 // Non-command-based subsystems
 #include "Constants.h"
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 
 /**
  * This class is where the bulk of the robot should be declared.  Since

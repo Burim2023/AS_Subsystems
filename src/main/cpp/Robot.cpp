@@ -5,7 +5,7 @@
 #include <cmath>
 
 // Optional includes for non-command-based subsystems if needed
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 #include "Constants.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"

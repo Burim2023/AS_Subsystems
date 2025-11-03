@@ -2,7 +2,7 @@
 
 #include <frc2/command/SubsystemBase.h>
 #include "subsystems/elevator/elevator.h"
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 
 /**
  * Elevator subsystem wrapper for command-based framework

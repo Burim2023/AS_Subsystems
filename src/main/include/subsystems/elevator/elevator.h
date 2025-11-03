@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 #include <atomic>
 
 #define ELEVATOR_HEIGHT 200.f  // Maximum elevator height in mm

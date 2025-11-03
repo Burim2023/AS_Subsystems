@@ -1,5 +1,5 @@
 #include "commands/SimpleDrive.h"
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 #include <iostream>
 
 SimpleDrive::SimpleDrive(AMCU* amcu, double forward, double strafe, double rotate)

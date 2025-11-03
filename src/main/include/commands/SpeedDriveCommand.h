@@ -2,7 +2,7 @@
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandBase.h>
 #include <frc/Timer.h>
-#include "AMCU.h"
+#include "subsystems/amcu/AMCU.h"
 
 class SpeedDriveCommand : public frc2::CommandHelper<frc2::CommandBase, SpeedDriveCommand> {
 public:
