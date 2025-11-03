@@ -78,7 +78,7 @@ class RobotContainer {
   CameraSubsystem m_camera;
   frc::UltrasonicSubsystem m_ultrasonic{Constants::kLeftTriggerPort, Constants::kLeftEchoPort, Constants::kRightTriggerPort, Constants::kRightEchoPort};  // Add UltrasonicSubsystem
   frc::LidarSubsystem m_lidar;
-  OI m_oi;
+  Gamepad m_gamepad;
 
  
 
