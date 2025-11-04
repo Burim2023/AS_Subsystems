@@ -8,9 +8,10 @@
 #include "AMCU.h"
 #include "Constants.h"
 #include "utilities/LoggingSystem.h"
-#include "subsystems/UltrasonicSubsystem.h"
+#include "gamepad/OI.h"
+//#include "subsystems/UltrasonicSubsystem.h"
 
-#include "commands/SpeedDriveCommand.h"
+//#include "commands/SpeedDriveCommand.h"
 
 // Global instances for non-command-based subsystems
 OI oi;
@@ -43,6 +44,10 @@ void Robot::RobotPeriodic() {
   
   m_container.GetLidar().Periodic();
   m_container.GetUltrasonic().Periodic();
+  if (auto* lf = m_container.GetLineFollower()) {
+    lf->update();
+    lf->UpdateShuffleboard(10);
+  }
   //frc2::CommandScheduler::GetInstance().Run();
   // Update non-command-based subsystems
   //m_ultrasonic.Periodic();
@@ -112,92 +117,133 @@ void Robot::AutonomousPeriodic() {
 void Robot::TeleopInit() {
   std::cout << "🎮 STARTING TELEOP" << std::endl;
   
-  // Cancel any autonomous commands when teleop starts
-  if (m_autonomousCommand != nullptr) {
-    m_autonomousCommand->Cancel();
-    m_autonomousCommand = nullptr;
-    std::cout << "❌ Cancelled autonomous command" << std::endl;
-  }
+  // // Cancel any autonomous commands when teleop starts
+  // if (m_autonomousCommand != nullptr) {
+  //   m_autonomousCommand->Cancel();
+  //   m_autonomousCommand = nullptr;
+  //   std::cout << "❌ Cancelled autonomous command" << std::endl;
+  // }
   
-  // Cancel all commands before switching to manual control
-  //frc2::CommandScheduler::GetInstance().CancelAll();
+  // // Cancel all commands before switching to manual control
+  // //frc2::CommandScheduler::GetInstance().CancelAll();
   
-  // FORCE STOP all motors immediately
-  amcu.stop();
-  amcu.setSpeed(MOTOR_1, 0);
-  amcu.setSpeed(MOTOR_2, 0);
-  amcu.setSpeed(MOTOR_3, 0);
+  // // FORCE STOP all motors immediately
+  // amcu.stop();
+  // amcu.setSpeed(MOTOR_1, 0);
+  // amcu.setSpeed(MOTOR_2, 0);
+  // amcu.setSpeed(MOTOR_3, 0);
   
-  std::cout << "✅ TELEOP READY - Manual control active" << std::endl;
+  // std::cout << "✅ TELEOP READY - Manual control active" << std::endl;
 }
 
 void Robot::TeleopPeriodic() {
-  
-  
-  
-  
-  try {
-    // Get joystick values with safety checks
-    double leftY = 0.0;
-    double leftX = 0.0;
-    double rightY = 0.0;
-    
-    try { leftY = oi.GetLeftDriveY(); } catch (...) { leftY = 0.0; }
-    try { leftX = oi.GetLeftDriveX(); } catch (...) { leftX = 0.0; }
-    try { rightY = oi.GetRightDriveY(); } catch (...) { rightY = 0.0; }
-    
-    // Apply deadband to prevent joystick drift
-    const double DEADBAND = 0.2;
-    if (std::abs(leftY) < DEADBAND) leftY = 0.0;
-    if (std::abs(leftX) < DEADBAND) leftX = 0.0;
-    if (std::abs(rightY) < DEADBAND) rightY = 0.0;
-    
-    // CRITICAL: Check if ALL inputs are zero first
-    if (leftY == 0.0 && leftX == 0.0 && rightY == 0.0) {
-      // No joystick input - STOP ALL DRIVE MOTORS
-      try {
-        amcu.setSpeed(MOTOR_1, 0);
-        amcu.setSpeed(MOTOR_2, 0);
-        amcu.setSpeed(MOTOR_3, 0);
-      } catch (...) {
-        std::cout << "ERROR: Exception while stopping motors" << std::endl;
-      }
-      return;
-    }
+  frc2::CommandScheduler::GetInstance().Run();
 
-    // IMPORTANT SAFETY LIMITS - much lower speed for testing!
-    // Reduce max speeds until you confirm everything works
-    int forwardSpeed = static_cast<int>(leftY * 20);   // Reduced from 40 to 20
-    int strafeSpeed = static_cast<int>(leftX * 20);    // Reduced from 40 to 20
-    int rotationSpeed = static_cast<int>(rightY * 10); // Reduced from 20 to 10
-    
-    // 3-wheel omni drive calculations
-    int motor1Speed = forwardSpeed - strafeSpeed - rotationSpeed;
-    int motor2Speed = forwardSpeed + strafeSpeed + rotationSpeed;
-    int motor3Speed = strafeSpeed * 2;
-    
-    // Clamp motor speeds to safe range
-    motor1Speed = std::max(-20, std::min(20, motor1Speed)); // Reduced from 40 to 20
-    motor2Speed = std::max(-20, std::min(20, motor2Speed)); // Reduced from 40 to 20
-    motor3Speed = std::max(-20, std::min(20, motor3Speed)); // Reduced from 40 to 20
-    
-    // Set the calculated motor speeds with safety checks
-    try {
-      amcu.setSpeed(MOTOR_1, motor1Speed);
-      amcu.setSpeed(MOTOR_2, motor2Speed);
-      amcu.setSpeed(MOTOR_3, motor3Speed);
-    } catch (const std::exception& e) {
-      std::cout << "ERROR setting motor speeds: " << e.what() << std::endl;
-      // Try to stop motors in case of error
-      try {
-        amcu.stop();
-      } catch (...) {}
-    }
-  } catch (const std::exception& e) {
-    std::cout << "CRITICAL ERROR in TeleopPeriodic: " << e.what() << std::endl;
-  } catch (...) {
-    std::cout << "UNKNOWN ERROR in TeleopPeriodic" << std::endl;
+  // update + telemetry (keep your existing lines)
+  if (auto* lf = m_container.GetLineFollower()) {
+    lf->update();
+    lf->UpdateShuffleboard(10);
+  } else {
+    return;
   }
+
+  // ---- edge-triggered buttons from your OI ----
+      // or use your own access if OI lives in Robot
+
+  static bool prevA = false, prevB = false, prevStart = false, prevBack = false;
+  const bool a     = oi.GetDriveAButton();         // calibrate WHITE
+  const bool b     = oi.GetDriveBButton();         // calibrate BLACK
+  const bool start = oi.GetDriveStartButton();     // raise minSignal
+  const bool back  = oi.GetDriveBackSelectButton();// lower minSignal
+
+  auto* lf = m_container.GetLineFollower();
+
+  // A → capture WHITE (vmax)
+  if (a && !prevA) {
+    lf->CaptureWhite();
+    std::cout << "[LF] Captured WHITE\n";
+  }
+
+  // B → capture BLACK (vmin)
+  if (b && !prevB) {
+    lf->CaptureBlack();
+    std::cout << "[LF] Captured BLACK\n";
+  }
+
+  // Optional: live tweak the detection threshold with Start/Back
+  // (so you can tighten/loosen when it says 'Detected')
+  static double minSig = 0.30;
+  if (start && !prevStart) { minSig = std::min(0.95, minSig + 0.05); lf->setMinSignal(minSig);
+    std::cout << "[LF] minSignal -> " << minSig << "\n"; }
+  if (back  && !prevBack ) { minSig = std::max(0.05, minSig - 0.05); lf->setMinSignal(minSig);
+    std::cout << "[LF] minSignal -> " << minSig << "\n"; }
+
+  prevA = a; prevB = b; prevStart = start; prevBack = back;
+  
+  
+  
+  // try {
+  //   // Get joystick values with safety checks
+  //   double leftY = 0.0;
+  //   double leftX = 0.0;
+  //   double rightY = 0.0;
+    
+  //   try { leftY = oi.GetLeftDriveY(); } catch (...) { leftY = 0.0; }
+  //   try { leftX = oi.GetLeftDriveX(); } catch (...) { leftX = 0.0; }
+  //   try { rightY = oi.GetRightDriveY(); } catch (...) { rightY = 0.0; }
+    
+  //   // Apply deadband to prevent joystick drift
+  //   const double DEADBAND = 0.2;
+  //   if (std::abs(leftY) < DEADBAND) leftY = 0.0;
+  //   if (std::abs(leftX) < DEADBAND) leftX = 0.0;
+  //   if (std::abs(rightY) < DEADBAND) rightY = 0.0;
+    
+  //   // CRITICAL: Check if ALL inputs are zero first
+  //   if (leftY == 0.0 && leftX == 0.0 && rightY == 0.0) {
+  //     // No joystick input - STOP ALL DRIVE MOTORS
+  //     try {
+  //       amcu.setSpeed(MOTOR_1, 0);
+  //       amcu.setSpeed(MOTOR_2, 0);
+  //       amcu.setSpeed(MOTOR_3, 0);
+  //     } catch (...) {
+  //       std::cout << "ERROR: Exception while stopping motors" << std::endl;
+  //     }
+  //     return;
+  //   }
+
+  //   // IMPORTANT SAFETY LIMITS - much lower speed for testing!
+  //   // Reduce max speeds until you confirm everything works
+  //   int forwardSpeed = static_cast<int>(leftY * 20);   // Reduced from 40 to 20
+  //   int strafeSpeed = static_cast<int>(leftX * 20);    // Reduced from 40 to 20
+  //   int rotationSpeed = static_cast<int>(rightY * 10); // Reduced from 20 to 10
+    
+  //   // 3-wheel omni drive calculations
+  //   int motor1Speed = forwardSpeed - strafeSpeed - rotationSpeed;
+  //   int motor2Speed = forwardSpeed + strafeSpeed + rotationSpeed;
+  //   int motor3Speed = strafeSpeed * 2;
+    
+  //   // Clamp motor speeds to safe range
+  //   motor1Speed = std::max(-20, std::min(20, motor1Speed)); // Reduced from 40 to 20
+  //   motor2Speed = std::max(-20, std::min(20, motor2Speed)); // Reduced from 40 to 20
+  //   motor3Speed = std::max(-20, std::min(20, motor3Speed)); // Reduced from 40 to 20
+    
+  //   // Set the calculated motor speeds with safety checks
+  //   try {
+  //     amcu.setSpeed(MOTOR_1, motor1Speed);
+  //     amcu.setSpeed(MOTOR_2, motor2Speed);
+  //     amcu.setSpeed(MOTOR_3, motor3Speed);
+  //   } catch (const std::exception& e) {
+  //     std::cout << "ERROR setting motor speeds: " << e.what() << std::endl;
+  //     // Try to stop motors in case of error
+  //     try {
+  //       amcu.stop();
+  //     } catch (...) {}
+  //   }
+  // } catch (const std::exception& e) {
+  //   std::cout << "CRITICAL ERROR in TeleopPeriodic: " << e.what() << std::endl;
+  // } catch (...) {
+  //   std::cout << "UNKNOWN ERROR in TeleopPeriodic" << std::endl;
+  // }
 }
 
 void Robot::TestPeriodic() {}

@@ -1,25 +1,54 @@
 #pragma once
 
-#include <frc2/command/SequentialCommandGroup.h>
-#include <frc2/command/ParallelRaceGroup.h>
-#include <frc2/command/InstantCommand.h>
+#include <memory>
+
+#include <frc2/command/CommandHelper.h>
+#include <frc2/command/CommandBase.h>
+
+#include "AMCU.h"
 #include "subsystems/UltrasonicSubsystem.h"
 #include "subsystems/Lidar.h"
-#include "AMCU.h"
+#include "commands/Drive/DriveUntilWallCommand.h"
+#include "commands/SpeedDriveCommand.h"
 
-// Forward-declare WPILib sensors to avoid heavy includes
-namespace frc { class UltrasonicSubsystem; class LidarSubsystem; }
-
-class WallAlignDriveCommand : public frc2::SequentialCommandGroup {
+class WallAlignDriveCommand
+    : public frc2::CommandHelper<frc2::CommandBase, WallAlignDriveCommand> {
  public:
-  // Constructor: keep signature so RobotContainer can construct it
-  WallAlignDriveCommand(AMCU* amcu, frc::UltrasonicSubsystem* ultrasonic, frc::LidarSubsystem* lidar,
-                        double wallThresholdCm, uint8_t driveSpeed, uint8_t turnSpeed);
+  WallAlignDriveCommand(AMCU* amcu,
+                        frc::UltrasonicSubsystem* ultrasonic,
+                        frc::LidarSubsystem* lidar,
+                        double wallThresholdCm,
+                        uint8_t driveSpeedCms,
+                        uint8_t turnSpeedDegPerS,
+                        double turnSeconds = 3.0);
 
-  // Method to set the AMCU instance (injection after Robot starts)
+  void Initialize() override;
+  void Execute() override;
+  void End(bool interrupted) override;
+  bool IsFinished() override;
+
   void SetAMCU(AMCU* amcu);
 
  private:
-  AMCU* m_amcu = nullptr;
-  bool m_turnLeft = false; // store turn decision for runtime use
+  enum class Phase { Idle, DrivingToWall, PauseAfterDrive, Turning, PauseAfterTurn };
+
+  AMCU* m_amcu{nullptr};
+  frc::UltrasonicSubsystem* m_ultrasonic{nullptr};
+  frc::LidarSubsystem* m_lidar{nullptr};
+
+  double m_wallThresholdCm{28.0};
+  uint8_t m_driveSpeedCms{20};
+  uint8_t m_turnSpeed{30};
+  double m_turnSeconds{3.0};
+
+  Phase m_phase{Phase::Idle};
+
+  // currently scheduled child command (owned so it lives while scheduled)
+  std::unique_ptr<frc2::Command> m_childCmdOwned;
+  frc2::Command* m_childCmdPtr{nullptr};
+
+  // small pause timers (use SpeedDriveCommand timeout for short stops)
+  double m_shortPauseSeconds{0.12};
+
+  bool m_finished{false};
 };

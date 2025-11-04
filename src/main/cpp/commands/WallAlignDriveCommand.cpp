@@ -1,68 +1,106 @@
 #include "commands/WallAlignDriveCommand.h"
-#include "commands/SpeedDriveCommand.h"
-#include "commands/Drive/DriveUntilWallCommand.h"
 
-#include <frc2/command/InstantCommand.h>
-#include <frc2/command/WaitUntilCommand.h>
-#include <frc2/command/WaitCommand.h>
-#include <frc2/command/ParallelRaceGroup.h>
-#include <frc2/command/SequentialCommandGroup.h>
-#include <frc2/command/PerpetualCommand.h>
+#include <frc2/command/CommandScheduler.h>
 #include <iostream>
 
-WallAlignDriveCommand::WallAlignDriveCommand(
-    AMCU* amcu,
-    frc::UltrasonicSubsystem* ultrasonic,
-    frc::LidarSubsystem* lidar,
-    double wallThresholdCm,
-    uint8_t driveSpeed,
-    uint8_t turnSpeed /* unused – we always send 30 as requested */) {
-
-    SetName("WallAlignDriveCommand");
-    m_amcu = amcu;
-    m_turnLeft = true;
-
-    AddCommands(
-        // Build the repeating cycle at runtime so we use the live m_amcu
-        frc2::InstantCommand([this, ultrasonic, lidar, wallThresholdCm, driveSpeed]() {
-            if (!ultrasonic || !lidar) {
-                std::cout << "[WallAlign] sensors missing\n";
-                return;
-            }
-
-            // Use DriveUntilWallCommand for the forward phase (uses US + LiDAR)
-            // lidarThreshold is left adjustable (use 28cm here as a good default)
-            auto forwardCmd = DriveUntilWallCommand(m_amcu, ultrasonic, lidar,
-                                                   wallThresholdCm, 28.0, static_cast<uint8_t>(driveSpeed));
-
-            // short stop command (tiny duration) implemented with SpeedDriveCommand(0)
-            auto stopShort = SpeedDriveCommand(m_amcu, 0.2, 0, 0, 0);
-
-            // fixed left turn: 3s at w=30deg/s -> 90deg
-            auto turnCmd = SpeedDriveCommand(m_amcu, 3.0, 0, 0, static_cast<uint8_t>(30));
-            //auto stopAfterTurn = SpeedDriveCommand(m_amcu, 0.2, 0, 0, 0);
-
-            frc2::SequentialCommandGroup cycle(
-                // drive until wall detected
-                forwardCmd,
-
-                // stop briefly
-                stopShort,
-
-                // execute 90° left turn (timed)
-                turnCmd,
-
-                
-                // stop after turn
-                stopAfterTurn
-            );
-
-            // Repeat the cycle while scheduled
-            this->AddCommands(frc2::PerpetualCommand(std::move(cycle)));
-        })
-    );
+WallAlignDriveCommand::WallAlignDriveCommand(AMCU* amcu,
+                                             frc::UltrasonicSubsystem* ultrasonic,
+                                             frc::LidarSubsystem* lidar,
+                                             double wallThresholdCm,
+                                             uint8_t driveSpeedCms,
+                                             uint8_t turnSpeedDegPerS,
+                                             double turnSeconds)
+    : m_amcu(amcu),
+      m_ultrasonic(ultrasonic),
+      m_lidar(lidar),
+      m_wallThresholdCm(wallThresholdCm),
+      m_driveSpeedCms(driveSpeedCms),
+      m_turnSpeed(turnSpeedDegPerS),
+      m_turnSeconds(turnSeconds) {
+  SetName("WallAlignDriveCommand");
 }
 
-void WallAlignDriveCommand::SetAMCU(AMCU* amcu) {
-    m_amcu = amcu;
+void WallAlignDriveCommand::SetAMCU(AMCU* amcu) { m_amcu = amcu; }
+
+void WallAlignDriveCommand::Initialize() {
+  m_finished = false;
+  m_phase = Phase::DrivingToWall;
+  m_childCmdOwned.reset();
+  m_childCmdPtr = nullptr;
+
+  // start the first forward-to-wall child
+  m_childCmdOwned =
+      std::make_unique<DriveUntilWallCommand>(m_amcu, m_ultrasonic, m_lidar, m_wallThresholdCm, 28.0, m_driveSpeedCms);
+  m_childCmdPtr = m_childCmdOwned.get();
+  frc2::CommandScheduler::GetInstance().Schedule(m_childCmdPtr);
+  std::cout << "WallAlign: scheduled DriveUntilWallCommand\n";
 }
+
+void WallAlignDriveCommand::Execute() {
+  // If no child is scheduled, schedule the next appropriate child for the current phase
+  auto& sched = frc2::CommandScheduler::GetInstance();
+
+  // If child still running - nothing to do
+  if (m_childCmdPtr && sched.IsScheduled(m_childCmdPtr)) {
+    return;
+  }
+
+  // child finished (or none scheduled) -> advance state machine
+  switch (m_phase) {
+    case Phase::DrivingToWall:
+      // finished driving: schedule short stop, then turning
+      m_phase = Phase::PauseAfterDrive;
+      m_childCmdOwned = std::make_unique<SpeedDriveCommand>(m_amcu, m_shortPauseSeconds, 0, 0, 0);
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: reached wall -> short pause\n";
+      break;
+
+    case Phase::PauseAfterDrive:
+      // after short pause schedule turn (timed SpeedDriveCommand: rotation positive or negative)
+      m_phase = Phase::Turning;
+      // turn left by using negative rotation (or positive depending on robot)
+      m_childCmdOwned = std::make_unique<SpeedDriveCommand>(m_amcu, m_turnSeconds, 0, 0, static_cast<uint8_t>(m_turnSpeed));
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: starting turn\n";
+      break;
+
+    case Phase::Turning:
+      // finished turn -> short pause then go drive again
+      m_phase = Phase::PauseAfterTurn;
+      m_childCmdOwned = std::make_unique<SpeedDriveCommand>(m_amcu, m_shortPauseSeconds, 0, 0, 0);
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: finished turn -> short pause\n";
+      break;
+
+    case Phase::PauseAfterTurn:
+      // after pause restart driving to wall
+      m_phase = Phase::DrivingToWall;
+      m_childCmdOwned =
+          std::make_unique<DriveUntilWallCommand>(m_amcu, m_ultrasonic, m_lidar, m_wallThresholdCm, 28.0, m_driveSpeedCms);
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: restarting DriveUntilWall\n";
+      break;
+
+    case Phase::Idle:
+    default:
+      break;
+  }
+}
+
+void WallAlignDriveCommand::End(bool interrupted) {
+  // cancel any child
+  if (m_childCmdPtr) {
+    frc2::CommandScheduler::GetInstance().Cancel(m_childCmdPtr);
+    m_childCmdPtr = nullptr;
+  }
+  m_childCmdOwned.reset();
+  m_phase = Phase::Idle;
+  m_finished = true;
+  std::cout << "WallAlign: End (interrupted=" << interrupted << ")\n";
+}
+
+bool WallAlignDriveCommand::IsFinished() { return m_finished; }
