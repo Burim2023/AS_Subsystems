@@ -4,7 +4,6 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc/smartdashboard/SendableChooser.h>
 
-
 // Subsystem includes
 #include "subsystems/elevator/ArmSubsystem.h"
 #include "subsystems/elevator/ExtenderSubsystem.h"
@@ -15,7 +14,10 @@
 #include "subsystems/joystick/Gamepad.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"
 #include "subsystems/sensor/Lidar.h"
-//#include "subsystems/Drivetrain.h"
+#include "subsystems/sensor/SensorManager.h"
+#include "subsystems/sensor/IRRangeSubsystem.h"
+// #include "subsystems/Drivetrain.h"
+#include "subsystems/sensor/LineFollower.h"
 
 // Command includes
 #include "commands/MoveArmToPosition.h"
@@ -53,48 +55,55 @@
  * scheduler calls).  Instead, the structure of the robot (including subsystems,
  * commands, and button mappings) should be declared here.
  */
-class RobotContainer {
- public:
+class RobotContainer
+{
+public:
   RobotContainer();
   ~RobotContainer();
 
-  frc2::Command* GetAutonomousCommand();
-  
-  void SetAMCU(AMCU* amcu);
-  //public getter methods
-  GripperJointSubsystem& GetGripperJoint() { return m_gripperJoint; }
-  GripperSubsystem& GetGripper() { return m_gripper; }
-  ElevatorSubsystem& GetElevator() { return m_elevator; }
-  ExtenderSubsystem& GetExtender() { return m_extender; }
-  CameraSubsystem& GetCamera() {return m_camera; }
-  frc::UltrasonicSubsystem& GetUltrasonic() {return m_ultrasonic;}
-  frc::LidarSubsystem& GetLidar() { return m_lidar; }
-  LineFollower* GetLineFollower() { return &m_lineFollower; }
-  Gamepad* GetGamepad() {return &m_gamepad; }
+  frc2::Command *GetAutonomousCommand();
 
- private:
- AMCU* m_amcu; 
- // Subsystems
+  void SetAMCU(AMCU *amcu);
+  void SetSensorManager(SensorManager *sensor_ptr);
+  // public getter methods
+  GripperJointSubsystem &GetGripperJoint() { return m_gripperJoint; }
+  GripperSubsystem &GetGripper() { return m_gripper; }
+  ElevatorSubsystem &GetElevator() { return m_elevator; }
+  ExtenderSubsystem &GetExtender() { return m_extender; }
+  CameraSubsystem &GetCamera() { return m_camera; }
+  frc::UltrasonicSubsystem *GetUltrasonic()
+  {
+    return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr;
+  }
+  frc::IRRangeSubsystem *GetIRRange()
+  {
+    return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr;
+  }
+  LineFollower *GetLineFollower() { return &m_lineFollower; }
+  Gamepad *GetGamepad() { return &m_gamepad; }
+  SensorManager *GetSensorManager() { return m_sensorManager; }
+
+private:
+  AMCU *m_amcu;
+  // Subsystems
   ArmSubsystem m_arm;
   ExtenderSubsystem m_extender;
   GripperSubsystem m_gripper;
   GripperJointSubsystem m_gripperJoint;
   ElevatorSubsystem m_elevator;
   CameraSubsystem m_camera;
-  frc::UltrasonicSubsystem m_ultrasonic{Constants::kLeftTriggerPort, Constants::kLeftEchoPort, Constants::kRightTriggerPort, Constants::kRightEchoPort};  // Add UltrasonicSubsystem
+  // Removed m_ultrasonic - now using SensorManager's ultrasonic
   frc::LidarSubsystem m_lidar;
-  LineFollower m_lineFollower{0,1,2,3, 5.0f};
+  LineFollower m_lineFollower{0, 1, 2, 3, 5.0f};
   Gamepad m_gamepad;
-
- 
+  SensorManager *m_sensorManager = nullptr;
 
   // Autonomous Chooser
-  frc::SendableChooser<frc2::Command*> m_chooser;
+  frc::SendableChooser<frc2::Command *> m_chooser;
 
   // Non-command-based subsystems
-  
 
- // Commands (Reordered to match initialization in .cpp)
+  // Commands (Reordered to match initialization in .cpp)
   FullPickSequence m_autoPickSequence;
   RetractAndLift m_autoRetractAndLift;
   CalibrateExtender m_calibrateExtenderOnly;
@@ -120,8 +129,6 @@ class RobotContainer {
   WallAlignDriveCommand m_wallAlignDriveCommand;
   DriveUntilWallCommand m_driveUntilWallCommand;
   CobraLineFollowCommand m_cobraLineFollowCommand;
-
-
 
   void ConfigureButtonBindings();
 };

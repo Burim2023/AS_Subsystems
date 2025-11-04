@@ -1,28 +1,34 @@
 #include "commands/WallAlignDriveCommand.h"
+#include "Robot.h"
 
 #include <frc2/command/CommandScheduler.h>
 #include <iostream>
 
-WallAlignDriveCommand::WallAlignDriveCommand(AMCU* amcu,
-                                             frc::UltrasonicSubsystem* ultrasonic,
-                                             frc::LidarSubsystem* lidar,
+WallAlignDriveCommand::WallAlignDriveCommand(AMCU *amcu,
+                                             SensorManager *sensorManager,
                                              double wallThresholdCm,
                                              uint8_t driveSpeedCms,
                                              uint8_t turnSpeedDegPerS,
                                              double turnSeconds)
     : m_amcu(amcu),
-      m_ultrasonic(ultrasonic),
-      m_lidar(lidar),
+      m_sensorManager(sensorManager),
       m_wallThresholdCm(wallThresholdCm),
       m_driveSpeedCms(driveSpeedCms),
       m_turnSpeed(turnSpeedDegPerS),
-      m_turnSeconds(turnSeconds) {
+      m_turnSeconds(turnSeconds)
+{
   SetName("WallAlignDriveCommand");
 }
 
-void WallAlignDriveCommand::SetAMCU(AMCU* amcu) { m_amcu = amcu; }
+void WallAlignDriveCommand::SetAMCU(AMCU *amcu) { m_amcu = amcu; }
 
-void WallAlignDriveCommand::Initialize() {
+void WallAlignDriveCommand::SetSensorManager(SensorManager *sensorManager)
+{
+  m_sensorManager = sensorManager;
+}
+
+void WallAlignDriveCommand::Initialize()
+{
   m_finished = false;
   m_phase = Phase::DrivingToWall;
   m_childCmdOwned.reset();
@@ -30,23 +36,32 @@ void WallAlignDriveCommand::Initialize() {
 
   // start the first forward-to-wall child
   m_childCmdOwned =
-      std::make_unique<DriveUntilWallCommand>(m_amcu, m_ultrasonic, m_lidar, m_wallThresholdCm, 28.0, m_driveSpeedCms);
+      std::make_unique<DriveUntilWallCommand>(m_amcu, m_sensorManager, m_wallThresholdCm, 28.0, m_driveSpeedCms);
   m_childCmdPtr = m_childCmdOwned.get();
   frc2::CommandScheduler::GetInstance().Schedule(m_childCmdPtr);
   std::cout << "WallAlign: scheduled DriveUntilWallCommand\n";
 }
 
-void WallAlignDriveCommand::Execute() {
+void WallAlignDriveCommand::Execute()
+{
   // If no child is scheduled, schedule the next appropriate child for the current phase
-  auto& sched = frc2::CommandScheduler::GetInstance();
+  auto &sched = frc2::CommandScheduler::GetInstance();
 
-  // If child still running - nothing to do
-  if (m_childCmdPtr && sched.IsScheduled(m_childCmdPtr)) {
-    return;
-  }
+  if (m_sensorManager && m_sensorManager->GetUltrasonicSubsystem())
+  {
+    // Sensors are managed by SensorManager background thread
+    // double leftDistance = m_sensorManager->GetUltrasonicSubsystem()->GetLeftDistance();
+    // double rightDistance = m_sensorManager->GetUltrasonicSubsystem()->GetRightDistance();
 
-  // child finished (or none scheduled) -> advance state machine
-  switch (m_phase) {
+    // If child still running - nothing to do
+    if (m_childCmdPtr && sched.IsScheduled(m_childCmdPtr))
+    {
+      return;
+    }
+
+    // child finished (or none scheduled) -> advance state machine
+    switch (m_phase)
+    {
     case Phase::DrivingToWall:
       // finished driving: schedule short stop, then turning
       m_phase = Phase::PauseAfterDrive;
@@ -79,7 +94,7 @@ void WallAlignDriveCommand::Execute() {
       // after pause restart driving to wall
       m_phase = Phase::DrivingToWall;
       m_childCmdOwned =
-          std::make_unique<DriveUntilWallCommand>(m_amcu, m_ultrasonic, m_lidar, m_wallThresholdCm, 28.0, m_driveSpeedCms);
+          std::make_unique<DriveUntilWallCommand>(m_amcu, m_sensorManager, m_wallThresholdCm, 28.0, m_driveSpeedCms);
       m_childCmdPtr = m_childCmdOwned.get();
       sched.Schedule(m_childCmdPtr);
       std::cout << "WallAlign: restarting DriveUntilWall\n";
@@ -88,12 +103,15 @@ void WallAlignDriveCommand::Execute() {
     case Phase::Idle:
     default:
       break;
+    }
   }
 }
 
-void WallAlignDriveCommand::End(bool interrupted) {
+void WallAlignDriveCommand::End(bool interrupted)
+{
   // cancel any child
-  if (m_childCmdPtr) {
+  if (m_childCmdPtr)
+  {
     frc2::CommandScheduler::GetInstance().Cancel(m_childCmdPtr);
     m_childCmdPtr = nullptr;
   }

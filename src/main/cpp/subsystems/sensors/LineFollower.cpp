@@ -1,4 +1,4 @@
-#include "subsystems/LineFollower.h"
+#include "subsystems/sensor/LineFollower.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 
 // Constructor

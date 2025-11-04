@@ -16,7 +16,7 @@ namespace Constants
     // inline constexpr const char* FILE_PATH = "/home/lvuser/deploy/robot.log";
     // // widget logfile - matches what the website expects
     // inline constexpr const char* WIDGET_FILE_PATH = "/home/lvuser/deploy/status.json";
-    //amcu constants
+    // amcu constants
     inline constexpr int kWheelRadius = 50;
     inline constexpr int kRobotRadius = 162;
 
@@ -37,9 +37,6 @@ namespace Constants
     // inline constexpr int LEFT_TRIG_PORT = 0;
     // inline constexpr int LEFT_ECHO_PORT = 1;
 
-    // // sensor update rate
-    // inline constexpr int SENSOR_UPDATE_RATE = 25;
-
     // // elevator
     // inline constexpr int GRIPPER_TILT_PORT = 10;
     // inline constexpr int GRIPPER_OPEN_PORT = 11;
@@ -55,8 +52,8 @@ namespace Constants
     inline constexpr int LIMIT_SWITCH_STOP_FRONT_PORT = 4;
 
     // Swapped due to 1:1 gear ratio mechanical reversal
-    inline constexpr double EXTENDER_DRIVE_FORWARD = 0.6;   // Was 0.0, now 1.0
-    inline constexpr double EXTENDER_DRIVE_BACKWARD = 0.4;  // Was 1.0, now 0.0
+    inline constexpr double EXTENDER_DRIVE_FORWARD = 0.6;  // Was 0.0, now 1.0
+    inline constexpr double EXTENDER_DRIVE_BACKWARD = 0.4; // Was 1.0, now 0.0
     inline constexpr double EXTENDER_DRIVE_STOP = 0.5;
 
     inline constexpr int SENSOR_UPDATE_RATE = 25;

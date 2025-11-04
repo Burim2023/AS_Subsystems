@@ -5,18 +5,17 @@
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandBase.h>
 
-#include "AMCU.h"
-#include "subsystems/UltrasonicSubsystem.h"
-#include "subsystems/Lidar.h"
+#include "subsystems/amcu/AMCU.h"
+#include "subsystems/sensor/SensorManager.h"
 #include "commands/Drive/DriveUntilWallCommand.h"
 #include "commands/SpeedDriveCommand.h"
 
 class WallAlignDriveCommand
-    : public frc2::CommandHelper<frc2::CommandBase, WallAlignDriveCommand> {
- public:
-  WallAlignDriveCommand(AMCU* amcu,
-                        frc::UltrasonicSubsystem* ultrasonic,
-                        frc::LidarSubsystem* lidar,
+    : public frc2::CommandHelper<frc2::CommandBase, WallAlignDriveCommand>
+{
+public:
+  WallAlignDriveCommand(AMCU *amcu,
+                        SensorManager *sensorManager,
                         double wallThresholdCm,
                         uint8_t driveSpeedCms,
                         uint8_t turnSpeedDegPerS,
@@ -27,14 +26,21 @@ class WallAlignDriveCommand
   void End(bool interrupted) override;
   bool IsFinished() override;
 
-  void SetAMCU(AMCU* amcu);
+  void SetAMCU(AMCU *amcu);
+  void SetSensorManager(SensorManager *sensorManager);
 
- private:
-  enum class Phase { Idle, DrivingToWall, PauseAfterDrive, Turning, PauseAfterTurn };
+private:
+  enum class Phase
+  {
+    Idle,
+    DrivingToWall,
+    PauseAfterDrive,
+    Turning,
+    PauseAfterTurn
+  };
 
-  AMCU* m_amcu{nullptr};
-  frc::UltrasonicSubsystem* m_ultrasonic{nullptr};
-  frc::LidarSubsystem* m_lidar{nullptr};
+  AMCU *m_amcu{nullptr};
+  SensorManager *m_sensorManager{nullptr};
 
   double m_wallThresholdCm{28.0};
   uint8_t m_driveSpeedCms{20};
@@ -45,7 +51,7 @@ class WallAlignDriveCommand
 
   // currently scheduled child command (owned so it lives while scheduled)
   std::unique_ptr<frc2::Command> m_childCmdOwned;
-  frc2::Command* m_childCmdPtr{nullptr};
+  frc2::Command *m_childCmdPtr{nullptr};
 
   // small pause timers (use SpeedDriveCommand timeout for short stops)
   double m_shortPauseSeconds{0.12};

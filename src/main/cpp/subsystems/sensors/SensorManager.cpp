@@ -48,7 +48,8 @@ void SensorManager::InitializeSensors()
     {
         infraRed->Init();
     }
-    if (lidar) {
+    if (lidar)
+    {
         lidar->Init();
     }
 }

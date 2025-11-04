@@ -13,12 +13,12 @@
 class SensorManager
 {
 public:
-    SensorManager(); 
+    SensorManager();
     ~SensorManager();
     void SensorManagerStartThread();
     void SensorWorker();
     void InitializeSensors();
-    
+
     frc::UltrasonicSubsystem *GetUltrasonicSubsystem();
     frc::IRRangeSubsystem *GetIRRangeSubsystem();
     frc::LidarSubsystem *GetLidarSubsystem();

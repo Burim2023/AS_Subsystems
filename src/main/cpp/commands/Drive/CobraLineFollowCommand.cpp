@@ -1,6 +1,6 @@
 #include "commands/Drive/CobraLineFollowCommand.h"
-#include "subsystems/LineFollower.h"
-#include "AMCU.h"
+#include "subsystems/sensor/LineFollower.h"
+#include "subsystems/amcu/AMCU.h"
 
 #include <algorithm>
 #include <cmath>
