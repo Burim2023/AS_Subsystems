@@ -1,61 +1,106 @@
 #include "commands/WallAlignDriveCommand.h"
-#include "commands/SpeedDriveCommand.h"
-#include <frc2/command/InstantCommand.h>
+
+#include <frc2/command/CommandScheduler.h>
 #include <iostream>
 
-WallAlignDriveCommand::WallAlignDriveCommand(AMCU* amcu, frc::UltrasonicSubsystem* ultrasonic, frc::LidarSubsystem* lidar, 
-                                             double wallThresholdCm, uint8_t driveSpeed, uint8_t turnSpeed) {
-    SetName("WallAlignDriveCommand");
-
-    // store the provided pointer (may be nullptr; RobotContainer should call SetAMCU later)
-    m_amcu = amcu;
-    m_turnLeft = false;
-
-    // Phase 1: Check sensors and decide turn direction, then create & append the SpeedDriveCommands at runtime
-    AddCommands(
-        frc2::InstantCommand([this, ultrasonic, lidar, wallThresholdCm, driveSpeed, turnSpeed]() {
-            // decide turn direction
-            if (!ultrasonic || !lidar) {
-                std::cout << "WallAlignDriveCommand: sensors missing, defaulting to no turn\n";
-                m_turnLeft = false;
-            } else {
-                double leftDist = ultrasonic->GetLeftDistance();
-                double rightDist = ultrasonic->GetRightDistance();
-                double frontDist = lidar->GetFrontDistance();
-
-                bool leftWall = leftDist > 0 && leftDist < wallThresholdCm;
-                bool rightWall = rightDist > 0 && rightDist < wallThresholdCm;
-                bool frontWall = frontDist > 0 && frontDist < wallThresholdCm;
-
-                if (frontWall) {
-                    m_turnLeft = leftWall && !rightWall;
-                } else if (leftWall && rightWall) {
-                    m_turnLeft = true;
-                } else {
-                    m_turnLeft = false;
-                }
-
-                std::cout << "WallAlignDriveCommand: Left=" << leftDist << " Right=" << rightDist
-                          << " Front=" << frontDist << " => turnLeft=" << m_turnLeft << std::endl;
-            }
-
-            // Build SpeedDriveCommand objects now that turn decision is known and (hopefully) m_amcu is set
-            if (!m_amcu) {
-                std::cout << "WallAlignDriveCommand: warning: AMCU is null when creating SpeedDriveCommand\n";
-            }
-
-            int16_t rot = m_turnLeft ? -static_cast<int16_t>(turnSpeed) : static_cast<int16_t>(turnSpeed);
-
-            // Append the turn command then forward command to this SequentialCommandGroup
-            this->AddCommands(
-                SpeedDriveCommand(m_amcu, 3.0, 0, 0, rot),           // timed turn
-                SpeedDriveCommand(m_amcu, 10.0, static_cast<int16_t>(driveSpeed), 0, static_cast<int16_t>(0)) // forward
-            );
-        })
-    );
+WallAlignDriveCommand::WallAlignDriveCommand(AMCU* amcu,
+                                             frc::UltrasonicSubsystem* ultrasonic,
+                                             frc::LidarSubsystem* lidar,
+                                             double wallThresholdCm,
+                                             uint8_t driveSpeedCms,
+                                             uint8_t turnSpeedDegPerS,
+                                             double turnSeconds)
+    : m_amcu(amcu),
+      m_ultrasonic(ultrasonic),
+      m_lidar(lidar),
+      m_wallThresholdCm(wallThresholdCm),
+      m_driveSpeedCms(driveSpeedCms),
+      m_turnSpeed(turnSpeedDegPerS),
+      m_turnSeconds(turnSeconds) {
+  SetName("WallAlignDriveCommand");
 }
 
-// Method to set the AMCU instance (can be called after construction)
-void WallAlignDriveCommand::SetAMCU(AMCU* amcu) {
-    m_amcu = amcu;
+void WallAlignDriveCommand::SetAMCU(AMCU* amcu) { m_amcu = amcu; }
+
+void WallAlignDriveCommand::Initialize() {
+  m_finished = false;
+  m_phase = Phase::DrivingToWall;
+  m_childCmdOwned.reset();
+  m_childCmdPtr = nullptr;
+
+  // start the first forward-to-wall child
+  m_childCmdOwned =
+      std::make_unique<DriveUntilWallCommand>(m_amcu, m_ultrasonic, m_lidar, m_wallThresholdCm, 28.0, m_driveSpeedCms);
+  m_childCmdPtr = m_childCmdOwned.get();
+  frc2::CommandScheduler::GetInstance().Schedule(m_childCmdPtr);
+  std::cout << "WallAlign: scheduled DriveUntilWallCommand\n";
 }
+
+void WallAlignDriveCommand::Execute() {
+  // If no child is scheduled, schedule the next appropriate child for the current phase
+  auto& sched = frc2::CommandScheduler::GetInstance();
+
+  // If child still running - nothing to do
+  if (m_childCmdPtr && sched.IsScheduled(m_childCmdPtr)) {
+    return;
+  }
+
+  // child finished (or none scheduled) -> advance state machine
+  switch (m_phase) {
+    case Phase::DrivingToWall:
+      // finished driving: schedule short stop, then turning
+      m_phase = Phase::PauseAfterDrive;
+      m_childCmdOwned = std::make_unique<SpeedDriveCommand>(m_amcu, m_shortPauseSeconds, 0, 0, 0);
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: reached wall -> short pause\n";
+      break;
+
+    case Phase::PauseAfterDrive:
+      // after short pause schedule turn (timed SpeedDriveCommand: rotation positive or negative)
+      m_phase = Phase::Turning;
+      // turn left by using negative rotation (or positive depending on robot)
+      m_childCmdOwned = std::make_unique<SpeedDriveCommand>(m_amcu, m_turnSeconds, 0, 0, static_cast<uint8_t>(m_turnSpeed));
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: starting turn\n";
+      break;
+
+    case Phase::Turning:
+      // finished turn -> short pause then go drive again
+      m_phase = Phase::PauseAfterTurn;
+      m_childCmdOwned = std::make_unique<SpeedDriveCommand>(m_amcu, m_shortPauseSeconds, 0, 0, 0);
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: finished turn -> short pause\n";
+      break;
+
+    case Phase::PauseAfterTurn:
+      // after pause restart driving to wall
+      m_phase = Phase::DrivingToWall;
+      m_childCmdOwned =
+          std::make_unique<DriveUntilWallCommand>(m_amcu, m_ultrasonic, m_lidar, m_wallThresholdCm, 28.0, m_driveSpeedCms);
+      m_childCmdPtr = m_childCmdOwned.get();
+      sched.Schedule(m_childCmdPtr);
+      std::cout << "WallAlign: restarting DriveUntilWall\n";
+      break;
+
+    case Phase::Idle:
+    default:
+      break;
+  }
+}
+
+void WallAlignDriveCommand::End(bool interrupted) {
+  // cancel any child
+  if (m_childCmdPtr) {
+    frc2::CommandScheduler::GetInstance().Cancel(m_childCmdPtr);
+    m_childCmdPtr = nullptr;
+  }
+  m_childCmdOwned.reset();
+  m_phase = Phase::Idle;
+  m_finished = true;
+  std::cout << "WallAlign: End (interrupted=" << interrupted << ")\n";
+}
+
+bool WallAlignDriveCommand::IsFinished() { return m_finished; }

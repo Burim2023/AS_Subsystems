@@ -38,6 +38,8 @@
 #include "commands/SmartPickSequence.h"
 // #include "commands/PickupAndDeliverSequence.h"
 #include "commands/WallAlignDriveCommand.h"
+#include "commands/Drive/DriveUntilWallCommand.h"
+#include "commands/Drive/CobraLineFollowCommand.h"
 
 #include "commands/DriveSmartPickupGround.h"
 // Non-command-based subsystems
@@ -54,6 +56,7 @@
 class RobotContainer {
  public:
   RobotContainer();
+  ~RobotContainer();
 
   frc2::Command* GetAutonomousCommand();
   
@@ -66,6 +69,8 @@ class RobotContainer {
   CameraSubsystem& GetCamera() {return m_camera; }
   frc::UltrasonicSubsystem& GetUltrasonic() {return m_ultrasonic;}
   frc::LidarSubsystem& GetLidar() { return m_lidar; }
+  LineFollower* GetLineFollower() { return &m_lineFollower; }
+  Gamepad* GetGamepad() {return &m_gamepad; }
 
  private:
  AMCU* m_amcu; 
@@ -78,6 +83,7 @@ class RobotContainer {
   CameraSubsystem m_camera;
   frc::UltrasonicSubsystem m_ultrasonic{Constants::kLeftTriggerPort, Constants::kLeftEchoPort, Constants::kRightTriggerPort, Constants::kRightEchoPort};  // Add UltrasonicSubsystem
   frc::LidarSubsystem m_lidar;
+  LineFollower m_lineFollower{0,1,2,3, 5.0f};
   Gamepad m_gamepad;
 
  
@@ -112,6 +118,8 @@ class RobotContainer {
   AppleGripperCheckCommand m_monitorGrip;
   // PickupAndDeliverSequence m_pickupAndDerliverSequence;
   WallAlignDriveCommand m_wallAlignDriveCommand;
+  DriveUntilWallCommand m_driveUntilWallCommand;
+  CobraLineFollowCommand m_cobraLineFollowCommand;
 
 
 
