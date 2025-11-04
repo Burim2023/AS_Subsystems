@@ -32,7 +32,7 @@ void SensorManager::SensorWorker()
     {
         ultraSonic->UpdateUltraSonic();
         infraRed->UpdateInfraRed();
-        // lidar->UpdateLidar();
+        lidar->Periodic();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
     }
@@ -48,9 +48,9 @@ void SensorManager::InitializeSensors()
     {
         infraRed->Init();
     }
-    // if (lidar) {
-    //     lidar->Init();
-    // }
+    if (lidar) {
+        lidar->Init();
+    }
 }
 
 void SensorManager::SensorManagerStartThread()
@@ -70,7 +70,7 @@ frc::IRRangeSubsystem *SensorManager::GetIRRangeSubsystem()
     return infraRed.get();
 }
 
-// LidarSubsystem *SensorManager::GetLidarSubsystem()
-// {
-//     return lidar.get();
-// }
+frc::LidarSubsystem *SensorManager::GetLidarSubsystem()
+{
+    return lidar.get();
+}

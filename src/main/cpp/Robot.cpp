@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 
-// Optional includes for non-command-based subsystems if needed
 #include "subsystems/amcu/AMCU.h"
 #include "Constants.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
@@ -13,7 +12,6 @@
 
 #include "commands/SpeedDriveCommand.h"
 
-// Global instances for non-command-based subsystems
 Gamepad gamepad;
 AMCU amcu;
 frc::UltrasonicSubsystem m_ultrasonic(0, 1, 2, 3);
@@ -21,24 +19,17 @@ SensorManager sensormanager;
 
 
 void Robot::RobotInit() {
-  // Initialize logging system
   InitLogging(&sensormanager);
   SetupLogging();
   sensormanager.InitializeSensors();
   sensormanager.SensorManagerStartThread();
   
-  // Initialize ultrasonic subsystem (non-command-based)
-  m_ultrasonic.Init();
   //amcu.init();
-  
-  // Pass AMCU instance to RobotContainer
   m_container.SetAMCU(&amcu);
 
   
   amcu.initOmniDriveBase(Constants::kWheelRadius, Constants::kRobotRadius, Constants::kMotorLeft, Constants::kMotorRight, Constants::kMotorBack);
   
-  
-  // All command-based subsystems are initialized in RobotContainer constructor
 }
 
 void Robot::RobotPeriodic() {
@@ -53,32 +44,35 @@ void Robot::RobotPeriodic() {
 }
 
 void Robot::DisabledInit() {
-  std::cout << "🛑 DISABLING ROBOT" << std::endl;
+  try
+  {
+    amcu.stop();
+    amcu.setSpeed(MOTOR_1, 0);
+    amcu.setSpeed(MOTOR_2, 0);
+    amcu.setSpeed(MOTOR_3, 0);
+    amcu.setSpeed(MOTOR_0, 0);
+    
+    frc2::CommandScheduler::GetInstance().CancelAll();
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
   
-  amcu.stop();
+ 
   
-  // FORCE STOP all individual motors
-  amcu.setSpeed(MOTOR_1, 0);
-  amcu.setSpeed(MOTOR_2, 0);
-  amcu.setSpeed(MOTOR_3, 0);
-  amcu.setSpeed(MOTOR_0, 0);
-  
-  // Cancel all running commands
-  frc2::CommandScheduler::GetInstance().CancelAll();
-  
-  std::cout << "✅ Robot disabled - all motors stopped" << std::endl;
+  LOG_DISABLED(" Disabled.");
 }
 
 void Robot::DisabledPeriodic() {
  
-  amcu.setSpeed(MOTOR_1, 0);
-  amcu.setSpeed(MOTOR_2, 0);
-  amcu.setSpeed(MOTOR_3, 0);
+  // amcu.setSpeed(MOTOR_1, 0);
+  // amcu.setSpeed(MOTOR_2, 0);
+  // amcu.setSpeed(MOTOR_3, 0);
   
 }
 
 void Robot::AutonomousInit() {
-  std::cout << "🤖 STARTING AUTONOMOUS" << std::endl;
   
   // Get the autonomous command from the container
   m_autonomousCommand = m_container.GetAutonomousCommand();
@@ -86,14 +80,16 @@ void Robot::AutonomousInit() {
   // Schedule the autonomous command (if one was selected)
   if (m_autonomousCommand != nullptr) {
     m_autonomousCommand->Schedule();
-    std::cout << "✅ Autonomous command scheduled" << std::endl;
+    LOG_INFO("Autonomous command scheduled")
   }
-  
-  // Stop motors initially
+
   amcu.stop();
   amcu.setSpeed(MOTOR_1, 0);
   amcu.setSpeed(MOTOR_2, 0);
   amcu.setSpeed(MOTOR_3, 0);
+
+  last_mode = {LOG_PURPLE, "[AUTONOMOUS]"};
+  LOG_AUTONOMOUS("Enabled");
 }
 
 void Robot::AutonomousPeriodic() {
@@ -114,13 +110,12 @@ void Robot::AutonomousPeriodic() {
 }
 
 void Robot::TeleopInit() {
-  std::cout << "🎮 STARTING TELEOP" << std::endl;
   
   // Cancel any autonomous commands when teleop starts
   if (m_autonomousCommand != nullptr) {
     m_autonomousCommand->Cancel();
     m_autonomousCommand = nullptr;
-    std::cout << "❌ Cancelled autonomous command" << std::endl;
+    LOG_WARN("Cancelled all autonomous commands")
   }
   
   // Cancel all commands before switching to manual control
@@ -132,7 +127,8 @@ void Robot::TeleopInit() {
   amcu.setSpeed(MOTOR_2, 0);
   amcu.setSpeed(MOTOR_3, 0);
   
-  std::cout << "✅ TELEOP READY - Manual control active" << std::endl;
+  last_mode = {LOG_CYAN, "[TELEOP]"};
+  LOG_TELEOP("Enabled.");
 }
 
 void Robot::TeleopPeriodic() {
@@ -202,6 +198,12 @@ void Robot::TeleopPeriodic() {
   }
 }
 
+void Robot::TestInit() {
+
+  last_mode = {LOG_YELLOW, "[TEST]"};
+  LOG_TEST("Enabled.");
+
+}
 void Robot::TestPeriodic() {}
 
 #ifndef RUNNING_FRC_TESTS

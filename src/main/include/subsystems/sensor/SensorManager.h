@@ -13,7 +13,7 @@
 class SensorManager
 {
 public:
-    SensorManager();
+    SensorManager(); 
     ~SensorManager();
     void SensorManagerStartThread();
     void SensorWorker();
