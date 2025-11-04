@@ -8,20 +8,24 @@
 #include "subsystems/sensor/IRRangeSubsystem.h"
 #include <iostream>
 #include <cmath>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 using namespace frc;
 
 IRRangeSubsystem::IRRangeSubsystem(int leftAnalogPort, int rightAnalogPort) : m_leftAnalogPort(leftAnalogPort), m_rightAnalogPort(rightAnalogPort) {}
 
+IRRangeSubsystem::~IRRangeSubsystem() {}
 
-IRRangeSubsystem::~IRRangeSubsystem(){}
-
-void IRRangeSubsystem::Init() {
-    if (m_irSideLeft == nullptr && m_irSideRight == nullptr) {
-        try{
+void IRRangeSubsystem::Init()
+{
+    if (m_irSideLeft == nullptr && m_irSideRight == nullptr)
+    {
+        try
+        {
             m_irSideLeft = std::make_unique<frc::AnalogInput>(m_leftAnalogPort);
             m_irSideRight = std::make_unique<frc::AnalogInput>(m_rightAnalogPort);
-        }catch(const std::exception& e)
+        }
+        catch (const std::exception &e)
         {
             std::cerr << e.what() << '\n';
         }
@@ -30,8 +34,9 @@ void IRRangeSubsystem::Init() {
 
 void IRRangeSubsystem::UpdateInfraRed()
 {
-    
-    if (m_irSideLeft != nullptr && m_irSideRight != nullptr) {
+
+    if (m_irSideLeft != nullptr && m_irSideRight != nullptr)
+    {
         try
         {
             const size_t maxSamples = 9;
@@ -39,10 +44,16 @@ void IRRangeSubsystem::UpdateInfraRed()
             double vRight = m_irSideRight->GetAverageVoltage();
 
             // guard against zero or tiny voltages
-            if (vLeft <= 0.0001) {vLeft = 0.0001;}
-            if (vRight <= 0.0001) {vRight = 0.0001;}
+            if (vLeft <= 0.0001)
+            {
+                vLeft = 0.0001;
+            }
+            if (vRight <= 0.0001)
+            {
+                vRight = 0.0001;
+            }
 
-            double rawLeft  = std::pow(vLeft,  -1.2045) * 27.726;
+            double rawLeft = std::pow(vLeft, -1.2045) * 27.726;
             double rawRight = std::pow(vRight, -1.2045) * 27.726 - 1.0;
 
             irSideLeftValueList.push_back(rawLeft);
@@ -58,7 +69,7 @@ void IRRangeSubsystem::UpdateInfraRed()
             if (!irSideRightValueList.empty())
                 irRightValue = getMedian(irSideRightValueList);
         }
-        catch(const std::exception& e)
+        catch (const std::exception &e)
         {
             std::cerr << e.what() << '\n';
         }
@@ -92,7 +103,28 @@ double IRRangeSubsystem::GetIRRightDistance()
 
 bool IRRangeSubsystem::IRDistanceSimilar()
 {
-    double IRDistance = GetIRLeftDistance()-GetIRRightDistance();
-    if(IRDistance > -1 && IRDistance < 1) {return true;}
+    double IRDistance = GetIRLeftDistance() - GetIRRightDistance();
+    if (IRDistance > -1 && IRDistance < 1)
+    {
+        return true;
+    }
     return false;
+}
+
+double IRRangeSubsystem::GetIRRLeftVoltage()
+{
+    if (m_irSideLeft)
+    {
+        return m_irSideLeft->GetVoltage();
+    }
+    return 0.0;
+}
+
+double IRRangeSubsystem::GetIRRightVoltage()
+{
+    if (m_irSideRight)
+    {
+        return m_irSideRight->GetVoltage();
+    }
+    return 0.0;
 }

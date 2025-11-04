@@ -24,6 +24,7 @@ void Robot::RobotInit() {
   // Initialize logging system
   InitLogging(&sensormanager);
   SetupLogging();
+  sensormanager.InitializeSensors();
   sensormanager.SensorManagerStartThread();
   
   // Initialize ultrasonic subsystem (non-command-based)

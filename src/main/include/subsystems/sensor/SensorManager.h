@@ -17,8 +17,8 @@ public:
     ~SensorManager();
     void SensorManagerStartThread();
     void SensorWorker();
-
-    // Getter methods to access sensor instances
+    void InitializeSensors();
+    
     frc::UltrasonicSubsystem *GetUltrasonicSubsystem();
     frc::IRRangeSubsystem *GetIRRangeSubsystem();
     frc::LidarSubsystem *GetLidarSubsystem();
@@ -26,10 +26,8 @@ public:
 private:
     std::thread workerThread;
     std::atomic<bool> stopThread;
-     // Example analog port 0
 
     std::unique_ptr<frc::UltrasonicSubsystem> ultraSonic;
-    std::unique_ptr<frc::IRRangeSubsystem> infraRedLeft;
-    std::unique_ptr<frc::IRRangeSubsystem> infraRedRight;
+    std::unique_ptr<frc::IRRangeSubsystem> infraRed;
     std::unique_ptr<frc::LidarSubsystem> lidar;
 };
