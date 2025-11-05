@@ -21,8 +21,10 @@ void Robot::RobotInit()
   // Initialize SensorManager after WPILib is ready
   sensormanager = new SensorManager();
 
-  InitLogging(sensormanager);
-  SetupLogging();
+  // FIXED: File logging for logs, NetworkTables for sensors
+  SetupLogging();             // Redirects cout/cerr to file
+  InitLogging(sensormanager); // Sets up NetworkTables for sensors
+
   sensormanager->InitializeSensors();
   sensormanager->SensorManagerStartThread();
 
@@ -35,9 +37,7 @@ void Robot::RobotInit()
 
 void Robot::RobotPeriodic()
 {
-  UpdateLogging(sensormanager);
-  // CRITICAL FIX: Only run command scheduler during autonomous and disabled
-  // NOT during teleop to prevent conflicts
+  UpdateLogging(sensormanager); // FIXED: sensormanager is already a pointer, don't use &
 
   frc2::CommandScheduler::GetInstance().Run();
 
@@ -146,17 +146,22 @@ void Robot::TeleopInit()
 
 void Robot::TeleopPeriodic()
 {
-  frc2::CommandScheduler::GetInstance().Run();
-
-  // update + telemetry (keep your existing lines)
-  if (auto *lf = m_container.GetLineFollower())
+  try
   {
-    lf->update();
-    lf->UpdateShuffleboard(10);
+    // update + telemetry (keep your existing lines)
+    if (auto *lf = m_container.GetLineFollower())
+    {
+      lf->update();
+      lf->UpdateShuffleboard(10);
+    }
+    else
+    {
+      return;
+    }
   }
-  else
+  catch (const std::exception &e)
   {
-    return;
+    std::cout << e.what() << '\n';
   }
 
   // ---- edge-triggered buttons from your OI ----

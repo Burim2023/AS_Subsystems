@@ -115,7 +115,7 @@ void ExtenderSubsystem::ExtenderSubsystemCurrentState() {
 }
 
 void ExtenderSubsystem::Periodic(){
-    //ExtenderSubsystemCurrentState();
+    //ExtenderSubsystemCurrentState();  
     // CRITICAL SAFETY: Check limit switches every periodic cycle
     bool frontPressed = IsFrontLimitPressed();
     bool backPressed = IsBackLimitPressed();
@@ -123,8 +123,8 @@ void ExtenderSubsystem::Periodic(){
     // Debug output every 50 cycles (~1 second) to avoid spam
     static int debugCounter = 0;
     if (debugCounter++ % 200 == 0) {
-        std::cout << "Periodic: Front=" << frontPressed << " Back=" << backPressed 
-                  << " State=" << GetCurrentStateString() << std::endl;
+        // std::cout << "Periodic: Front=" << frontPressed << " Back=" << backPressed 
+        //           << " State=" << GetCurrentStateString() << std::endl;
     }
     
     // SAFETY: Stop immediately if limit switch is hit

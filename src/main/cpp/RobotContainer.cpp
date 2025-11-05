@@ -66,17 +66,7 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
   // m_chooser.AddOption("Smart Pick Sequence", new SmartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator));
   m_chooser.AddOption("Smart Pick Sequence", &m_smartPickSequence);
-  // m_chooser.AddOption("Drive to Apple And Pick off Ground!", &m_driveSmartPickupGround);
-  m_chooser.AddOption("Drive Smart Pickup", new frc2::InstantCommand([this]
-                                                                     {
-        if (!m_amcu) {
-            std::cout << "RobotContainer: AMCU is null - cannot start DriveSmartPickupGround" << std::endl;
-            return;
-        }
-        // construct and schedule a fresh command instance
-        frc2::CommandScheduler::GetInstance().Schedule(
-            new DriveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu)
-        ); }));
+  m_chooser.AddOption("Drive Smart Pickup", &m_driveSmartPickupGround); // FIXED: Use member variable instead of leaked new
   // m_chooser.AddOption("Pickup&Deliver", &m_pickupAndDerliverSequence);
 
   // Elevator commands
