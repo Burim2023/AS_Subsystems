@@ -24,6 +24,9 @@ public:
     frc::LidarSubsystem *GetLidarSubsystem();
 
 private:
+    std::mutex m_sensorMutex;
+    std::atomic<bool> m_lidarReady{false}; 
+
     std::thread workerThread;
     std::atomic<bool> stopThread;
 

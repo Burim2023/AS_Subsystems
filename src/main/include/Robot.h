@@ -26,16 +26,17 @@ public:
   void TestInit() override;
   void TestPeriodic() override;
 
-  static SensorManager *GetSensorManager() { return sensormanager; }
-  static AMCU *GetAmcu() { return amcu; }
-  static Gamepad *GetGamepad() { return gamepad; }
+  static SensorManager* GetSensorManager() {  return s_instance ? s_instance->m_sensormanager.get() : nullptr; }
+  static AMCU* GetAmcu() { return s_instance ? s_instance->m_amcu.get() : nullptr; }
+  static Gamepad *GetGamepad() { return s_instance ? s_instance->m_gamepad.get() : nullptr; }
 
 private:
   frc2::Command *m_autonomousCommand = nullptr;
 
   RobotContainer m_container;
-  static SensorManager *sensormanager;
-  static AMCU *amcu;
-  static Gamepad *gamepad;
+  static Robot* s_instance;
+  std::unique_ptr<SensorManager> m_sensormanager;
+  std::unique_ptr<AMCU> m_amcu;
+  std::unique_ptr<Gamepad> m_gamepad;
 
 };

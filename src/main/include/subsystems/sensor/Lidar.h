@@ -188,7 +188,8 @@ class LidarSubsystem : public Sendable,
 
  private:
   // LiDAR hardware
-  studica::Lidar* m_lidar;
+  std::unique_ptr<studica::Lidar> m_lidar; 
+  std::mutex m_lidarMutex; 
   studica::Lidar::Port m_port;
   
   // Current scan data
@@ -205,6 +206,7 @@ class LidarSubsystem : public Sendable,
     Waiting,
     Starting
   };
+  
   RestartState m_restartState = RestartState::None;
   int m_restartTimer = 0;
   int m_periodicCounter = 0;  // Track total periodic calls for timing

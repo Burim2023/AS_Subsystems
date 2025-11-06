@@ -59,6 +59,13 @@ model {
                 targetPlatform wpi.platforms.desktop
             }
 
+            binaries.all {
+            if (buildType == buildTypes.debug) {
+            cppCompiler.args "-g", "-O0"
+            linker.args "-g"
+            }
+            }
+
             sources.cpp {
                 source {
                     srcDirs 'src/main/cpp', 'src/main/deploy/web-ds-logger/cpp/NetworkTables'

@@ -15,26 +15,19 @@
 using namespace frc;
 
 LidarSubsystem::LidarSubsystem(studica::Lidar::Port port)
-    : m_lidar(nullptr), m_port(port), m_hasValidData(false)
-{
-}
+    : m_lidar(nullptr), m_port(port), m_hasValidData(false) {}
 
-LidarSubsystem::~LidarSubsystem()
-{
+LidarSubsystem::~LidarSubsystem() {
+    std::lock_guard<std::mutex> lock(m_lidarMutex);
     StopScan();
-    if (m_lidar)
-    {
-        delete m_lidar;
-    }
 }
-
 void LidarSubsystem::Init()
 {
     try
     {
-        if (!m_lidar)
-        {
-            m_lidar = new studica::Lidar(m_port);
+        std::lock_guard<std::mutex> lock(m_lidarMutex);
+        if (!m_lidar) {
+            m_lidar = std::make_unique<studica::Lidar>(m_port); 
             std::cout << "Studica LiDAR sensor initialized on USB port " << static_cast<int>(m_port) << std::endl;
 
             // Enable Kalman filter by default for noise reduction
@@ -44,11 +37,9 @@ void LidarSubsystem::Init()
             std::cout << "LiDAR initialization complete" << std::endl;
         }
     }
-    catch (const std::exception &e)
-    {
-        std::cout << "LiDAR initialization failed: " << e.what() << std::endl;
-        std::cout.flush();
-        throw; // Re-throw to let SensorManager handle it
+    catch (const std::exception &e) {
+        std::cerr << "LiDAR initialization failed: " << e.what() << std::endl;
+        throw;
     }
 }
 
@@ -175,13 +166,14 @@ void LidarSubsystem::ProcessRestartStateMachine()
 
 void LidarSubsystem::UpdateScanData()
 {
-    if (m_lidar)
+    std::lock_guard<std::mutex> lock(m_lidarMutex);
+    if (m_lidar) 
     {
-        try
-        {
+        try 
+            {
             m_currentScan = m_lidar->GetData();
             m_hasValidData = true;
-            m_consecutiveErrors = 0; // Reset error counter on success
+            m_consecutiveErrors = 0;
         }
         catch (const std::exception &e)
         {

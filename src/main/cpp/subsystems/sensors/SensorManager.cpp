@@ -40,23 +40,21 @@ SensorManager::~SensorManager()
 
 void SensorManager::SensorWorker()
 {
-    while (!stopThread.load())
-    {
-        if (ultraSonic)
-        {
-            ultraSonic->UpdateUltraSonic();
+    while (!stopThread.load()) {
+            {
+                std::lock_guard<std::mutex> lock(m_sensorMutex);
+                if (lidar && m_lidarReady.load()) {
+                    lidar->Periodic();
+                }
+                if (ultraSonic) {
+                    ultraSonic->UpdateUltraSonic();
+                }
+                if (infraRed) {
+                    infraRed->UpdateInfraRed();
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
         }
-        if (infraRed)
-        {
-            infraRed->UpdateInfraRed();
-        }
-        if (lidar)
-        {
-            lidar->Periodic();
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
-    }
 }
 
 void SensorManager::InitializeSensors()
@@ -73,19 +71,20 @@ void SensorManager::InitializeSensors()
 
     // Initialize LiDAR in background thread with try-catch
     // This can take 1-2 seconds, so we do it here to avoid blocking robot init
-    try
-    {
+  try {
         std::cout << "SensorManager: Starting LiDAR initialization in background..." << std::endl;
+        std::lock_guard<std::mutex> lock(m_sensorMutex);  // Protect creation
         lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
         lidar->Init();
         lidar->StartScan();
+        m_lidarReady.store(true);
         std::cout << "SensorManager: LiDAR initialized successfully" << std::endl;
     }
-    catch (const std::exception &e)
-    {
+    catch (const std::exception &e) {
+        std::lock_guard<std::mutex> lock(m_sensorMutex);
         std::cout << "SensorManager: LiDAR initialization failed: " << e.what() << std::endl;
-        std::cout << "SensorManager: Continuing without LiDAR functionality" << std::endl;
         lidar = nullptr;
+        m_lidarReady.store(false);
     }
 }
 void SensorManager::SensorManagerStartThread()
@@ -105,7 +104,7 @@ frc::IRRangeSubsystem *SensorManager::GetIRRangeSubsystem()
     return infraRed.get();
 }
 
-frc::LidarSubsystem *SensorManager::GetLidarSubsystem()
-{
-    return lidar.get();
+frc::LidarSubsystem *SensorManager::GetLidarSubsystem() {
+    std::lock_guard<std::mutex> lock(m_sensorMutex);
+    return m_lidarReady.load() ? lidar.get() : nullptr;
 }

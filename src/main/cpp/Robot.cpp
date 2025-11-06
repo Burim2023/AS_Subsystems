@@ -12,51 +12,51 @@
 // #include "commands/SpeedDriveCommand.h"
 
 // Define static members of Robot class
-AMCU *Robot::amcu = nullptr;
-SensorManager *Robot::sensormanager = nullptr;
-Gamepad *Robot::gamepad = nullptr;
+
+Robot *Robot::s_instance = nullptr;
 
 void Robot::RobotInit()
 {
-  sensormanager = new SensorManager();
-  amcu = new AMCU();
+  s_instance = this;
+  m_sensormanager = std::make_unique<SensorManager>();
+  m_amcu = std::make_unique<AMCU>();
 
   SetupLogging();
-  InitLogging(sensormanager);
+  InitLogging(m_sensormanager.get());
 
-  sensormanager->InitializeSensors();
-  sensormanager->SensorManagerStartThread();
+  m_sensormanager->InitializeSensors();
+  m_sensormanager->SensorManagerStartThread();
 
   // Forward SensorManager and AMCU to RobotContainer
-  m_container.SetSensorManager(sensormanager);
-  m_container.SetAMCU(amcu);
+  m_container.SetSensorManager(m_sensormanager.get());
+  m_container.SetAMCU(m_amcu.get());
 
-  amcu->initOmniDriveBase(Constants::kWheelRadius, Constants::kRobotRadius, Constants::kMotorLeft, Constants::kMotorRight, Constants::kMotorBack);
+  m_amcu->initOmniDriveBase(Constants::kWheelRadius, Constants::kRobotRadius, Constants::kMotorLeft, Constants::kMotorRight, Constants::kMotorBack);
 }
 
 void Robot::RobotPeriodic()
 {
-  UpdateLogging(sensormanager);
+  UpdateLogging(m_sensormanager.get());
 
   frc2::CommandScheduler::GetInstance().Run();
 
-  if (auto *lf = m_container.GetLineFollower())
-  {
-    try
-    {
-      lf->update();
-      lf->UpdateShuffleboard(10);
-    }
-    catch (const std::exception &e)
-    {
-      // Silently catch to prevent crashes, log occasionally
-      static int errorCount = 0;
-      if (++errorCount % 250 == 0)
-      { // Log every 5 seconds at 50Hz
-        std::cout << "LineFollower error: " << e.what() << std::endl;
-      }
-    }
-  }
+  // if (auto *lf = m_container.GetLineFollower())
+  // {
+  //   try
+  //   {
+  //     lf->update();
+  //     lf->UpdateShuffleboard(10);
+  //   }
+  //   catch (const std::exception &e)
+  //   {
+  //     // Silently catch to prevent crashes, log occasionally
+  //     static int errorCount = 0;
+  //     if (++errorCount % 250 == 0)
+  //     { // Log every 5 seconds at 50Hz
+  //       std::cout << "LineFollower error: " << e.what() << std::endl;
+  //     }
+  //   }
+  // }
 }
 
 void Robot::DisabledInit()

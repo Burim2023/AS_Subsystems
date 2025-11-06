@@ -46,7 +46,21 @@ void WallAlignDriveCommand::Execute()
 {
   // If no child is scheduled, schedule the next appropriate child for the current phase
   auto &sched = frc2::CommandScheduler::GetInstance();
-
+  if (!m_amcu) {
+        std::cerr << "ERROR: WallAlignDriveCommand - AMCU is null!" << std::endl;
+        return;  // Safe early return
+    }
+  if (!m_sensorManager) {
+      std::cerr << "ERROR: WallAlignDriveCommand - SensorManager is null!" << std::endl;
+      return;
+  }
+  
+  auto* lidar = m_sensorManager->GetLidarSubsystem();
+  if (!lidar) {
+      std::cerr << "ERROR: LiDAR not available" << std::endl;
+      return;
+  }
+    
   if (m_sensorManager && m_sensorManager->GetUltrasonicSubsystem())
   {
     // Sensors are managed by SensorManager background thread
