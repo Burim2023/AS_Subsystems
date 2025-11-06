@@ -16,12 +16,24 @@ SensorManager::SensorManager()
 
     ultraSonic = std::make_unique<frc::UltrasonicSubsystem>(0, 1, 2, 3);
     infraRed = std::make_unique<frc::IRRangeSubsystem>(0, 1);
-    lidar = std::make_unique<frc::LidarSubsystem>();
-}
 
+    // LiDAR will be initialized in the sensor thread to avoid blocking
+    // Just create the object here without Init/StartScan
+    lidar = nullptr; // Will be created in InitializeSensors()
+
+    std::cout << "SensorManager: Constructor complete (LiDAR will init in background)" << std::endl;
+}
 SensorManager::~SensorManager()
 {
     stopThread = true;
+
+    // Stop LiDAR scanning before destroying
+    if (lidar)
+    {
+        lidar->StopScan();
+        std::cout << "SensorManager: LiDAR scan stopped on shutdown" << std::endl;
+    }
+
     if (workerThread.joinable())
         workerThread.join();
 }
@@ -30,9 +42,18 @@ void SensorManager::SensorWorker()
 {
     while (!stopThread.load())
     {
-        ultraSonic->UpdateUltraSonic();
-        infraRed->UpdateInfraRed();
-        lidar->Periodic();
+        if (ultraSonic)
+        {
+            ultraSonic->UpdateUltraSonic();
+        }
+        if (infraRed)
+        {
+            infraRed->UpdateInfraRed();
+        }
+        if (lidar)
+        {
+            lidar->Periodic();
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
     }
@@ -40,6 +61,7 @@ void SensorManager::SensorWorker()
 
 void SensorManager::InitializeSensors()
 {
+    // Initialize Ultrasonic and IR sensors (these are fast)
     if (ultraSonic)
     {
         ultraSonic->Init();
@@ -48,12 +70,24 @@ void SensorManager::InitializeSensors()
     {
         infraRed->Init();
     }
-    if (lidar)
+
+    // Initialize LiDAR in background thread with try-catch
+    // This can take 1-2 seconds, so we do it here to avoid blocking robot init
+    try
     {
+        std::cout << "SensorManager: Starting LiDAR initialization in background..." << std::endl;
+        lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
         lidar->Init();
+        lidar->StartScan();
+        std::cout << "SensorManager: LiDAR initialized successfully" << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "SensorManager: LiDAR initialization failed: " << e.what() << std::endl;
+        std::cout << "SensorManager: Continuing without LiDAR functionality" << std::endl;
+        lidar = nullptr;
     }
 }
-
 void SensorManager::SensorManagerStartThread()
 {
     InitializeSensors();

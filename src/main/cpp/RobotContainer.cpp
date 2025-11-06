@@ -44,12 +44,19 @@ RobotContainer::RobotContainer()
   m_extender.Init();
   m_gripper.Init();
   m_gripperJoint.Init();
-  m_camera.InitDashboard();
-  m_camera.Start();
-  // Note: Elevator will be initialized in SetAMCU() method
-  // Ultrasonic is now initialized in SensorManager
-  m_lidar.Init();      // create studica::Lidar instance
-  m_lidar.StartScan(); // start scanning (non-blocking)
+
+  // FIXED: Wrap camera initialization in try-catch to prevent crashes
+  try
+  {
+    m_camera.InitDashboard();
+    m_camera.Start();
+  }
+  catch (const std::exception &e)
+  {
+    std::cout << "WARNING: Camera initialization failed: " << e.what() << std::endl;
+    std::cout << "Robot will continue without camera functionality" << std::endl;
+  }
+
   // m_lineFollower = std::make_unique<LineFollower>(0, 1, 2, 3);
   m_lineFollower.setMinSignal(0.65);
 
@@ -107,20 +114,20 @@ void RobotContainer::ConfigureButtonBindings()
   // For now, commands can be triggered manually or through autonomous mode
 }
 
-void RobotContainer::SetAMCU(AMCU *amcu)
+void RobotContainer::SetAMCU(AMCU *amcu_ptr)
 {
-  m_amcu = amcu;
+  m_amcu = amcu_ptr;
 
   // Initialize elevator with AMCU
-  m_elevator.Init(amcu);
+  m_elevator.Init(amcu_ptr);
 
-  m_testSequence.SetAMCU(amcu);
+  m_testSequence.SetAMCU(amcu_ptr);
 
-  m_wallAlignDriveCommand.SetAMCU(amcu);
+  m_wallAlignDriveCommand.SetAMCU(amcu_ptr);
 
-  m_driveUntilWallCommand.SetAMCU(amcu);
+  m_driveUntilWallCommand.SetAMCU(amcu_ptr);
 
-  m_cobraLineFollowCommand.SetAMCU(amcu);
+  m_cobraLineFollowCommand.SetAMCU(amcu_ptr);
 
   // m_simpleDrive.SetAMCU(amcu);
   //  Update SimpleDrive command with the actual AMCU instance
@@ -145,6 +152,7 @@ void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
   {
     m_wallAlignDriveCommand.SetSensorManager(m_sensorManager);
     m_driveUntilWallCommand.SetSensorManager(m_sensorManager);
+
     std::cout << "RobotContainer: Updated commands with SensorManager\n";
   }
   else
@@ -155,13 +163,9 @@ void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
 
 RobotContainer::~RobotContainer()
 {
-  // Stop LiDAR scanning cleanly when RobotContainer is destroyed
-  std::cout << "RobotContainer: Stopping LiDAR scan on shutdown..." << std::endl;
-  m_lidar.StopScan();
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand()
 {
-  // Return the selected command from the chooser
   return m_chooser.GetSelected();
 }

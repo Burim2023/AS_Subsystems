@@ -61,74 +61,64 @@ public:
   RobotContainer();
   ~RobotContainer();
 
-  frc2::Command *GetAutonomousCommand();
-
-  void SetAMCU(AMCU *amcu);
+  void SetAMCU(AMCU *amcu_ptr);
   void SetSensorManager(SensorManager *sensor_ptr);
-  // public getter methods
-  GripperJointSubsystem &GetGripperJoint() { return m_gripperJoint; }
-  GripperSubsystem &GetGripper() { return m_gripper; }
-  ElevatorSubsystem &GetElevator() { return m_elevator; }
-  ExtenderSubsystem &GetExtender() { return m_extender; }
-  CameraSubsystem &GetCamera() { return m_camera; }
-  frc::UltrasonicSubsystem *GetUltrasonic()
-  {
-    return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr;
-  }
-  frc::IRRangeSubsystem *GetIRRange()
-  {
-    return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr;
-  }
-  LineFollower *GetLineFollower() { return &m_lineFollower; }
-  Gamepad *GetGamepad() { return &m_gamepad; }
-  SensorManager *GetSensorManager() { return m_sensorManager; }
+
+  // frc
+  frc2::Command *GetAutonomousCommand();
+  frc::UltrasonicSubsystem  *GetUltrasonic(){ return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr; }
+  frc::IRRangeSubsystem     *GetIRRange(){ return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr; }
+  
+  GripperJointSubsystem   &GetGripperJoint() { return m_gripperJoint; }
+  GripperSubsystem        &GetGripper() { return m_gripper; }
+  ElevatorSubsystem       &GetElevator() { return m_elevator; }
+  ExtenderSubsystem       &GetExtender() { return m_extender; }
+  CameraSubsystem         &GetCamera() { return m_camera; }
+  LineFollower            *GetLineFollower() { return &m_lineFollower; }
+  Gamepad                 *GetGamepad() { return &m_gamepad; }
+  SensorManager           *GetSensorManager() { return m_sensorManager; }
 
 private:
-  AMCU *m_amcu;
-  // Subsystems
-  ArmSubsystem m_arm;
-  ExtenderSubsystem m_extender;
-  GripperSubsystem m_gripper;
+  ArmSubsystem          m_arm;
+  ExtenderSubsystem     m_extender;
+  GripperSubsystem      m_gripper;
   GripperJointSubsystem m_gripperJoint;
-  ElevatorSubsystem m_elevator;
-  CameraSubsystem m_camera;
-  // Removed m_ultrasonic - now using SensorManager's ultrasonic
-  frc::LidarSubsystem m_lidar;
-  LineFollower m_lineFollower{0, 1, 2, 3, 5.0f};
-  Gamepad m_gamepad;
-  SensorManager *m_sensorManager = nullptr;
+  ElevatorSubsystem     m_elevator;
+  CameraSubsystem       m_camera;
+  LineFollower          m_lineFollower{0, 1, 2, 3, 5.0f};
+  Gamepad               m_gamepad;
+  SensorManager         *m_sensorManager = nullptr;
+  AMCU                  *m_amcu = nullptr;
 
   // Autonomous Chooser
   frc::SendableChooser<frc2::Command *> m_chooser;
 
-  // Non-command-based subsystems
-
   // Commands (Reordered to match initialization in .cpp)
-  FullPickSequence m_autoPickSequence;
-  RetractAndLift m_autoRetractAndLift;
-  CalibrateExtender m_calibrateExtenderOnly;
+  FullPickSequence            m_autoPickSequence;
+  RetractAndLift              m_autoRetractAndLift;
+  CalibrateExtender           m_calibrateExtenderOnly;
   ExtenderCalibrationSequence m_demoExtender;
-  SimpleDrive m_simpleDrive;
-  TestCommandSequence m_testSequence;
-  GripperOperate m_gripperOperateUp;
-  GripperOperate m_gripperOperateDown;
-  GripperOperate m_gripperPickup;
-  GripperPickupSequence m_gripperPickupSequence;
-  CalibrateElevator m_calibrateElevator;
-  ElevatorPresets m_elevatorGround;
-  ElevatorPresets m_elevatorLow;
-  ElevatorPresets m_elevatorHigh;
-  MoveElevatorToPosition m_elevatorCustom;
-  ElevatorTestSequence m_elevatorTestSequence;
-  SmartPickSequence m_smartPickSequence;
-  DriveSmartPickupGround m_driveSmartPickupGround;
-  AppleGripperCheckCommand m_checkAppleGrip;
-  AppleGripperCheckCommand m_waitForGrip;
-  AppleGripperCheckCommand m_monitorGrip;
+  SimpleDrive                 m_simpleDrive;
+  TestCommandSequence         m_testSequence;
+  GripperOperate              m_gripperOperateUp;
+  GripperOperate              m_gripperOperateDown;
+  GripperOperate              m_gripperPickup;
+  GripperPickupSequence       m_gripperPickupSequence;
+  CalibrateElevator           m_calibrateElevator;
+  ElevatorPresets             m_elevatorGround;
+  ElevatorPresets             m_elevatorLow;
+  ElevatorPresets             m_elevatorHigh;
+  MoveElevatorToPosition      m_elevatorCustom;
+  ElevatorTestSequence        m_elevatorTestSequence;
+  SmartPickSequence           m_smartPickSequence;
+  DriveSmartPickupGround      m_driveSmartPickupGround;
+  AppleGripperCheckCommand    m_checkAppleGrip;
+  AppleGripperCheckCommand    m_waitForGrip;
+  AppleGripperCheckCommand    m_monitorGrip;    
+  WallAlignDriveCommand       m_wallAlignDriveCommand;
+  DriveUntilWallCommand       m_driveUntilWallCommand;
+  CobraLineFollowCommand      m_cobraLineFollowCommand;
   // PickupAndDeliverSequence m_pickupAndDerliverSequence;
-  WallAlignDriveCommand m_wallAlignDriveCommand;
-  DriveUntilWallCommand m_driveUntilWallCommand;
-  CobraLineFollowCommand m_cobraLineFollowCommand;
 
   void ConfigureButtonBindings();
 };

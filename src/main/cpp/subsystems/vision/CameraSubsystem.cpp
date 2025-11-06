@@ -209,23 +209,32 @@ void CameraSubsystem::Stop()
 
   cameraRunning = false;
 
-  if (m_thread.joinable())
-    m_thread.join();
-
-  // FIXED: Stop Orbbec camera - smart pointers handle cleanup automatically
-  if (pipeline)
+  try
   {
-    pipeline->stop();
-    pipeline.reset(); // FIXED: Use reset() for smart pointer
-  }
+    if (m_thread.joinable())
+      m_thread.join();
 
-  if (obContext)
+    // FIXED: Stop Orbbec camera - smart pointers handle cleanup automatically
+    if (pipeline)
+    {
+      pipeline->stop();
+      pipeline.reset(); // FIXED: Use reset() for smart pointer
+    }
+
+    if (obContext)
+    {
+      obContext.reset(); // FIXED: Use reset() for smart pointer
+    }
+
+    m_ntRunning.SetBoolean(false);
+    frc::SmartDashboard::PutString(m_ns + "Debug", "Camera stopped");
+  }
+  catch (const std::exception &e)
   {
-    obContext.reset(); // FIXED: Use reset() for smart pointer
+    std::cout << "Warning: Exception during camera shutdown: " << e.what() << std::endl;
+    // Continue cleanup despite error
+    m_ntRunning.SetBoolean(false);
   }
-
-  m_ntRunning.SetBoolean(false);
-  frc::SmartDashboard::PutString(m_ns + "Debug", "Camera stopped");
 }
 
 void CameraSubsystem::SetResolution(int w, int h)
