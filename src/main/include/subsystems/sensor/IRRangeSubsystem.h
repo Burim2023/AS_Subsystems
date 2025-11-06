@@ -13,23 +13,10 @@
 #include <frc/smartdashboard/SendableHelper.h>
 #include <frc/smartdashboard/SendableBuilder.h>
 #include <memory>
+#include <mutex>
 
 namespace frc
 {
-
-  /**
-   * Studica IR Range Sensor subsystem class.
-   *
-   * This subsystem wraps the Studica IR Range Sensor (10cm to 80cm) functionality
-   * to provide distance measurement capabilities for autonomous robot navigation.
-   * The sensor uses analog voltage output that corresponds to distance measurements.
-   *
-   * Sensor specifications:
-   * - Range: 10cm to 80cm
-   * - Output: Analog voltage (higher voltage = closer distance)
-   * - Supply voltage: 5V
-   * - Interface: Analog input port
-   */
   class IRRangeSubsystem
   {
   public:
@@ -43,7 +30,6 @@ namespace frc
     double GetIRRightVoltage();
     double GetIRRLeftVoltage();
     bool IsObjectDetected(double threshold = 15.0);
-
 
   private:
     static constexpr double kMinRange = 10.0;  // Minimum range in cm
@@ -62,6 +48,8 @@ namespace frc
     std::unique_ptr<AnalogInput> m_irSideLeft;
     std::vector<double> irSideLeftValueList;
     std::vector<double> irSideRightValueList;
+
+    mutable std::mutex m_mutex;
   };
 
-} // namespace frc
+}

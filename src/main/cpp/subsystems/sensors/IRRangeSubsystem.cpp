@@ -34,6 +34,7 @@ void IRRangeSubsystem::Init()
 
 void IRRangeSubsystem::UpdateInfraRed()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_irSideLeft != nullptr && m_irSideRight != nullptr)
     {
@@ -71,7 +72,11 @@ void IRRangeSubsystem::UpdateInfraRed()
         }
         catch (const std::exception &e)
         {
-            std::cerr << e.what() << '\n';
+            static int errorCount = 0;
+            if (++errorCount % 50 == 0) // Log occasionally to avoid spam
+            {
+                std::cerr << "IRRangeSubsystem::UpdateInfraRed error: " << e.what() << '\n';
+            }
         }
     }
 }
@@ -93,17 +98,20 @@ double IRRangeSubsystem::getMedian(std::vector<double> &values)
 
 double IRRangeSubsystem::GetIRLeftDistance()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     return irLeftValue;
 }
 
 double IRRangeSubsystem::GetIRRightDistance()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     return irRightValue;
 }
 
 bool IRRangeSubsystem::IRDistanceSimilar()
 {
-    double IRDistance = GetIRLeftDistance() - GetIRRightDistance();
+    std::lock_guard<std::mutex> lock(m_mutex);
+    double IRDistance = irLeftValue - irRightValue;
     if (IRDistance > -1 && IRDistance < 1)
     {
         return true;
@@ -113,6 +121,7 @@ bool IRRangeSubsystem::IRDistanceSimilar()
 
 double IRRangeSubsystem::GetIRRLeftVoltage()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_irSideLeft)
     {
         return m_irSideLeft->GetVoltage();
@@ -122,6 +131,7 @@ double IRRangeSubsystem::GetIRRLeftVoltage()
 
 double IRRangeSubsystem::GetIRRightVoltage()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_irSideRight)
     {
         return m_irSideRight->GetVoltage();

@@ -17,18 +17,19 @@ UltrasonicSubsystem::UltrasonicSubsystem(int leftTrigger, int leftEcho, int righ
     : m_leftTriggerPort(leftTrigger),
       m_leftEchoPort(leftEcho),
       m_rightTriggerPort(rightTrigger),
-      m_rightEchoPort(rightEcho) {
+      m_rightEchoPort(rightEcho)
+{
 
-            leftValue = 0.0;
-            rightValue = 0.0;
-      }
+    leftValue = 0.0;
+    rightValue = 0.0;
+}
 
+UltrasonicSubsystem::~UltrasonicSubsystem() {}
 
-UltrasonicSubsystem::~UltrasonicSubsystem(){}
-
-
-void UltrasonicSubsystem::Init() {
-    if (m_leftSensor == nullptr && m_rightSensor == nullptr){
+void UltrasonicSubsystem::Init()
+{
+    if (m_leftSensor == nullptr && m_rightSensor == nullptr)
+    {
         try
         {
             m_leftSensor = std::make_unique<frc::Ultrasonic>(m_leftTriggerPort, m_leftEchoPort);
@@ -43,11 +44,18 @@ void UltrasonicSubsystem::Init() {
     }
 }
 
-
 void UltrasonicSubsystem::UpdateUltraSonic()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
     try
     {
+        // Check if sensors are initialized
+        if (!m_leftSensor || !m_rightSensor)
+        {
+            return;
+        }
+
         if (sideLeftValueList.size() >= 9)
         {
             leftValue = getMedian(sideLeftValueList);
@@ -58,14 +66,18 @@ void UltrasonicSubsystem::UpdateUltraSonic()
             rightValue = getMedian(sideRightValueList);
             sideRightValueList.erase(sideRightValueList.begin());
         }
+
         sideLeftValueList.push_back(m_leftSensor->GetRangeMM());
         sideRightValueList.push_back(m_rightSensor->GetRangeMM());
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        static int errorCount = 0;
+        if (++errorCount % 50 == 0) // Log occasionally to avoid spam
+        {
+            std::cerr << "UltrasonicSubsystem::UpdateUltraSonic error: " << e.what() << '\n';
+        }
     }
-    
 }
 
 double UltrasonicSubsystem::getMedian(std::vector<double> &values)
@@ -80,20 +92,24 @@ double UltrasonicSubsystem::getMedian(std::vector<double> &values)
 
 double UltrasonicSubsystem::GetRightDistance()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     return rightValue / 10.0;
 }
 
 double UltrasonicSubsystem::GetLeftDistance()
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     return leftValue / 10.0;
 }
 
-bool UltrasonicSubsystem::IsLeftWallDetected() {
+bool UltrasonicSubsystem::IsLeftWallDetected()
+{
     double distance = GetLeftDistance();
     return (distance > 0 && distance < kDefaultThreshold);
 }
 
-bool UltrasonicSubsystem::IsRightWallDetected() {
+bool UltrasonicSubsystem::IsRightWallDetected()
+{
     double distance = GetRightDistance();
     return (distance > 0 && distance < kDefaultThreshold);
 }

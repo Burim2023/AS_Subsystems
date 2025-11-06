@@ -13,49 +13,42 @@
 #include <frc/smartdashboard/SendableHelper.h>
 #include <frc/smartdashboard/SendableBuilder.h>
 #include <memory>
+#include <mutex>
 
-namespace frc {
+namespace frc
+{
 
-/**
- * UltrasonicSubsystem
- * --------------------
- * This subsystem manages **two ultrasonic sensors** (left and right).
- * Each sensor measures distance to nearby objects independently.
- * 
- * The subsystem:
- * - Initializes both sensors
- * - Continuously updates distances
- * - Publishes readings and wall detection info to SmartDashboard
- */
-class UltrasonicSubsystem{
-public:
+  class UltrasonicSubsystem
+  {
+  public:
+    UltrasonicSubsystem(int leftTrigger, int leftEcho, int rightTrigger, int rightEcho);
+    ~UltrasonicSubsystem();
 
-  UltrasonicSubsystem(int leftTrigger, int leftEcho, int rightTrigger, int rightEcho);
-  ~UltrasonicSubsystem();
+    void Init();
+    double GetLeftDistance();
+    double GetRightDistance();
+    void UpdateUltraSonic();
+    bool IsLeftWallDetected();
+    bool IsRightWallDetected();
 
-  void Init();
-  double GetLeftDistance();
-  double GetRightDistance();
-  void UpdateUltraSonic();
-  bool IsLeftWallDetected();
-  bool IsRightWallDetected();
-  
-private:
-  int m_leftTriggerPort;
-  int m_leftEchoPort;
-  int m_rightTriggerPort;
-  int m_rightEchoPort;
+  private:
+    int m_leftTriggerPort;
+    int m_leftEchoPort;
+    int m_rightTriggerPort;
+    int m_rightEchoPort;
 
-  static constexpr double kDefaultThreshold = 15.0;
+    static constexpr double kDefaultThreshold = 15.0;
 
-  double getMedian(std::vector<double> &values);
-  double leftValue;
-  double rightValue;
+    double getMedian(std::vector<double> &values);
+    double leftValue;
+    double rightValue;
 
-  std::unique_ptr<Ultrasonic> m_leftSensor;
-  std::unique_ptr<Ultrasonic> m_rightSensor;
-  std::vector<double> sideLeftValueList;
-  std::vector<double> sideRightValueList;
-};
+    std::unique_ptr<Ultrasonic> m_leftSensor;
+    std::unique_ptr<Ultrasonic> m_rightSensor;
+    std::vector<double> sideLeftValueList;
+    std::vector<double> sideRightValueList;
 
-} 
+    mutable std::mutex m_mutex;
+  };
+
+}
