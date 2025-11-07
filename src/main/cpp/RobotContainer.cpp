@@ -41,7 +41,7 @@ RobotContainer::RobotContainer()
   m_extender.Init();
   m_gripper.Init();
   m_gripperJoint.Init();
-
+  try
   {
     m_camera.InitDashboard();
     m_camera.Start();

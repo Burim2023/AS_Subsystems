@@ -13,7 +13,7 @@
 #include "subsystems/vision/CameraSubsystem.h"
 #include "subsystems/joystick/Gamepad.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"
-#include "subsystems/sensor/Lidar.h"
+#include "subsystems/sensor/LidarSubsystem.h"
 #include "subsystems/sensor/SensorManager.h"
 #include "subsystems/sensor/IRRangeSubsystem.h"
 // #include "subsystems/Drivetrain.h"
@@ -68,13 +68,13 @@ public:
   frc2::Command *GetAutonomousCommand();
   frc::UltrasonicSubsystem  *GetUltrasonic(){ return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr; }
   frc::IRRangeSubsystem     *GetIRRange(){ return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr; }
-  
+  LineFollower *GetLineFollower() { return m_sensorManager ? m_sensorManager->GetLineFollower() : nullptr; }
+
   GripperJointSubsystem   &GetGripperJoint() { return m_gripperJoint; }
   GripperSubsystem        &GetGripper() { return m_gripper; }
   ElevatorSubsystem       &GetElevator() { return m_elevator; }
   ExtenderSubsystem       &GetExtender() { return m_extender; }
   CameraSubsystem         &GetCamera() { return m_camera; }
-  LineFollower            *GetLineFollower() { return &m_lineFollower; }
   Gamepad                 *GetGamepad() { return &m_gamepad; }
   SensorManager           *GetSensorManager() { return m_sensorManager; }
 
