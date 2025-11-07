@@ -99,7 +99,6 @@ void Robot::TeleopPeriodic()
   {
     if (auto *lf = m_container.GetLineFollower())
     {
-      lf->update();
       lf->UpdateShuffleboard(10);
     }
     else

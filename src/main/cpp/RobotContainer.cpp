@@ -6,12 +6,9 @@
 RobotContainer::RobotContainer()
     : m_amcu(nullptr),
       m_sensorManager(nullptr),
-      // Removed m_ultrasonic initialization - using SensorManager's ultrasonic
-      // m_lidar(studica::Lidar::kUSB0),
-
       m_wallAlignDriveCommand(nullptr, nullptr, 15.0, 15, 30),
       m_driveUntilWallCommand(nullptr, nullptr, 15.0, 28.0, 15),
-      m_cobraLineFollowCommand(&m_lineFollower, 40.0, static_cast<uint8_t>(15), 0.30),
+      m_cobraLineFollowCommand(nullptr, 40.0, static_cast<uint8_t>(15), 0.30),
       m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
       m_calibrateExtenderOnly(&m_extender),
@@ -45,8 +42,6 @@ RobotContainer::RobotContainer()
   m_gripper.Init();
   m_gripperJoint.Init();
 
-  // FIXED: Wrap camera initialization in try-catch to prevent crashes
-  try
   {
     m_camera.InitDashboard();
     m_camera.Start();
@@ -56,9 +51,6 @@ RobotContainer::RobotContainer()
     std::cout << "WARNING: Camera initialization failed: " << e.what() << std::endl;
     std::cout << "Robot will continue without camera functionality" << std::endl;
   }
-
-  // m_lineFollower = std::make_unique<LineFollower>(0, 1, 2, 3);
-  m_lineFollower.setMinSignal(0.65);
 
   // Configure the button bindings
   ConfigureButtonBindings();
@@ -102,56 +94,34 @@ RobotContainer::RobotContainer()
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }
 
-void RobotContainer::ConfigureButtonBindings()
-{
-  // Since your OI class uses direct button methods instead of a controller object,
-  // we'll skip button bindings for now and rely on teleop periodic control
-  //
-  // To add button bindings, you would need to either:
-  // 1. Add a GetDriveController() method to your OI class that returns frc::Joystick&
-  // 2. Or use a different approach with triggers based on your existing OI methods
-
-  // For now, commands can be triggered manually or through autonomous mode
-}
+void RobotContainer::ConfigureButtonBindings() {}
 
 void RobotContainer::SetAMCU(AMCU *amcu_ptr)
 {
   m_amcu = amcu_ptr;
 
-  // Initialize elevator with AMCU
   m_elevator.Init(amcu_ptr);
-
   m_testSequence.SetAMCU(amcu_ptr);
-
   m_wallAlignDriveCommand.SetAMCU(amcu_ptr);
-
   m_driveUntilWallCommand.SetAMCU(amcu_ptr);
-
   m_cobraLineFollowCommand.SetAMCU(amcu_ptr);
 
-  // m_simpleDrive.SetAMCU(amcu);
-  //  Update SimpleDrive command with the actual AMCU instance
-  // m_simpleDrive = SimpleDrive(amcu, 0.3, 0.0, 0.0); // Forward at 30% speed
-  //  Reinitialize the test sequence with the actual AMCU instance
-  //  Note: This is a bit of a hack - ideally we'd pass AMCU in the constructor
-
-  // // Example: Use bumpers to change speed
-  // frc2::JoystickButton(&m_oi.GetDriveJoystick(), OI::LEFT_SHOULDER)
-  //     .WhenPressed(frc2::InstantCommand([this] { m_teleopDrive.SetSpeedMultiplier(0.4); }, {})); // 40% speed
-
-  // frc2::JoystickButton(&m_oi.GetDriveJoystick(), OI::RIGHT_SHOULDER)
-  //     .WhenPressed(frc2::InstantCommand([this] { m_teleopDrive.SetSpeedMultiplier(0.6); }, {})); // 80% speed
 }
 
 void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
 {
   m_sensorManager = sensor_ptr;
 
-  // Update commands that need the SensorManager
   if (m_sensorManager)
   {
     m_wallAlignDriveCommand.SetSensorManager(m_sensorManager);
     m_driveUntilWallCommand.SetSensorManager(m_sensorManager);
+
+    if (m_sensorManager->GetLineFollower())
+    {
+      m_sensorManager->GetLineFollower()->setMinSignal(0.65);
+      m_cobraLineFollowCommand.SetLineFollower(m_sensorManager->GetLineFollower());
+    }
 
     std::cout << "RobotContainer: Updated commands with SensorManager\n";
   }
