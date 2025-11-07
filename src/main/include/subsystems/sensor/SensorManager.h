@@ -8,7 +8,8 @@
 #include "Constants.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"
 #include "subsystems/sensor/IRRangeSubsystem.h"
-#include "subsystems/sensor/Lidar.h"
+#include "subsystems/sensor/LidarSubsystem.h"
+#include "subsystems/sensor/LineFollower.h"
 
 class SensorManager
 {
@@ -22,10 +23,11 @@ public:
     frc::UltrasonicSubsystem *GetUltrasonicSubsystem();
     frc::IRRangeSubsystem *GetIRRangeSubsystem();
     frc::LidarSubsystem *GetLidarSubsystem();
+    LineFollower *GetLineFollower();
 
 private:
     std::mutex m_sensorMutex;
-    std::atomic<bool> m_lidarReady{false}; 
+    std::atomic<bool> m_lidarReady{false};
 
     std::thread workerThread;
     std::atomic<bool> stopThread;
@@ -33,4 +35,5 @@ private:
     std::unique_ptr<frc::UltrasonicSubsystem> ultraSonic;
     std::unique_ptr<frc::IRRangeSubsystem> infraRed;
     std::unique_ptr<frc::LidarSubsystem> lidar;
+    std::unique_ptr<LineFollower> lineFollower;
 };
