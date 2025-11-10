@@ -1,4 +1,4 @@
-#include "commands/SmartPickSequence.h"
+#include "commands/SmartPickSequenceHigh.h"
 #include "commands/MoveArmToPosition.h"
 #include "commands/MoveGripperJointToPosition.h"
 #include "commands/MoveElevatorToPosition.h"
@@ -8,17 +8,17 @@
 #include "Constants.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 
-SmartPickSequence::SmartPickSequence(ArmSubsystem* arm, 
-                                   GripperSubsystem* gripper, 
-                                   GripperJointSubsystem* gripperJoint,
-                                   CameraSubsystem* camera,
-                                   ElevatorSubsystem* elevator) {
+SmartPickSequenceHigh::SmartPickSequenceHigh(ArmSubsystem* arm, 
+                                            GripperSubsystem* gripper, 
+                                            GripperJointSubsystem* gripperJoint,
+                                            CameraSubsystem* camera,
+                                            ElevatorSubsystem* elevator) {
     
-    SetName("SmartPickSequenceGround");
+    SetName("SmartPickSequenceHigh");
 
     AddCommands(
         // === PHASE 1: PREPARATION ===
-        frc2::PrintCommand("🍎 Starting Smart Pick Sequence..."),
+        frc2::PrintCommand("🍎 Starting Smart Pick Sequence (HIGH LEVEL)..."),
         
         // ENSURE GRIPPER STARTS IN KNOWN POSITION
         frc2::PrintCommand("🔄 Resetting gripper to mid position..."),
@@ -36,14 +36,13 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
         frc2::PrintCommand("🔧 Starting elevator calibration..."),
 
         // === PHASE 2: CALIBRATE ELEVATOR ===
-        // CRITICAL FIX: Remove ParallelDeadlineGroup - this was causing communication issues
         CalibrateElevator(elevator, 10.0),
 
-        frc2::PrintCommand("✅ Calibration complete - positioning for detection"),
+        frc2::PrintCommand("✅ Calibration complete - positioning for HIGH level detection"),
 
-        // === PHASE 3: POSITION FOR DETECTION ===
-        frc2::PrintCommand("Moving elevator to apple pickup position..."),
-        MoveElevatorToPosition(elevator, 60.0f, 5.0f),
+        // === PHASE 3: POSITION FOR HIGH DETECTION ===
+        frc2::PrintCommand("Moving elevator to HIGH apple pickup position..."),
+        MoveElevatorToPosition(elevator, 140.0f, 5.0f),  // HIGH: Much higher initial position
         frc2::WaitCommand(3.0_s),
 
         MoveGripperJointToPosition(gripperJoint, JOINT_DOWN_ANGLE),
@@ -51,30 +50,30 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
 
         frc2::InstantCommand([gripper] { 
             gripper->SetOpenGripper(); 
-            std::cout << "SmartPick: Opening gripper for apple detection" << std::endl;
+            std::cout << "SmartPick HIGH: Opening gripper for apple detection" << std::endl;
         }, {gripper}),
         frc2::WaitCommand(2.0_s),
 
-        MoveElevatorToPosition(elevator, 45.0f, 5.0f),
-
+        // FINAL HIGH POSITION - highest pickup level
+        MoveElevatorToPosition(elevator, 125.0f, 5.0f),  // HIGH: Final pickup height
         frc2::WaitCommand(3.0_s),
         
-        frc2::PrintCommand("🎯 Robot positioned - starting apple detection"),
+        frc2::PrintCommand("🎯 Robot positioned at HIGH level - starting apple detection"),
         
-        // CRITICAL FIX: Create AppleGripperCheckCommand directly without shared_ptr
+        // Apple detection for high level
         AppleGripperCheckCommand(camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 5.0),
         
-        frc2::PrintCommand("🐛 DEBUG: Apple detection completed - checking results..."),
+        frc2::PrintCommand("🐛 DEBUG: HIGH apple detection completed - checking results..."),
         
-        // CRITICAL FIX: Simplified conditional logic
+        // Conditional logic for high level
         frc2::ConditionalCommand(
-            // IF APPLE DETECTED: Execute grip sequence
+            // IF HIGH APPLE DETECTED: Execute grip sequence
             frc2::SequentialCommandGroup(
-                frc2::PrintCommand("✅ Apple detected! Executing grip sequence..."),
+                frc2::PrintCommand("✅ HIGH apple detected! Executing grip sequence..."),
                 
                 frc2::InstantCommand([gripper] { 
                     gripper->SetClosedGripper(); 
-                    std::cout << "SmartPick: Closing gripper to grab apple" << std::endl;
+                    std::cout << "SmartPick HIGH: Closing gripper to grab apple" << std::endl;
                 }, {gripper}),
                 frc2::WaitCommand(2.0_s),
 
@@ -87,12 +86,12 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
                 MoveArmToPosition(arm, HOME_ANGLE),
                 frc2::WaitCommand(5.0_s),
                 
-                frc2::PrintCommand("✅ Smart Pick Complete - Apple Secured!")
+                frc2::PrintCommand("✅ Smart Pick HIGH Complete - Apple Secured!")
             ),
             
-            // IF NO APPLE DETECTED: Abort sequence
+            // IF NO HIGH APPLE DETECTED: Abort sequence
             frc2::SequentialCommandGroup(
-                frc2::PrintCommand("❌ No apple detected - Aborting sequence"),
+                frc2::PrintCommand("❌ No HIGH apple detected - Aborting sequence"),
                 
                 MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
                 frc2::WaitCommand(2.0_s),
@@ -103,23 +102,23 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
                 MoveArmToPosition(arm, HOME_ANGLE),
                 frc2::WaitCommand(7.0_s),
                 
-                frc2::PrintCommand("🏠 Sequence aborted - returned to safe position")
+                frc2::PrintCommand("🏠 HIGH sequence aborted - returned to safe position")
             ),
             
-            // CRITICAL FIX: Simplified lambda without shared_ptr capture
+            // Detection condition for high level - wider range for distant apples
             []() { 
                 bool detected = frc::SmartDashboard::GetBoolean("Camera/Apple/Found", false);
                 double distance = frc::SmartDashboard::GetNumber("Camera/Apple/Distance_MM", -1);
-                bool validDetection = detected && (distance >= 200.0 && distance <= 2500.0);
+                bool validDetection = detected && (distance >= 150.0 && distance <= 1500.0); // HIGH: Longer range
                 
-                std::cout << "SmartPick: Apple detection result = " << (validDetection ? "TRUE" : "FALSE") << std::endl;
-                std::cout << "SmartPick: SmartDashboard Apple/Found = " << detected << std::endl;
-                std::cout << "SmartPick: Distance = " << distance << "mm" << std::endl;
+                std::cout << "SmartPick HIGH: Apple detection result = " << (validDetection ? "TRUE" : "FALSE") << std::endl;
+                std::cout << "SmartPick HIGH: SmartDashboard Apple/Found = " << detected << std::endl;
+                std::cout << "SmartPick HIGH: Distance = " << distance << "mm" << std::endl;
                 
                 return validDetection;
             }
         ),
         
-        frc2::PrintCommand("🏁 Smart Pick Sequence Finished")
+        frc2::PrintCommand("🏁 Smart Pick HIGH Sequence Finished")
     );
 }

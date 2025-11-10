@@ -28,6 +28,8 @@ RobotContainer::RobotContainer()
       m_elevatorTestSequence(&m_elevator),
       // picksequence with camera apple detection
       m_smartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
+      m_smartPickSequenceMid(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
+      m_smartPickSequenceHigh(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
       m_driveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu),
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
@@ -64,7 +66,9 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Gripper Pickup Sequence", &m_gripperPickupSequence);
   m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
   // m_chooser.AddOption("Smart Pick Sequence", new SmartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator));
-  m_chooser.AddOption("Smart Pick Sequence", &m_smartPickSequence);
+  m_chooser.AddOption("Smart Pick Ground", &m_smartPickSequence);
+  m_chooser.AddOption("Smart Pick Mid", &m_smartPickSequenceMid);
+  m_chooser.AddOption("Smart Pick High", &m_smartPickSequenceHigh);
   m_chooser.AddOption("Drive Smart Pickup", &m_driveSmartPickupGround); // FIXED: Use member variable instead of leaked new
   // m_chooser.AddOption("Pickup&Deliver", &m_pickupAndDerliverSequence);
 

@@ -38,6 +38,8 @@
 #include "commands/CalibrateExtender.h"
 #include "commands/AppleGripperCheckCommand.h"
 #include "commands/SmartPickSequence.h"
+#include "commands/SmartPickSequenceMid.h"
+#include "commands/SmartPickSequenceHigh.h"
 // #include "commands/PickupAndDeliverSequence.h"
 #include "commands/WallAlignDriveCommand.h"
 #include "commands/Drive/DriveUntilWallCommand.h"
@@ -111,6 +113,8 @@ private:
   MoveElevatorToPosition      m_elevatorCustom;
   ElevatorTestSequence        m_elevatorTestSequence;
   SmartPickSequence           m_smartPickSequence;
+  SmartPickSequenceMid        m_smartPickSequenceMid;
+  SmartPickSequenceHigh       m_smartPickSequenceHigh;
   DriveSmartPickupGround      m_driveSmartPickupGround;
   AppleGripperCheckCommand    m_checkAppleGrip;
   AppleGripperCheckCommand    m_waitForGrip;

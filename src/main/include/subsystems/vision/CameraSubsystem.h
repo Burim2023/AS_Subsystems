@@ -17,7 +17,7 @@ public:
     int width = 320;
     int height = 240;
     int fps = 30;
-    bool autoExposure = false;
+    bool autoExposure = true;
   };
 
   CameraSubsystem();
@@ -37,7 +37,7 @@ public:
 
   double GetAppleDistance();
   
-  // Add this getter method for the namespace
+  // getter method for the namespace
   const std::string& GetNamespace() const { return m_ns; }
 
 private:
