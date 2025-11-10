@@ -40,6 +40,7 @@
 #include "commands/SmartPickSequence.h"
 #include "commands/SmartPickSequenceMid.h"
 #include "commands/SmartPickSequenceHigh.h"
+#include "commands/QRCodeReaderCommand.h"
 // #include "commands/PickupAndDeliverSequence.h"
 #include "commands/WallAlignDriveCommand.h"
 #include "commands/Drive/DriveUntilWallCommand.h"
@@ -122,6 +123,9 @@ private:
   WallAlignDriveCommand       m_wallAlignDriveCommand;
   DriveUntilWallCommand       m_driveUntilWallCommand;
   CobraLineFollowCommand      m_cobraLineFollowCommand;
+  QRCodeReaderCommand         m_qrCodeReaderCommandSingle;
+  QRCodeReaderCommand         m_qrCodeReaderCommandTimed;
+  QRCodeReaderCommand         m_qrCodeReaderCommandContinuous;
   // PickupAndDeliverSequence m_pickupAndDerliverSequence;
 
   void ConfigureButtonBindings();

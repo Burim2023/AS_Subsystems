@@ -30,6 +30,9 @@ RobotContainer::RobotContainer()
       m_smartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
       m_smartPickSequenceMid(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
       m_smartPickSequenceHigh(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator),
+      m_qrCodeReaderCommandSingle(&m_camera, QRCodeReaderCommand::ReadMode::SINGLE_READ),
+      m_qrCodeReaderCommandTimed(&m_camera, 10.0), // 10 second timeout
+      m_qrCodeReaderCommandContinuous(&m_camera, QRCodeReaderCommand::ReadMode::CONTINUOUS_READ),
       m_driveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu),
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
@@ -94,6 +97,10 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Drive Until Wall", &m_driveUntilWallCommand);
   m_chooser.AddOption("Line Follow", &m_cobraLineFollowCommand);
 
+  //QR Code Reader
+  m_chooser.AddOption("QR READ Single", &m_qrCodeReaderCommandSingle);
+  m_chooser.AddOption("QR READ Timed", &m_qrCodeReaderCommandTimed);
+  m_chooser.AddOption("QR READ Continuous", &m_qrCodeReaderCommandContinuous);
   // m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }

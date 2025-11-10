@@ -54,6 +54,7 @@ void SensorManager::SensorWorker()
             if (lineFollower)
             {
                 lineFollower->update();
+                lineFollower->UpdateShuffleboard(10);
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
