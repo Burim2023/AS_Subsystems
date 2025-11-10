@@ -9,6 +9,10 @@
 #include <atomic>
 #include <string>
 #include <mutex>
+#include <memory>
+
+// FIXED: Remove OpenCV forward declarations that conflict with stitching headers
+// Use PIMPL pattern instead
 
 class CameraSubsystem : public frc2::SubsystemBase {
 public:
@@ -37,18 +41,21 @@ public:
 
   double GetAppleDistance();
   
-  // getter method for the namespace
   const std::string& GetNamespace() const { return m_ns; }
 
 private:
   // Configuration
   Settings m_cfg;
-  std::string m_ns = "Camera/"; // NT/SD path prefix
+  std::string m_ns = "Camera/";
 
   // Camera/capture state
   std::atomic_bool m_running{false};
   std::thread m_thread;
   std::atomic<double> m_measuredFps{0.0};
+
+  // FIXED: PIMPL pattern to hide OpenCV types from header
+  struct Impl;
+  std::unique_ptr<Impl> m_impl;
 
   // NetworkTables entries
   nt::NetworkTableEntry m_ntRunning;

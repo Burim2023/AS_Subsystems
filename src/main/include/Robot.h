@@ -39,4 +39,6 @@ private:
   std::unique_ptr<AMCU> m_amcu;
   std::unique_ptr<Gamepad> m_gamepad;
 
+  void InitializeStorageParameters();
+
 };

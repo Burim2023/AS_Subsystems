@@ -47,6 +47,8 @@
 #include "commands/Drive/CobraLineFollowCommand.h"
 
 #include "commands/DriveSmartPickupGround.h"
+
+#include "commands/StoreAppleCommand.h"
 // Non-command-based subsystems
 #include "Constants.h"
 #include "subsystems/amcu/AMCU.h"
@@ -126,6 +128,10 @@ private:
   QRCodeReaderCommand         m_qrCodeReaderCommandSingle;
   QRCodeReaderCommand         m_qrCodeReaderCommandTimed;
   QRCodeReaderCommand         m_qrCodeReaderCommandContinuous;
+  storage::StoreAppleCommand   m_storeAppleAuto;         // Auto-detection
+  storage::StoreAppleCommand   m_storeAppleRed;          // Manual red
+  storage::StoreAppleCommand   m_storeAppleYellow;       // Manual yellow
+  storage::StoreAppleCommand   m_storeAppleGreen;        // Manual green
   // PickupAndDeliverSequence m_pickupAndDerliverSequence;
 
   void ConfigureButtonBindings();

@@ -37,7 +37,11 @@ RobotContainer::RobotContainer()
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
       m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
-      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0)
+      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0),
+      m_storeAppleAuto(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper),                    // Auto-detection
+      m_storeAppleRed(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "red", 1.0),         // Red apple, 1.0s pick time
+      m_storeAppleYellow(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "yellow", 1.8),   // Yellow apple, 1.8s pick time
+      m_storeAppleGreen(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "green", 2.5)
 // m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
 {
 
@@ -102,6 +106,12 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("QR READ Timed", &m_qrCodeReaderCommandTimed);
   m_chooser.AddOption("QR READ Continuous", &m_qrCodeReaderCommandContinuous);
   // m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
+
+  // ADD APPLE STORAGE OPTIONS TO CHOOSER:
+  m_chooser.AddOption("Store Apple (Auto)", &m_storeAppleAuto);           // Camera detection
+  m_chooser.AddOption("Store Apple (Red)", &m_storeAppleRed);             // Manual red
+  m_chooser.AddOption("Store Apple (Yellow)", &m_storeAppleYellow);       // Manual yellow
+  m_chooser.AddOption("Store Apple (Green)", &m_storeAppleGreen); 
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }
 
@@ -144,6 +154,9 @@ void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
 
 RobotContainer::~RobotContainer()
 {
+  if (m_camera.IsRunning()) {
+        m_camera.Stop();
+    }
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand()
