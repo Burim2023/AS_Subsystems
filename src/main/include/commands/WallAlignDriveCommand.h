@@ -10,6 +10,11 @@
 #include "commands/Drive/DriveUntilWallCommand.h"
 #include "commands/SpeedDriveCommand.h"
 
+/**
+ * WallAlignDriveCommand - Drives to wall and aligns using sensors
+ *
+ * REFACTORED: Now properly declares subsystem requirements
+ */
 class WallAlignDriveCommand
     : public frc2::CommandHelper<frc2::CommandBase, WallAlignDriveCommand>
 {
@@ -25,9 +30,6 @@ public:
   void Execute() override;
   void End(bool interrupted) override;
   bool IsFinished() override;
-
-  void SetAMCU(AMCU *amcu);
-  void SetSensorManager(SensorManager *sensorManager);
 
 private:
   enum class Phase

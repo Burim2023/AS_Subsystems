@@ -15,9 +15,15 @@
 using namespace frc;
 
 LidarSubsystem::LidarSubsystem(studica::Lidar::Port port)
-    : m_lidar(nullptr), m_port(port), m_hasValidData(false) {}
+    : frc2::SubsystemBase(),
+      m_lidar(nullptr),
+      m_port(port),
+      m_hasValidData(false)
+{
+}
 
-LidarSubsystem::~LidarSubsystem() {
+LidarSubsystem::~LidarSubsystem()
+{
     std::lock_guard<std::mutex> lock(m_lidarMutex);
     StopScan();
 }
@@ -26,8 +32,9 @@ void LidarSubsystem::Init()
     try
     {
         std::lock_guard<std::mutex> lock(m_lidarMutex);
-        if (!m_lidar) {
-            m_lidar = std::make_unique<studica::Lidar>(m_port); 
+        if (!m_lidar)
+        {
+            m_lidar = std::make_unique<studica::Lidar>(m_port);
             std::cout << "Studica LiDAR sensor initialized on USB port " << static_cast<int>(m_port) << std::endl;
 
             // Enable Kalman filter by default for noise reduction
@@ -37,7 +44,8 @@ void LidarSubsystem::Init()
             std::cout << "LiDAR initialization complete" << std::endl;
         }
     }
-    catch (const std::exception &e) {
+    catch (const std::exception &e)
+    {
         std::cerr << "LiDAR initialization failed: " << e.what() << std::endl;
         throw;
     }
@@ -167,10 +175,10 @@ void LidarSubsystem::ProcessRestartStateMachine()
 void LidarSubsystem::UpdateScanData()
 {
     std::lock_guard<std::mutex> lock(m_lidarMutex);
-    if (m_lidar) 
+    if (m_lidar)
     {
-        try 
-            {
+        try
+        {
             m_currentScan = m_lidar->GetData();
             m_hasValidData = true;
             m_consecutiveErrors = 0;
@@ -438,24 +446,6 @@ void LidarSubsystem::Periodic()
 {
     m_periodicCounter++;          // Track timing for restart cooldown
     ProcessRestartStateMachine(); // Handle non-blocking restart
+    UpdateScanData();             // Update scan data in main thread
     UpdateDashboard();
-}
-
-void LidarSubsystem::InitSendable(SendableBuilder &builder)
-{
-    builder.SetSmartDashboardType("Studica LiDAR Subsystem");
-    builder.AddDoubleProperty("Front Distance (cm)", [this]
-                              { return GetFrontDistance(); }, nullptr);
-    builder.AddDoubleProperty("Left Distance (cm)", [this]
-                              { return GetDistanceAtAngle(90); }, nullptr);
-    builder.AddDoubleProperty("Right Distance (cm)", [this]
-                              { return GetDistanceAtAngle(270); }, nullptr);
-    builder.AddDoubleProperty("Rear Distance (cm)", [this]
-                              { return GetDistanceAtAngle(180); }, nullptr);
-    builder.AddBooleanProperty("Path Clear", [this]
-                               { return IsPathClear(); }, nullptr);
-    builder.AddBooleanProperty("Is Scanning", [this]
-                               { return IsScanning(); }, nullptr);
-    builder.AddDoubleProperty("Valid Points", [this]
-                              { return GetValidPointCount(); }, nullptr);
 }

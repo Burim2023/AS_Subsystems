@@ -4,10 +4,23 @@
 #include <frc/Timer.h>
 #include "subsystems/amcu/AMCU.h"
 
-class SpeedDriveCommand : public frc2::CommandHelper<frc2::CommandBase, SpeedDriveCommand> {
+/**
+ * SpeedDriveCommand - Drives robot at specified speed for duration
+ *
+ * REFACTORED: Now properly declares subsystem requirements
+ */
+class SpeedDriveCommand : public frc2::CommandHelper<frc2::CommandBase, SpeedDriveCommand>
+{
 public:
-    // timeoutSeconds = 0 => run until interrupted
-    SpeedDriveCommand(AMCU* amcu, double timeoutSeconds, uint8_t forward, uint8_t strafe = 0, uint8_t rot = 0);
+    /**
+     * Constructor
+     * @param amcu AMCU subsystem
+     * @param timeoutSeconds Duration (0 = run until interrupted)
+     * @param forward Forward speed
+     * @param strafe Strafe speed
+     * @param rot Rotation speed
+     */
+    SpeedDriveCommand(AMCU *amcu, double timeoutSeconds, uint8_t forward, uint8_t strafe = 0, uint8_t rot = 0);
 
     void Initialize() override;
     void Execute() override;
@@ -15,10 +28,10 @@ public:
     bool IsFinished() override;
 
 private:
-    AMCU* m_amcu;
+    AMCU *m_amcu;
     double m_timeout;
-    uint8_t m_fwd, m_strafe, m_rot;  // Change to uint8_t
+    uint8_t m_fwd, m_strafe, m_rot;
     frc::Timer m_timer;
     frc::Timer m_keepalive;
-    static constexpr double kKeepaliveInterval = 0.25; // seconds (adjust as needed)
+    static constexpr double kKeepaliveInterval = 0.25;
 };

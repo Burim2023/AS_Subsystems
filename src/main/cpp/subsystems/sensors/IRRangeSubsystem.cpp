@@ -12,7 +12,12 @@
 
 using namespace frc;
 
-IRRangeSubsystem::IRRangeSubsystem(int leftAnalogPort, int rightAnalogPort) : m_leftAnalogPort(leftAnalogPort), m_rightAnalogPort(rightAnalogPort) {}
+IRRangeSubsystem::IRRangeSubsystem(int leftAnalogPort, int rightAnalogPort)
+    : frc2::SubsystemBase(),
+      m_leftAnalogPort(leftAnalogPort),
+      m_rightAnalogPort(rightAnalogPort)
+{
+}
 
 IRRangeSubsystem::~IRRangeSubsystem() {}
 
@@ -137,4 +142,9 @@ double IRRangeSubsystem::GetIRRightVoltage()
         return m_irSideRight->GetVoltage();
     }
     return 0.0;
+}
+
+void IRRangeSubsystem::Periodic()
+{
+    UpdateInfraRed();
 }

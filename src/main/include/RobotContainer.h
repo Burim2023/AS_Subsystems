@@ -3,6 +3,7 @@
 #include <frc2/command/Command.h>
 #include <frc2/command/SequentialCommandGroup.h>
 #include <frc/smartdashboard/SendableChooser.h>
+#include <memory>
 
 // Subsystem includes
 #include "subsystems/elevator/ArmSubsystem.h"
@@ -12,12 +13,7 @@
 #include "subsystems/elevator/ElevatorSubsystem.h"
 #include "subsystems/vision/CameraSubsystem.h"
 #include "subsystems/joystick/Gamepad.h"
-#include "subsystems/sensor/UltrasonicSubsystem.h"
-#include "subsystems/sensor/LidarSubsystem.h"
 #include "subsystems/sensor/SensorManager.h"
-#include "subsystems/sensor/IRRangeSubsystem.h"
-// #include "subsystems/Drivetrain.h"
-#include "subsystems/sensor/LineFollower.h"
 
 // Command includes
 #include "commands/MoveArmToPosition.h"
@@ -41,97 +37,100 @@
 #include "commands/SmartPickSequenceMid.h"
 #include "commands/SmartPickSequenceHigh.h"
 #include "commands/QRCodeReaderCommand.h"
-// #include "commands/PickupAndDeliverSequence.h"
 #include "commands/WallAlignDriveCommand.h"
 #include "commands/Drive/DriveUntilWallCommand.h"
 #include "commands/Drive/CobraLineFollowCommand.h"
-
 #include "commands/DriveSmartPickupGround.h"
-
 #include "commands/StoreAppleCommand.h"
-// Non-command-based subsystems
+
+// Hardware subsystems
 #include "Constants.h"
 #include "subsystems/amcu/AMCU.h"
 
-/**
- * This class is where the bulk of the robot should be declared.  Since
- * Command-based is a "declarative" paradigm, very little robot logic should
- * actually be handled in the {@link Robot} periodic methods (other than the
- * scheduler calls).  Instead, the structure of the robot (including subsystems,
- * commands, and button mappings) should be declared here.
- */
 class RobotContainer
 {
 public:
   RobotContainer();
   ~RobotContainer();
 
-  void SetAMCU(AMCU *amcu_ptr);
-  void SetSensorManager(SensorManager *sensor_ptr);
-
-  // frc
+  // Accessors for Robot.cpp initialization
   frc2::Command *GetAutonomousCommand();
-  frc::UltrasonicSubsystem  *GetUltrasonic(){ return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr; }
-  frc::IRRangeSubsystem     *GetIRRange(){ return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr; }
-  LineFollower *GetLineFollower() { return m_sensorManager ? m_sensorManager->GetLineFollower() : nullptr; }
 
-  GripperJointSubsystem   &GetGripperJoint() { return m_gripperJoint; }
-  GripperSubsystem        &GetGripper() { return m_gripper; }
-  ElevatorSubsystem       &GetElevator() { return m_elevator; }
-  ExtenderSubsystem       &GetExtender() { return m_extender; }
-  CameraSubsystem         &GetCamera() { return m_camera; }
-  Gamepad                 *GetGamepad() { return &m_gamepad; }
-  SensorManager           *GetSensorManager() { return m_sensorManager; }
+  // Subsystem accessors for Robot.cpp
+  AMCU *GetAMCU() { return &m_amcu; }
+  SensorManager *GetSensorManager() { return &m_sensorManager; }
+
+  // Sensor subsystem accessors
+  frc::UltrasonicSubsystem *GetUltrasonic() { return m_sensorManager.GetUltrasonicSubsystem(); }
+  frc::IRRangeSubsystem *GetIRRange() { return m_sensorManager.GetIRRangeSubsystem(); }
+  LineFollower *GetLineFollower() { return m_sensorManager.GetLineFollower(); }
+
+  // Robot subsystem accessors
+  GripperJointSubsystem &GetGripperJoint() { return m_gripperJoint; }
+  GripperSubsystem &GetGripper() { return m_gripper; }
+  ElevatorSubsystem &GetElevator() { return m_elevator; }
+  ExtenderSubsystem &GetExtender() { return m_extender; }
+  CameraSubsystem &GetCamera() { return m_camera; }
+  Gamepad *GetGamepad() { return &m_gamepad; }
 
 private:
-  ArmSubsystem          m_arm;
-  ExtenderSubsystem     m_extender;
-  GripperSubsystem      m_gripper;
+  // === SUBSYSTEMS (owned by container) ===
+  // Drive system
+  AMCU m_amcu; // Now a proper subsystem, not a pointer
+
+  // Sensor system
+  SensorManager m_sensorManager; // Now a proper subsystem, not a pointer
+
+  // Manipulator subsystems
+  ArmSubsystem m_arm;
+  ExtenderSubsystem m_extender;
+  GripperSubsystem m_gripper;
   GripperJointSubsystem m_gripperJoint;
-  ElevatorSubsystem     m_elevator;
-  CameraSubsystem       m_camera;
-  LineFollower          m_lineFollower{0, 1, 2, 3, 5.0f};
-  Gamepad               m_gamepad;
-  SensorManager         *m_sensorManager = nullptr;
-  AMCU                  *m_amcu = nullptr;
+  ElevatorSubsystem m_elevator;
+
+  // Vision system
+  CameraSubsystem m_camera;
+
+  // Operator interface
+  Gamepad m_gamepad;
 
   // Autonomous Chooser
   frc::SendableChooser<frc2::Command *> m_chooser;
 
   // Commands (Reordered to match initialization in .cpp)
-  FullPickSequence            m_autoPickSequence;
-  RetractAndLift              m_autoRetractAndLift;
-  CalibrateExtender           m_calibrateExtenderOnly;
+  FullPickSequence m_autoPickSequence;
+  RetractAndLift m_autoRetractAndLift;
+  CalibrateExtender m_calibrateExtenderOnly;
   ExtenderCalibrationSequence m_demoExtender;
-  SimpleDrive                 m_simpleDrive;
-  TestCommandSequence         m_testSequence;
-  GripperOperate              m_gripperOperateUp;
-  GripperOperate              m_gripperOperateDown;
-  GripperOperate              m_gripperPickup;
-  GripperPickupSequence       m_gripperPickupSequence;
-  CalibrateElevator           m_calibrateElevator;
-  ElevatorPresets             m_elevatorGround;
-  ElevatorPresets             m_elevatorLow;
-  ElevatorPresets             m_elevatorHigh;
-  MoveElevatorToPosition      m_elevatorCustom;
-  ElevatorTestSequence        m_elevatorTestSequence;
-  SmartPickSequence           m_smartPickSequence;
-  SmartPickSequenceMid        m_smartPickSequenceMid;
-  SmartPickSequenceHigh       m_smartPickSequenceHigh;
-  DriveSmartPickupGround      m_driveSmartPickupGround;
-  AppleGripperCheckCommand    m_checkAppleGrip;
-  AppleGripperCheckCommand    m_waitForGrip;
-  AppleGripperCheckCommand    m_monitorGrip;    
-  WallAlignDriveCommand       m_wallAlignDriveCommand;
-  DriveUntilWallCommand       m_driveUntilWallCommand;
-  CobraLineFollowCommand      m_cobraLineFollowCommand;
-  QRCodeReaderCommand         m_qrCodeReaderCommandSingle;
-  QRCodeReaderCommand         m_qrCodeReaderCommandTimed;
-  QRCodeReaderCommand         m_qrCodeReaderCommandContinuous;
-  storage::StoreAppleCommand   m_storeAppleAuto;         // Auto-detection
-  storage::StoreAppleCommand   m_storeAppleRed;          // Manual red
-  storage::StoreAppleCommand   m_storeAppleYellow;       // Manual yellow
-  storage::StoreAppleCommand   m_storeAppleGreen;        // Manual green
+  SimpleDrive m_simpleDrive;
+  TestCommandSequence m_testSequence;
+  GripperOperate m_gripperOperateUp;
+  GripperOperate m_gripperOperateDown;
+  GripperOperate m_gripperPickup;
+  GripperPickupSequence m_gripperPickupSequence;
+  CalibrateElevator m_calibrateElevator;
+  ElevatorPresets m_elevatorGround;
+  ElevatorPresets m_elevatorLow;
+  ElevatorPresets m_elevatorHigh;
+  MoveElevatorToPosition m_elevatorCustom;
+  ElevatorTestSequence m_elevatorTestSequence;
+  SmartPickSequence m_smartPickSequence;
+  SmartPickSequenceMid m_smartPickSequenceMid;
+  SmartPickSequenceHigh m_smartPickSequenceHigh;
+  DriveSmartPickupGround m_driveSmartPickupGround;
+  AppleGripperCheckCommand m_checkAppleGrip;
+  AppleGripperCheckCommand m_waitForGrip;
+  AppleGripperCheckCommand m_monitorGrip;
+  WallAlignDriveCommand m_wallAlignDriveCommand;
+  DriveUntilWallCommand m_driveUntilWallCommand;
+  CobraLineFollowCommand m_cobraLineFollowCommand;
+  QRCodeReaderCommand m_qrCodeReaderCommandSingle;
+  QRCodeReaderCommand m_qrCodeReaderCommandTimed;
+  QRCodeReaderCommand m_qrCodeReaderCommandContinuous;
+  storage::StoreAppleCommand m_storeAppleAuto;   // Auto-detection
+  storage::StoreAppleCommand m_storeAppleRed;    // Manual red
+  storage::StoreAppleCommand m_storeAppleYellow; // Manual yellow
+  storage::StoreAppleCommand m_storeAppleGreen;  // Manual green
   // PickupAndDeliverSequence m_pickupAndDerliverSequence;
 
   void ConfigureButtonBindings();

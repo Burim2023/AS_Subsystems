@@ -2,9 +2,6 @@
 #include <iostream>
 #include <algorithm>
 
-// ...existing code...
-
-
 ArmSubsystem::ArmSubsystem() {
     ArmServo = nullptr;
     servoAngleArm = HOME_ANGLE;

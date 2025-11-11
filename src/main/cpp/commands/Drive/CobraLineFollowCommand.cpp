@@ -9,8 +9,8 @@
 using Clock = std::chrono::steady_clock;
 
 CobraLineFollowCommand::CobraLineFollowCommand(
-    LineFollower *lf, double kP, uint8_t fwd, double lostDebounce)
-    : m_lf(lf), m_kP(kP), m_fwd(fwd), m_lost(lostDebounce),
+    AMCU *amcu, LineFollower *lf, double kP, uint8_t fwd, double lostDebounce)
+    : m_amcu(amcu), m_lf(lf), m_kP(kP), m_fwd(fwd), m_lost(lostDebounce),
       CommandHelper(
           // -------- Initialize --------
           [this]()
@@ -90,4 +90,10 @@ CobraLineFollowCommand::CobraLineFollowCommand(
           [this]() -> bool
           { return false; })
 {
+  // Declare subsystem requirements for WPILib scheduler
+  if (m_amcu)
+  {
+    AddRequirements({m_amcu});
+  }
+  // Note: LineFollower is managed by SensorManager subsystem, not independent
 }

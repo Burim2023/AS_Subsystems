@@ -2,8 +2,10 @@
 
 #include <vector>
 #include <atomic>
-#include <thread>
+#include <mutex>
+#include <memory>
 #include <frc/Ultrasonic.h>
+#include <frc2/command/SubsystemBase.h>
 
 #include "Constants.h"
 #include "subsystems/sensor/UltrasonicSubsystem.h"
@@ -11,15 +13,24 @@
 #include "subsystems/sensor/LidarSubsystem.h"
 #include "subsystems/sensor/LineFollower.h"
 
-class SensorManager
+class SensorManager : public frc2::SubsystemBase
 {
 public:
     SensorManager();
     ~SensorManager();
-    void SensorManagerStartThread();
-    void SensorWorker();
+
+    /**
+     * Initialize all sensor subsystems
+     * Should be called once during robot initialization
+     */
     void InitializeSensors();
 
+    /**
+     * Periodic update - called automatically by scheduler
+     */
+    void Periodic() override;
+
+    // Sensor subsystem accessors
     frc::UltrasonicSubsystem *GetUltrasonicSubsystem();
     frc::IRRangeSubsystem *GetIRRangeSubsystem();
     frc::LidarSubsystem *GetLidarSubsystem();
@@ -28,9 +39,6 @@ public:
 private:
     std::mutex m_sensorMutex;
     std::atomic<bool> m_lidarReady{false};
-
-    std::thread workerThread;
-    std::atomic<bool> stopThread;
 
     std::unique_ptr<frc::UltrasonicSubsystem> ultraSonic;
     std::unique_ptr<frc::IRRangeSubsystem> infraRed;

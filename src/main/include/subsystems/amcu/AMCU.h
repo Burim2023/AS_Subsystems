@@ -4,9 +4,9 @@
 #include <hal/CAN.h>
 #include <stdlib.h>
 #include <atomic>
-#include <thread>
 #include <mutex>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/SubsystemBase.h>
 #include <list>
 
 #define ID_11_BIT 0x40000000
@@ -44,7 +44,7 @@ struct TLV_Frame
   std::list<uint8_t> value;
 };
 
-class AMCU
+class AMCU : public frc2::SubsystemBase
 {
 public:
   // ----------------------------------------------------------------------
@@ -276,8 +276,6 @@ private:
   std::atomic<uint16_t> count_MSG_received{0};
   std::atomic<uint16_t> count_MSG_sended{0};
   uint8_t cntOmni = 0;
-  std::atomic<bool> thread_finished{false};
-  std::thread thr;
   std::atomic<bool> waitForResponse{false};
 
   int8_t rpm[4];
@@ -287,7 +285,11 @@ private:
   std::list<TLV_Frame> queue;
   std::atomic<bool> initialized{false};
 
-  // Thread safety mutexes
+  // Periodic cycle counter for RPM/encoder requests
+  int m_periodicCycleCount{0};
+  static constexpr int kRpmRequestInterval = 20; // Request every 20 cycles (~400ms at 50Hz)
+
+  // Thread safety mutexes (still needed for data access)
   std::mutex queue_mutex;
   std::mutex data_mutex;
 
@@ -304,18 +306,20 @@ private:
   void handleTLVReceive(uint8_t tag, uint8_t len, uint8_t value[]);
 
   // ----------------------------------------------------------------------
-  // description:     gets called every 100µs
-  // parameters:      -
-  // return value:    -
-  // ----------------------------------------------------------------------
-  void handleThread();
-
-  // ----------------------------------------------------------------------
   // description:     initializes the CAN connection
   // parameters:      -
   // return value:    -
   // ----------------------------------------------------------------------
   void init();
+
+  // ----------------------------------------------------------------------
+  // description:     WPILib Periodic - handles CAN communication
+  //                  Called automatically by command scheduler at ~50Hz
+  // parameters:      -
+  // return value:    -
+  // ----------------------------------------------------------------------
+public:
+  void Periodic() override;
 
   // ----------------------------------------------------------------------
   // description:     adds a TLV-Frame to the sending queue

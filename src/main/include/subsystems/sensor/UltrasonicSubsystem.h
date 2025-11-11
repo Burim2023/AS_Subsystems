@@ -8,17 +8,15 @@
 #pragma once
 
 #include <frc/Ultrasonic.h>
+#include <frc2/command/SubsystemBase.h>
 #include <frc/smartdashboard/SmartDashboard.h>
-#include <frc/smartdashboard/Sendable.h>
-#include <frc/smartdashboard/SendableHelper.h>
-#include <frc/smartdashboard/SendableBuilder.h>
 #include <memory>
 #include <mutex>
 
 namespace frc
 {
 
-  class UltrasonicSubsystem
+  class UltrasonicSubsystem : public frc2::SubsystemBase
   {
   public:
     UltrasonicSubsystem(int leftTrigger, int leftEcho, int rightTrigger, int rightEcho);
@@ -30,6 +28,7 @@ namespace frc
     void UpdateUltraSonic();
     bool IsLeftWallDetected();
     bool IsRightWallDetected();
+    void Periodic();
 
   private:
     int m_leftTriggerPort;

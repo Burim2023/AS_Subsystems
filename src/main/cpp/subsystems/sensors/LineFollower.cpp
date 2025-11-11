@@ -3,9 +3,16 @@
 
 // Constructor
 LineFollower::LineFollower(int ch0, int ch1, int ch2, int ch3, float vRef)
-    : m_cobra(vRef),
+    : frc2::SubsystemBase(),
+      m_cobra(vRef),
       m_ch{ch0, ch1, ch2, ch3}
 {
+}
+
+void LineFollower::Init()
+{
+  // Cobra sensor is initialized in constructor, so this is a no-op
+  // but provided for consistency with other subsystems
 }
 
 void LineFollower::update()
@@ -132,4 +139,9 @@ void LineFollower::UpdateShuffleboard(int rateDiv)
   m_entSignal.SetDouble(m_signal);
   m_entErr.SetDouble(m_posErr);
   m_entDetected.SetBoolean(m_signal >= m_minSignal);
+}
+
+void LineFollower::Periodic()
+{
+  update();
 }

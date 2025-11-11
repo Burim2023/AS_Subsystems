@@ -14,16 +14,8 @@ DriveUntilWallCommand::DriveUntilWallCommand(AMCU *amcu,
       m_driveSpeedCms(driveSpeedCms)
 {
   SetName("DriveUntilWallCommand");
-}
-
-void DriveUntilWallCommand::SetAMCU(AMCU *amcu)
-{
-  m_amcu = amcu;
-}
-
-void DriveUntilWallCommand::SetSensorManager(SensorManager *sensorManager)
-{
-  m_sensorManager = sensorManager;
+  // Both AMCU and SensorManager are now proper subsystems - declare requirements
+  AddRequirements({m_amcu, m_sensorManager});
 }
 
 void DriveUntilWallCommand::Initialize()

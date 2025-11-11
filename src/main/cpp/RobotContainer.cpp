@@ -4,18 +4,15 @@
 #include "Constants.h"
 
 RobotContainer::RobotContainer()
-    : m_amcu(nullptr),
-      m_sensorManager(nullptr),
-      m_wallAlignDriveCommand(nullptr, nullptr, 15.0, 15, 30),
-      m_driveUntilWallCommand(nullptr, nullptr, 15.0, 28.0, 15),
-      m_cobraLineFollowCommand(nullptr, 40.0, static_cast<uint8_t>(15), 0.30),
+    : m_wallAlignDriveCommand(&m_amcu, &m_sensorManager, 15.0, 15, 30),
+      m_driveUntilWallCommand(&m_amcu, &m_sensorManager, 15.0, 28.0, 15),
+      m_cobraLineFollowCommand(&m_amcu, m_sensorManager.GetLineFollower(), 40.0, static_cast<uint8_t>(15), 0.30),
       m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
       m_calibrateExtenderOnly(&m_extender),
       m_demoExtender(&m_extender, 2.0),
-      m_simpleDrive(nullptr, 0.3, 0.0, 0.0),
-      // m_testSequence(m_amcu, &m_arm, &m_extender),
-      m_testSequence(m_amcu),
+      m_simpleDrive(&m_amcu, 0.3, 0.0, 0.0),
+      m_testSequence(&m_amcu),
       m_gripperOperateUp(&m_gripperJoint, &m_gripper, GripperOperate::Position::UP, true, 2.0),
       m_gripperOperateDown(&m_gripperJoint, &m_gripper, GripperOperate::Position::DOWN, false, 2.0),
       m_gripperPickup(&m_gripperJoint, &m_gripper, GripperOperate::Position::MID, false, 2.0),
@@ -33,23 +30,34 @@ RobotContainer::RobotContainer()
       m_qrCodeReaderCommandSingle(&m_camera, QRCodeReaderCommand::ReadMode::SINGLE_READ),
       m_qrCodeReaderCommandTimed(&m_camera, 10.0), // 10 second timeout
       m_qrCodeReaderCommandContinuous(&m_camera, QRCodeReaderCommand::ReadMode::CONTINUOUS_READ),
-      m_driveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu),
+      m_driveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, &m_amcu),
       // Apple detection commands - simplified
       m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
       m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
       m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0),
-      m_storeAppleAuto(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper),                    // Auto-detection
-      m_storeAppleRed(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "red", 1.0),         // Red apple, 1.0s pick time
-      m_storeAppleYellow(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "yellow", 1.8),   // Yellow apple, 1.8s pick time
+      m_storeAppleAuto(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper),                  // Auto-detection
+      m_storeAppleRed(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "red", 1.0),       // Red apple, 1.0s pick time
+      m_storeAppleYellow(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "yellow", 1.8), // Yellow apple, 1.8s pick time
       m_storeAppleGreen(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "green", 2.5)
-// m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
 {
+  std::cout << "RobotContainer: Initializing subsystems..." << std::endl;
 
-  // Initialize all subsystems
+  m_sensorManager.InitializeSensors();
+  if (m_sensorManager.GetLineFollower())
+  {
+    m_sensorManager.GetLineFollower()->setMinSignal(0.65);
+  }
+
+  // Initialize manipulator subsystems
   m_arm.Init();
   m_extender.Init();
   m_gripper.Init();
   m_gripperJoint.Init();
+
+  // Initialize elevator with AMCU reference
+  m_elevator.Init(&m_amcu);
+
+  // Initialize camera subsystem
   try
   {
     m_camera.InitDashboard();
@@ -63,6 +71,8 @@ RobotContainer::RobotContainer()
 
   // Configure the button bindings
   ConfigureButtonBindings();
+
+  std::cout << "RobotContainer: Subsystems initialized (proper dependency injection)" << std::endl;
 
   // Setup autonomous chooser
   m_chooser.SetDefaultOption("Test Command Sequence", &m_testSequence);
@@ -101,62 +111,28 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Drive Until Wall", &m_driveUntilWallCommand);
   m_chooser.AddOption("Line Follow", &m_cobraLineFollowCommand);
 
-  //QR Code Reader
+  // QR Code Reader
   m_chooser.AddOption("QR READ Single", &m_qrCodeReaderCommandSingle);
   m_chooser.AddOption("QR READ Timed", &m_qrCodeReaderCommandTimed);
   m_chooser.AddOption("QR READ Continuous", &m_qrCodeReaderCommandContinuous);
   // m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
 
   // ADD APPLE STORAGE OPTIONS TO CHOOSER:
-  m_chooser.AddOption("Store Apple (Auto)", &m_storeAppleAuto);           // Camera detection
-  m_chooser.AddOption("Store Apple (Red)", &m_storeAppleRed);             // Manual red
-  m_chooser.AddOption("Store Apple (Yellow)", &m_storeAppleYellow);       // Manual yellow
-  m_chooser.AddOption("Store Apple (Green)", &m_storeAppleGreen); 
+  m_chooser.AddOption("Store Apple (Auto)", &m_storeAppleAuto);     // Camera detection
+  m_chooser.AddOption("Store Apple (Red)", &m_storeAppleRed);       // Manual red
+  m_chooser.AddOption("Store Apple (Yellow)", &m_storeAppleYellow); // Manual yellow
+  m_chooser.AddOption("Store Apple (Green)", &m_storeAppleGreen);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }
 
 void RobotContainer::ConfigureButtonBindings() {}
 
-void RobotContainer::SetAMCU(AMCU *amcu_ptr)
-{
-  m_amcu = amcu_ptr;
-
-  m_elevator.Init(amcu_ptr);
-  m_testSequence.SetAMCU(amcu_ptr);
-  m_wallAlignDriveCommand.SetAMCU(amcu_ptr);
-  m_driveUntilWallCommand.SetAMCU(amcu_ptr);
-  m_cobraLineFollowCommand.SetAMCU(amcu_ptr);
-
-}
-
-void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
-{
-  m_sensorManager = sensor_ptr;
-
-  if (m_sensorManager)
-  {
-    m_wallAlignDriveCommand.SetSensorManager(m_sensorManager);
-    m_driveUntilWallCommand.SetSensorManager(m_sensorManager);
-
-    if (m_sensorManager->GetLineFollower())
-    {
-      m_sensorManager->GetLineFollower()->setMinSignal(0.65);
-      m_cobraLineFollowCommand.SetLineFollower(m_sensorManager->GetLineFollower());
-    }
-
-    std::cout << "RobotContainer: Updated commands with SensorManager\n";
-  }
-  else
-  {
-    std::cout << "RobotContainer: WARNING - SensorManager is null!\n";
-  }
-}
-
 RobotContainer::~RobotContainer()
 {
-  if (m_camera.IsRunning()) {
-        m_camera.Stop();
-    }
+  if (m_camera.IsRunning())
+  {
+    m_camera.Stop();
+  }
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand()

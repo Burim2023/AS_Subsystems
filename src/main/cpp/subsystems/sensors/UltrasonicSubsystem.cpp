@@ -10,11 +10,9 @@
 
 using namespace frc;
 
-/**
- * Constructor — stores the trigger/echo port numbers for both sensors.
- */
 UltrasonicSubsystem::UltrasonicSubsystem(int leftTrigger, int leftEcho, int rightTrigger, int rightEcho)
-    : m_leftTriggerPort(leftTrigger),
+    : frc2::SubsystemBase(),
+      m_leftTriggerPort(leftTrigger),
       m_leftEchoPort(leftEcho),
       m_rightTriggerPort(rightTrigger),
       m_rightEchoPort(rightEcho)
@@ -112,4 +110,9 @@ bool UltrasonicSubsystem::IsRightWallDetected()
 {
     double distance = GetRightDistance();
     return (distance > 0 && distance < kDefaultThreshold);
+}
+
+void UltrasonicSubsystem::Periodic()
+{
+    UpdateUltraSonic();
 }

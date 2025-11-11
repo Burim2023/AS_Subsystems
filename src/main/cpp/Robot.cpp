@@ -9,53 +9,44 @@
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/sensor/SensorManager.h"
 
-// #include "commands/SpeedDriveCommand.h"
-
-// Define static members of Robot class
-
-Robot *Robot::s_instance = nullptr;
-
 void Robot::RobotInit()
 {
-  s_instance = this;
-  m_sensormanager = std::make_unique<SensorManager>();
-  m_amcu = std::make_unique<AMCU>();
-
   SetupLogging();
-  InitLogging(m_sensormanager.get());
+  InitLogging(m_container.GetSensorManager());
 
-  m_sensormanager->InitializeSensors();
-  m_sensormanager->SensorManagerStartThread();
-
-  // Forward SensorManager and AMCU to RobotContainer
-  m_container.SetSensorManager(m_sensormanager.get());
-  m_container.SetAMCU(m_amcu.get());
-
-  m_amcu->initOmniDriveBase(Constants::kWheelRadius, Constants::kRobotRadius, Constants::kMotorLeft, Constants::kMotorRight, Constants::kMotorBack);
+  // Initialize drive base configuration
+  m_container.GetAMCU()->initOmniDriveBase(
+      Constants::kWheelRadius,
+      Constants::kRobotRadius,
+      Constants::kMotorLeft,
+      Constants::kMotorRight,
+      Constants::kMotorBack);
 
   InitializeStorageParameters();
+
+  std::cout << "Robot: Initialization complete (no singleton pattern)" << std::endl;
 }
 
 // Storage Parameters
 void Robot::InitializeStorageParameters()
 {
   auto nt = nt::NetworkTableInstance::GetDefault().GetTable("Storage");
-  
+
   // Set storage height to 200mm (optimal for apple dropping)
   nt->PutNumber("HeightMM", 200.0);
-  
+
   // Set slot timing thresholds for pick time classification
-  nt->PutNumber("T1", 1.5);   // 0-1.5s = Slot 0 (red apples)
-  nt->PutNumber("T2", 2.2);   // 1.5-2.2s = Slot 1 (yellow apples), >2.2s = Slot 2 (green apples)
-  
+  nt->PutNumber("T1", 1.5); // 0-1.5s = Slot 0 (red apples)
+  nt->PutNumber("T2", 2.2); // 1.5-2.2s = Slot 1 (yellow apples), >2.2s = Slot 2 (green apples)
+
   // Set slot position fractions (time-based positioning)
-  nt->PutNumber("Slot0Frac", 0.17);  // 17% from back (closest to robot)
-  nt->PutNumber("Slot1Frac", 0.50);  // 50% from back (middle)
-  nt->PutNumber("Slot2Frac", 0.83);  // 83% from back (furthest from robot)
-  
+  nt->PutNumber("Slot0Frac", 0.17); // 17% from back (closest to robot)
+  nt->PutNumber("Slot1Frac", 0.50); // 50% from back (middle)
+  nt->PutNumber("Slot2Frac", 0.83); // 83% from back (furthest from robot)
+
   // Set operational parameters
-  nt->PutNumber("DropDwellMs", 500.0);  // 500ms wait after gripper opens
-  
+  nt->PutNumber("DropDwellMs", 500.0); // 500ms wait after gripper opens
+
   std::cout << "Storage parameters initialized:" << std::endl;
   std::cout << "  - Storage Height: 200mm" << std::endl;
   std::cout << "  - Slot 0 (Red): 17% extension, <1.5s pick time" << std::endl;
@@ -65,7 +56,7 @@ void Robot::InitializeStorageParameters()
 
 void Robot::RobotPeriodic()
 {
-  UpdateLogging(m_sensormanager.get());
+  UpdateLogging(m_container.GetSensorManager());
 
   frc2::CommandScheduler::GetInstance().Run();
 

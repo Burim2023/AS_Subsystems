@@ -3,14 +3,15 @@
 #include "studica/Servo.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/SubsystemBase.h>
+#include <memory>
 
 #define GRIPPER_SERVO_PORT 21
 
 #define GRIPPER_CLOSED_ANGLE 0
 #define GRIPPER_OPEN_ANGLE 45
 
-
-class GripperSubsystem : public frc2::SubsystemBase {
+class GripperSubsystem : public frc2::SubsystemBase
+{
 public:
     explicit GripperSubsystem();
     void Init();
@@ -22,7 +23,8 @@ public:
 
     double GetServoAngle();
     double GetGripperPosition();
+
 private:
-    double servoAngleGripper = 0;
-    
+    std::unique_ptr<studica::Servo> m_servo; // Member variable (not global)
+    double m_angle = GRIPPER_OPEN_ANGLE;     // Member variable (not global)
 };

@@ -6,17 +6,20 @@
 #include <cstdint>
 #include <mutex>
 
+#include <frc2/command/SubsystemBase.h>
 #include <networktables/NetworkTableEntry.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 
-#include "studica/Cobra.h" 
+#include "studica/Cobra.h"
 
-class LineFollower
+class LineFollower : public frc2::SubsystemBase
 {
 public:
   LineFollower(int ch0, int ch1, int ch2, int ch3, float vRef = 5.0f);
+  void Init();
   void update();
+  void Periodic();
   void setMinMax(double whiteV, double blackV)
   {
     m_white.fill(whiteV);
@@ -98,6 +101,6 @@ private:
   nt::NetworkTableEntry m_entSignal;
   nt::NetworkTableEntry m_entErr;
   nt::NetworkTableEntry m_entDetected;
-  
+
   mutable std::mutex m_mutex;
 };

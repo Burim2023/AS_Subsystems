@@ -21,9 +21,6 @@ public:
   bool IsFinished() override;
   void End(bool interrupted) override;
 
-  void SetAMCU(AMCU *amcu);
-  void SetSensorManager(SensorManager *sensorManager);
-
 private:
   AMCU *m_amcu{nullptr};
   SensorManager *m_sensorManager{nullptr};

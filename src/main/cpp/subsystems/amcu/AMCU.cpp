@@ -1,21 +1,17 @@
 #include "subsystems/amcu/AMCU.h"
 #include <iostream>
 
-// Constructor starts thread for CAN
 AMCU::AMCU()
 {
-  thread_finished = false;
-  thr = std::thread(&AMCU::handleThread, this);
+  SetName("AMCU");
 }
 
-// Destructor stops CAN and ends thread
+// Destructor stops CAN
 AMCU::~AMCU()
 {
-  HAL_CAN_CloseStreamSession(handleCAN);
-  if (thr.joinable())
+  if (initialized)
   {
-    thread_finished = true;
-    thr.join();
+    HAL_CAN_CloseStreamSession(handleCAN);
   }
 }
 
@@ -254,6 +250,9 @@ bool AMCU::sendTLV()
 // reads TLV-frames from the buffer
 void AMCU::readTLV()
 {
+  if (!initialized)
+    return;
+
   HAL_CANStreamMessage message;
   uint32_t read_msg = 0;
 
@@ -263,20 +262,6 @@ void AMCU::readTLV()
     if (message.dataSize > 0)
     {
       count_MSG_received++; // increase counter for received messages
-
-      // output values to dashboard (read with lock)
-      {
-        std::lock_guard<std::mutex> lock(data_mutex);
-        frc::SmartDashboard::PutNumber("RPM 0", rpm[MOTOR_0]);
-        frc::SmartDashboard::PutNumber("RPM 1", rpm[MOTOR_1]);
-        frc::SmartDashboard::PutNumber("RPM 2", rpm[MOTOR_2]);
-        frc::SmartDashboard::PutNumber("RPM 3", rpm[MOTOR_3]);
-
-        frc::SmartDashboard::PutNumber("Encoder 0", encoder[MOTOR_0]);
-        frc::SmartDashboard::PutNumber("Encoder 1", encoder[MOTOR_1]);
-        frc::SmartDashboard::PutNumber("Encoder 2", encoder[MOTOR_2]);
-        frc::SmartDashboard::PutNumber("Encoder 3", encoder[MOTOR_3]);
-      }
     }
 
     // check if size of can frame -2 is the same as the length value of the TLV-Frame
@@ -342,58 +327,66 @@ void AMCU::handleTLVReceive(uint8_t tag, uint8_t len, uint8_t value[])
     waitForResponse = false;
 }
 
-// called for thread
-void AMCU::handleThread()
+// WPILib Periodic() - replaces handleThread()
+// Called automatically by command scheduler at ~50Hz (every 20ms)
+void AMCU::Periodic()
 {
-  int cntGetRPM = 0;
-  int storeQueueSize = 0;
-  while (!thread_finished) // infinity loop while AMCU object exists
+  // Initialize on first call
+  if (!initialized)
   {
-    if (initialized == false) // if it hasnt been initiales initialise it
-    {
-      initialized = true;
-      std::this_thread::sleep_for(350ms); // Wait until CAN is ready
-      init();                             // init object
+    init();
+    initialized = true;
 
-      // Read queue size with lock
-      {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        storeQueueSize = queue.size();
-      }
-      frc::SmartDashboard::PutNumber("SizeQueue at Init", storeQueueSize);
-    }
-    cnt_test++;
-    cntGetRPM++;
-    // send a request for rpm and encoder every 1000 loops
-    if (cntGetRPM > 1000)
-    {
-      addTLVToList(TAG_GET_RPM, 1, {0});
-      addTLVToList(TAG_GET_RPM, 1, {1});
-      addTLVToList(TAG_GET_RPM, 1, {2});
-      addTLVToList(TAG_GET_RPM, 1, {3});
-
-      addTLVToList(TAG_GET_ENC, 1, {0});
-      addTLVToList(TAG_GET_ENC, 1, {1});
-      addTLVToList(TAG_GET_ENC, 1, {2});
-      addTLVToList(TAG_GET_ENC, 1, {3});
-      cntGetRPM = 0;
-    }
-
-    readTLV(); // read a tlv-frame from buffer
-    sendTLV(); // send a tlv-frame from the queue
-
-    // Read queue size with lock
-    {
-      std::lock_guard<std::mutex> lock(queue_mutex);
-      frc::SmartDashboard::PutNumber("SizeQueue", queue.size());
-    }
-
-    frc::SmartDashboard::PutNumber("countMSG received", count_MSG_received);
-    frc::SmartDashboard::PutNumber("countMSG sended", count_MSG_sended);
-    frc::SmartDashboard::PutNumber("cnt_OK", cnt_sucessfull);
-    frc::SmartDashboard::PutNumber("cnt_FAIL", cnt_fail);
-    frc::SmartDashboard::PutNumber("cnt_DONE", cnt_done);
-    frc::SmartDashboard::PutNumber("cnt_LmSW", cnt_lmSw);
-    std::this_thread::sleep_for(100us); // wait for 100µs
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    frc::SmartDashboard::PutNumber("SizeQueue at Init", queue.size());
+    std::cout << "AMCU: Initialized in Periodic()" << std::endl;
+    return; // Skip first cycle to let CAN stabilize
   }
+
+  // Request RPM and encoder values periodically (every 20 cycles = ~400ms)
+  m_periodicCycleCount++;
+  if (m_periodicCycleCount >= kRpmRequestInterval)
+  {
+    addTLVToList(TAG_GET_RPM, 1, {0});
+    addTLVToList(TAG_GET_RPM, 1, {1});
+    addTLVToList(TAG_GET_RPM, 1, {2});
+    addTLVToList(TAG_GET_RPM, 1, {3});
+
+    addTLVToList(TAG_GET_ENC, 1, {0});
+    addTLVToList(TAG_GET_ENC, 1, {1});
+    addTLVToList(TAG_GET_ENC, 1, {2});
+    addTLVToList(TAG_GET_ENC, 1, {3});
+
+    m_periodicCycleCount = 0;
+  }
+
+  // Process CAN communication (read and send)
+  readTLV();
+  sendTLV();
+
+  // Update dashboard with current state (with lock for thread safety)
+  {
+    std::lock_guard<std::mutex> lock(data_mutex);
+    frc::SmartDashboard::PutNumber("RPM 0", rpm[MOTOR_0]);
+    frc::SmartDashboard::PutNumber("RPM 1", rpm[MOTOR_1]);
+    frc::SmartDashboard::PutNumber("RPM 2", rpm[MOTOR_2]);
+    frc::SmartDashboard::PutNumber("RPM 3", rpm[MOTOR_3]);
+
+    frc::SmartDashboard::PutNumber("Encoder 0", encoder[MOTOR_0]);
+    frc::SmartDashboard::PutNumber("Encoder 1", encoder[MOTOR_1]);
+    frc::SmartDashboard::PutNumber("Encoder 2", encoder[MOTOR_2]);
+    frc::SmartDashboard::PutNumber("Encoder 3", encoder[MOTOR_3]);
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    frc::SmartDashboard::PutNumber("SizeQueue", queue.size());
+  }
+
+  frc::SmartDashboard::PutNumber("countMSG received", count_MSG_received);
+  frc::SmartDashboard::PutNumber("countMSG sended", count_MSG_sended);
+  frc::SmartDashboard::PutNumber("cnt_OK", cnt_sucessfull);
+  frc::SmartDashboard::PutNumber("cnt_FAIL", cnt_fail);
+  frc::SmartDashboard::PutNumber("cnt_DONE", cnt_done);
+  frc::SmartDashboard::PutNumber("cnt_LmSW", cnt_lmSw);
 }

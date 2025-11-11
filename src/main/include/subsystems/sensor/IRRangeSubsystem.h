@@ -8,16 +8,14 @@
 #pragma once
 
 #include <frc/AnalogInput.h>
+#include <frc2/command/SubsystemBase.h>
 #include <frc/smartdashboard/SmartDashboard.h>
-#include <frc/smartdashboard/Sendable.h>
-#include <frc/smartdashboard/SendableHelper.h>
-#include <frc/smartdashboard/SendableBuilder.h>
 #include <memory>
 #include <mutex>
 
 namespace frc
 {
-  class IRRangeSubsystem
+  class IRRangeSubsystem : public frc2::SubsystemBase
   {
   public:
     IRRangeSubsystem(int leftAnalogPort, int rightAnalogPort);
@@ -30,6 +28,7 @@ namespace frc
     double GetIRRightVoltage();
     double GetIRRLeftVoltage();
     bool IsObjectDetected(double threshold = 15.0);
+    void Periodic();
 
   private:
     static constexpr double kMinRange = 10.0;  // Minimum range in cm

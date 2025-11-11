@@ -19,12 +19,7 @@
 #define ARM_SPEED_FAST 5.0
 #define ARM_SPEED_VERY_FAST 8.0
 
-/**
- * Arm Subsystem
- * 
- * Controls the main arm servo for apple picking operations.
- * Supports variable speed control for smooth movement between positions.
- */
+
 class ArmSubsystem : public frc2::SubsystemBase {
 public:
     explicit ArmSubsystem();

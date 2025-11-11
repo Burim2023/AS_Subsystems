@@ -11,17 +11,12 @@ class CobraLineFollowCommand
     : public frc2::CommandHelper<frc2::FunctionalCommand, CobraLineFollowCommand>
 {
 public:
-  // Build without AMCU; you'll inject it later via SetAMCU()
-  CobraLineFollowCommand(LineFollower *lf,
+  // Constructor requires both AMCU and LineFollower for proper scheduler requirements
+  CobraLineFollowCommand(AMCU *amcu,
+                         LineFollower *lf,
                          double kP = 40.0,
                          uint8_t fwd = 15,
                          double lostDebounce = 0.50);
-
-  // Inject / change the AMCU pointer any time before scheduling
-  void SetAMCU(AMCU *amcu) { m_amcu = amcu; }
-
-  // Inject / change the LineFollower pointer any time before scheduling
-  void SetLineFollower(LineFollower *lf) { m_lf = lf; }
 
 private:
   // live params the lambdas will read

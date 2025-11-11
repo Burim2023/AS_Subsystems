@@ -21,12 +21,6 @@
 #define SPEED_FAST 5.0
 #define SPEED_VERY_FAST 8.0
 
-/**
- * Gripper Joint Subsystem
- * 
- * Controls the servo that moves the gripper joint up, down, and to mid position.
- * Supports variable speed control for smooth movement.
- */
 class GripperJointSubsystem : public frc2::SubsystemBase {
 public:
     explicit GripperJointSubsystem();
