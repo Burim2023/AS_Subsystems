@@ -11,6 +11,16 @@
 #include "subsystems/sensor/LidarSubsystem.h"
 #include "subsystems/sensor/LineFollower.h"
 
+// Cached sensor values using atomics - thread-safe without locks!
+struct SensorCache
+{
+    std::atomic<double> ultrasonicLeft{0.0};
+    std::atomic<double> ultrasonicRight{0.0};
+    std::atomic<double> irLeft{0.0};
+    std::atomic<double> irRight{0.0};
+    std::atomic<double> lidarFront{0.0};
+};
+
 class SensorManager
 {
 public:
@@ -26,6 +36,9 @@ public:
     frc::LidarSubsystem *GetLidarSubsystem();
     LineFollower *GetLineFollower();
 
+    // Get cached sensor values (lock-free access)
+    SensorCache *GetSensorCache() { return &m_sensorCache; }
+
     // Simple flag to enable/disable sensor thread
     static std::atomic<bool> EnableSensorThread;
 
@@ -38,4 +51,7 @@ private:
     std::unique_ptr<frc::IRRangeSubsystem> infraRed;
     std::unique_ptr<frc::LidarSubsystem> lidar;
     std::unique_ptr<LineFollower> lineFollower;
+
+    // Cached sensor values for lock-free dashboard updates
+    SensorCache m_sensorCache;
 };

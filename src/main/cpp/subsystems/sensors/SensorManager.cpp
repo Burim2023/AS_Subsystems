@@ -44,20 +44,27 @@ void SensorManager::SensorWorker()
     {
         try
         {
-            std::lock_guard<std::mutex> lock(m_sensorMutex);
+            // Update sensors and cache their values atomically
+            if (ultraSonic)
+            {
+                ultraSonic->UpdateUltraSonic();
+                m_sensorCache.ultrasonicLeft.store(ultraSonic->GetLeftDistance(), std::memory_order_relaxed);
+                m_sensorCache.ultrasonicRight.store(ultraSonic->GetRightDistance(), std::memory_order_relaxed);
+            }
+
+            if (infraRed)
+            {
+                infraRed->UpdateInfraRed();
+                m_sensorCache.irLeft.store(infraRed->GetIRLeftDistance(), std::memory_order_relaxed);
+                m_sensorCache.irRight.store(infraRed->GetIRRightDistance(), std::memory_order_relaxed);
+            }
 
             if (lidar)
             {
                 lidar->UpdateLidar();
+                m_sensorCache.lidarFront.store(lidar->GetDistanceAtAngle(0), std::memory_order_relaxed);
             }
-            if (ultraSonic)
-            {
-                ultraSonic->UpdateUltraSonic();
-            }
-            if (infraRed)
-            {
-                infraRed->UpdateInfraRed();
-            }
+
             if (lineFollower)
             {
                 lineFollower->update();
@@ -144,24 +151,20 @@ void SensorManager::SensorManagerStopThread()
 
 frc::UltrasonicSubsystem *SensorManager::GetUltrasonicSubsystem()
 {
-    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return ultraSonic.get();
 }
 
 frc::IRRangeSubsystem *SensorManager::GetIRRangeSubsystem()
 {
-    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return infraRed.get();
 }
 
 frc::LidarSubsystem *SensorManager::GetLidarSubsystem()
 {
-    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return lidar.get();
 }
 
 LineFollower *SensorManager::GetLineFollower()
 {
-    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return lineFollower.get();
 }
