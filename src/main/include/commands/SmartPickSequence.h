@@ -22,6 +22,7 @@
 #include "commands/MoveGripperJointToPosition.h"
 #include "commands/ElevatorPresets.h"
 #include "commands/CalibrateElevator.h"
+#include "commands/GripperOperate.h"
 
 /**
  * Smart Pick Sequence with Apple Detection

@@ -81,7 +81,7 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
                 MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
                 frc2::WaitCommand(2.0_s),
 
-                MoveElevatorToPosition(elevator, 200.0f, 5.0f),
+                MoveElevatorToPosition(elevator, 195.0f, 5.0f),
                 frc2::WaitCommand(3.0_s),
                 
                 MoveArmToPosition(arm, HOME_ANGLE),
@@ -97,7 +97,7 @@ SmartPickSequence::SmartPickSequence(ArmSubsystem* arm,
                 MoveGripperJointToPosition(gripperJoint, JOINT_MID_ANGLE),
                 frc2::WaitCommand(2.0_s),
 
-                MoveElevatorToPosition(elevator, 200.0f, 5.0f),
+                MoveElevatorToPosition(elevator, 195.0f, 5.0f),
                 frc2::WaitCommand(3.0_s),
                 
                 MoveArmToPosition(arm, HOME_ANGLE),

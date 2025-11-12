@@ -8,9 +8,9 @@
 
 #define ARM_SERVO_PORT 18
 
-#define HOME_ANGLE 14
+#define HOME_ANGLE 16
 #define DROP_APPLE_ANGLE 35
-#define PICK_APPLE_ANGLE 205
+#define PICK_APPLE_ANGLE 208
 
 // Preset speed constants for testing
 #define ARM_SPEED_VERY_SLOW 0.5

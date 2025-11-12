@@ -84,7 +84,6 @@ void ElevatorSubsystem::Stop() {
 
 void ElevatorSubsystem::Periodic() {
     if (m_isInitialized) {
-        // Update SmartDashboard with current status
         float currentPos = GetCurrentPosition();
         float error = (m_lastTargetPosition >= 0) ? std::abs(currentPos - m_lastTargetPosition) : 0.0f;
         
@@ -93,28 +92,31 @@ void ElevatorSubsystem::Periodic() {
         frc::SmartDashboard::PutBoolean("Elevator At Target", IsAtTarget(5.0f));
         frc::SmartDashboard::PutNumber("Elevator Error", error);
         
-        // CRITICAL FIX: Add oscillation detection and auto-stop
         static float lastPosition = currentPos;
         static int oscillationCount = 0;
         static int stableCount = 0;
+        static double lastWarningTime = 0;
         
-        // Check if elevator is oscillating
-        if (m_lastTargetPosition >= 0 && error < 10.0f) { // Within 10mm of target
-            if (std::abs(currentPos - lastPosition) > 2.0f) { // Position changed by more than 2mm
+        if (m_lastTargetPosition >= 0 && error < 10.0f) {
+            if (std::abs(currentPos - lastPosition) > 2.0f) {
                 oscillationCount++;
                 stableCount = 0;
             } else {
                 stableCount++;
-                if (stableCount > 10) { // Stable for 10 cycles
+                if (stableCount > 10) {
                     oscillationCount = 0;
                 }
             }
             
-            // If oscillating too much, force stop
-            if (oscillationCount > 15) { // 15 cycles of oscillation
-                //std::cout << "WARNING: Elevator oscillation detected - forcing stop" << std::endl;
-                Stop();
-                oscillationCount = 0;
+            // Only WARN, don't auto-stop
+            if (oscillationCount > 15) {
+                double now = frc::Timer::GetFPGATimestamp();  // ✅ Remove .value()
+                if (now - lastWarningTime > 1.0) {
+                    std::cout << "WARNING: Elevator oscillation detected (target=" 
+                              << m_lastTargetPosition << "mm, current=" << currentPos 
+                              << "mm, error=" << error << "mm)" << std::endl;
+                    lastWarningTime = now;
+                }
             }
         }
         

@@ -1,48 +1,111 @@
 #include "commands/CompetitionAutonomousSequence.h"
-
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/WaitCommand.h>
 #include "commands/DriveDistanceCommand.h"
+#include "Constants.h"
+#include <iostream>
 
-CompetitionAutonomousSequence::CompetitionAutonomousSequence(AMCU* amcu,
-                                                           ArmSubsystem* arm,
-                                                           GripperSubsystem* gripper,
-                                                           GripperJointSubsystem* gripperJoint,
-                                                           CameraSubsystem* camera,
-                                                           ElevatorSubsystem* elevator,
-                                                           ExtenderSubsystem* extender)
+CompetitionAutonomousSequence::CompetitionAutonomousSequence(
+    AMCU* amcu,
+    ArmSubsystem* arm,
+    GripperSubsystem* gripper,
+    GripperJointSubsystem* gripperJoint,
+    CameraSubsystem* camera,
+    ElevatorSubsystem* elevator,
+    ExtenderSubsystem* extender)
+    : m_amcu(amcu),
+      m_arm(arm),
+      m_gripper(gripper),
+      m_gripperJoint(gripperJoint),
+      m_camera(camera),
+      m_elevator(elevator),
+      m_extender(extender),
+      m_sequenceBuilt(false)
 {
-    // Compose a competition-friendly autonomous routine using existing commands
+    // ✅ DON'T build sequence here if AMCU is null
+    if (m_amcu) {
+        BuildSequence();
+        m_sequenceBuilt = true;
+        std::cout << "CompetitionAutonomousSequence: Built with valid AMCU" << std::endl;
+    } else {
+        std::cout << "CompetitionAutonomousSequence: AMCU is null, sequence will be built later" << std::endl;
+    }
+}
+
+void CompetitionAutonomousSequence::SetAMCU(AMCU* amcu) {
+    m_amcu = amcu;
+    std::cout << "CompetitionAutonomousSequence: AMCU updated to " << amcu << std::endl;
+    
+    // ✅ Build sequence now that AMCU is valid
+    if (m_amcu && !m_sequenceBuilt) {
+        BuildSequence();
+        m_sequenceBuilt = true;
+        std::cout << "CompetitionAutonomousSequence: Sequence built with AMCU" << std::endl;
+    }
+}
+
+void CompetitionAutonomousSequence::BuildSequence() {
+    if (!m_amcu) {
+        std::cerr << "ERROR: Cannot build sequence - AMCU is still null!" << std::endl;
+        return;
+    }
+    
+    std::cout << "CompetitionAutonomousSequence: Building sequence with AMCU at " << m_amcu << std::endl;
+    
     AddCommands(
-        // Locate and pick an apple from the field
-        // DriveSmartPickupGround(arm, gripper, gripperJoint, camera, elevator, amcu),
-        std::move(CalibrateExtender(extender)),
+        frc2::InstantCommand([]() {
+            std::cout << "\n========================================" << std::endl;
+            std::cout << ">>> COMPETITION AUTO SEQUENCE START <<<" << std::endl;
+            std::cout << "========================================\n" << std::endl;
+        }),
 
-        ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.1, 2.0),
+        // ✅ Now m_amcu is valid!
+        SpeedDriveCommand(m_amcu, 5, 15, 0, 0),
+
+        frc2::WaitCommand(2.0_s),
+
+        std::move(CalibrateExtender(m_extender)),
+
+        ExtendForDuration(m_extender, ExtendForDuration::Direction::RETRACT, 0.1, 2.0),
         
         frc2::WaitCommand(2.0_s),
 
-        SmartPickSequence(arm, gripper, gripperJoint, camera, elevator),
+        //MoveGripperJointToPosition(m_gripperJoint, JOINT_MID_ANGLE, true),
 
-        //frc2::WaitCommand(2.0_s),
+        SmartPickSequence(m_arm, m_gripper, m_gripperJoint, m_camera, m_elevator),
 
-        //storage::StoreSingleApple(extender, elevator, arm, gripperJoint, gripper, 0),
-        // Store the picked apple into the requested storage slot
-        //storage::StoreAppleCommand(extender, elevator, arm, gripperJoint, gripper, storeSlot),
-        GripperOperate(gripperJoint, gripper, GripperOperate::Position::DOWN, false, 2.0),
         frc2::WaitCommand(2.0_s),
-        //ExtendForDuration(extender, ExtendForDuration::Direction::RETRACT, 0.3, 2.0),
 
-        GripperOperate(gripperJoint, gripper, GripperOperate::Position::DOWN, true, 2.0)
+        GripperOperate(m_gripperJoint, m_gripper, GripperOperate::Position::DOWN, false, 2.0),
         
+        frc2::WaitCommand(2.0_s),
 
-        //ExtendForDuration(extender, ExtendForDuration::Direction::EXTEND, 0.1, 2.0)
-        // Drive forward to scoring area (distance-based for reliability)
-        // Parameters: AMCU*, xMeters, yMeters, omega_degrees, timeoutSeconds
-        // DriveDistanceCommand(amcu, 1 /*1m forward*/, 0, 0, 3.0),
-        //SpeedDriveCommand(amcu, 4, 15, 0, 0)
-        // Ensure gripper is opened to release object (move joint up + open gripper)
+        GripperOperate(m_gripperJoint, m_gripper, GripperOperate::Position::DOWN, true, 2.0),
+
+        frc2::WaitCommand(2.0_s),
+
+        MoveElevatorToPosition(m_elevator, 150.0f, 1.0f),
+
+        frc2::WaitCommand(2.0_s),
+
+        GripperOperate(m_gripperJoint, m_gripper, GripperOperate::Position::DOWN, false, 2.0),
+
+        frc2::WaitCommand(3.0_s),
+
+        MoveElevatorToPosition(m_elevator, 195.0f, 2.0f),
+
+        GripperOperate(m_gripperJoint, m_gripper, GripperOperate::Position::MID, false, 2.0),
         
-        // DriveDistanceCommand(amcu, 1 /*1m back - AMCU driveDistance likely interprets sign via API*/, 0, 0, 2.5)
+        frc2::WaitCommand(2.0_s),
+
+        frc2::WaitCommand(2.0_s),
+
+        MoveArmToPosition(m_arm, PICK_APPLE_ANGLE),
+
+        frc2::InstantCommand([]() {
+            std::cout << "\n========================================" << std::endl;
+            std::cout << ">>> COMPETITION AUTO SEQUENCE COMPLETE <<<" << std::endl;
+            std::cout << "========================================\n" << std::endl;
+        })
     );
 }

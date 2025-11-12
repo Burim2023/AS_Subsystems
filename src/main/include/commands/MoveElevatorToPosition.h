@@ -1,8 +1,9 @@
 #pragma once
 
-#include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
+#include <frc2/command/CommandBase.h>
 #include "subsystems/elevator/ElevatorSubsystem.h"
+#include <frc/Timer.h>
 
 /**
  * Command to move the elevator to a specific position and wait for completion.
@@ -26,4 +27,6 @@ private:
     ElevatorSubsystem* m_elevator;
     float m_targetPosition;
     float m_tolerance;
+    double m_startTime;
+    double m_timeout;  // Add timeout
 };

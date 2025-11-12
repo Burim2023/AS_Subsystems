@@ -48,7 +48,7 @@
 
 #include "commands/DriveSmartPickupGround.h"
 
-#include "commands/StoreAppleCommand.h"
+
 #include "commands/CompetitionAutonomousSequence.h"
 // Non-command-based subsystems
 #include "Constants.h"
@@ -74,6 +74,7 @@ public:
   frc2::Command *GetAutonomousCommand();
   frc::UltrasonicSubsystem  *GetUltrasonic(){ return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr; }
   frc::IRRangeSubsystem     *GetIRRange(){ return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr; }
+  frc::LidarSubsystem       *GetLidar(){ return m_sensorManager ? m_sensorManager->GetLidarSubsystem() : nullptr; }
   LineFollower *GetLineFollower() { return m_sensorManager ? m_sensorManager->GetLineFollower() : nullptr; }
 
   GripperJointSubsystem   &GetGripperJoint() { return m_gripperJoint; }
@@ -129,10 +130,10 @@ private:
   QRCodeReaderCommand         m_qrCodeReaderCommandSingle;
   QRCodeReaderCommand         m_qrCodeReaderCommandTimed;
   QRCodeReaderCommand         m_qrCodeReaderCommandContinuous;
-  storage::StoreAppleCommand   m_storeAppleAuto;         // Auto-detection
-  storage::StoreAppleCommand   m_storeAppleRed;          // Manual red
-  storage::StoreAppleCommand   m_storeAppleYellow;       // Manual yellow
-  storage::StoreAppleCommand   m_storeAppleGreen;        // Manual green
+  // storage::StoreAppleCommand   m_storeAppleAuto;         // Auto-detection
+  // storage::StoreAppleCommand   m_storeAppleRed;          // Manual red
+  // storage::StoreAppleCommand   m_storeAppleYellow;       // Manual yellow
+  // storage::StoreAppleCommand   m_storeAppleGreen;        // Manual green
   CompetitionAutonomousSequence m_competitionAuto;       // Competition autonomous sequence
   // PickupAndDeliverSequence m_pickupAndDerliverSequence;
 

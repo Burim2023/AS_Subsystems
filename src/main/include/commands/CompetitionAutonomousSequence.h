@@ -1,8 +1,8 @@
 #pragma once
 
 #include <frc2/command/SequentialCommandGroup.h>
+#include <memory>
 
-// Subsystem includes
 class AMCU;
 #include "subsystems/elevator/ArmSubsystem.h"
 #include "subsystems/gripper/GripperSubsystem.h"
@@ -11,15 +11,17 @@ class AMCU;
 #include "subsystems/elevator/ElevatorSubsystem.h"
 #include "subsystems/elevator/ExtenderSubsystem.h"
 
-// Command includes
 #include "commands/DriveSmartPickupGround.h"
-#include "commands/StoreAppleCommand.h"
 #include "commands/DriveForDuration.h"
 #include "commands/GripperOperate.h"
 #include "commands/DriveDistanceCommand.h"
 #include "commands/SmartPickSequence.h"
 #include "commands/SpeedDriveCommand.h"
 #include "commands/CalibrateExtender.h"
+#include "commands/ExtendForDuration.h"
+#include "commands/MoveElevatorToPosition.h"
+#include "commands/MoveArmToPosition.h"
+#include "commands/MoveGripperJointToPosition.h"
 
 /**
  * CompetitionAutonomousSequence
@@ -52,4 +54,21 @@ public:
                                   CameraSubsystem* camera,
                                   ElevatorSubsystem* elevator,
                                   ExtenderSubsystem* extender);
+
+    // ✅ Fixed: Add parameter to SetAMCU
+    void SetAMCU(AMCU* amcu);
+
+private:
+    // ✅ Add member variables
+    AMCU* m_amcu;
+    ArmSubsystem* m_arm;
+    GripperSubsystem* m_gripper;
+    GripperJointSubsystem* m_gripperJoint;
+    CameraSubsystem* m_camera;
+    ElevatorSubsystem* m_elevator;
+    ExtenderSubsystem* m_extender;
+
+    void BuildSequence();  // ✅ Helper to build command sequence
+    
+    bool m_sequenceBuilt = false;  // ✅ Track if sequence was built
 };
