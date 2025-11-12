@@ -9,237 +9,139 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
-#include <thread>
-#include <chrono>
 
 using namespace frc;
 
 LidarSubsystem::LidarSubsystem(studica::Lidar::Port port)
-    : m_lidar(nullptr), m_port(port), m_hasValidData(false) {}
+    : m_lidar(nullptr), m_port(port), m_hasValidData(false), m_disabled(false) {}
 
-LidarSubsystem::~LidarSubsystem() {
+LidarSubsystem::~LidarSubsystem()
+{
     std::lock_guard<std::mutex> lock(m_lidarMutex);
-    StopScan();
-}
-void LidarSubsystem::Init()
-{
-    try
-    {
-        std::lock_guard<std::mutex> lock(m_lidarMutex);
-        if (!m_lidar) {
-            m_lidar = std::make_unique<studica::Lidar>(m_port); 
-            std::cout << "Studica LiDAR sensor initialized on USB port " << static_cast<int>(m_port) << std::endl;
-
-            // Enable Kalman filter by default for noise reduction
-            ConfigureKalmanFilter();
-            EnableFilter(studica::Lidar::kKALMAN, true);
-
-            std::cout << "LiDAR initialization complete" << std::endl;
-        }
-    }
-    catch (const std::exception &e) {
-        std::cerr << "LiDAR initialization failed: " << e.what() << std::endl;
-        throw;
-    }
-}
-
-void LidarSubsystem::StartScan()
-{
     if (m_lidar)
     {
         try
         {
-            m_lidar->Start();
-            std::cout << "LiDAR scanning started" << std::endl;
-            std::cout.flush();
+            m_lidar->Stop();
         }
-        catch (const std::exception &e)
+        catch (...)
         {
-            std::cout << "LiDAR start scan failed: " << e.what() << std::endl;
-            std::cout.flush();
-            throw; // Re-throw to let SensorManager handle it
-        }
-    }
-    else
-    {
-        std::cout << "Cannot start LiDAR scan - sensor not initialized" << std::endl;
-        std::cout.flush();
+        } // Ignore errors during destruction
     }
 }
 
-void LidarSubsystem::StopScan()
+void LidarSubsystem::Init()
 {
-    if (m_lidar)
-    {
-        m_lidar->Stop();
-        std::cout << "LiDAR scanning stopped" << std::endl;
-        std::cout.flush();
-    }
-}
+    std::lock_guard<std::mutex> lock(m_lidarMutex);
 
-void LidarSubsystem::RestartScan()
-{
-    if (m_lidar && m_restartState == RestartState::None)
+    if (m_disabled)
     {
-        // Check if enough time has passed since last restart attempt
-        if (m_periodicCounter - m_lastRestartTime >= kRestartCooldown)
-        {
-            std::cout << "Initiating non-blocking LiDAR restart..." << std::endl;
-            std::cout.flush();
-            m_restartState = RestartState::Stopping;
-            m_restartTimer = 0;
-            m_lastRestartTime = m_periodicCounter;
-        }
-        else
-        {
-            std::cout << "LiDAR restart skipped - cooldown period active" << std::endl;
-            std::cout.flush();
-        }
-    }
-}
-
-void LidarSubsystem::ProcessRestartStateMachine()
-{
-    if (m_restartState == RestartState::None)
-    {
+        // LiDAR has been disabled due to repeated failures
         return;
     }
 
-    m_restartTimer++;
-
-    switch (m_restartState)
+    if (!m_lidar)
     {
-    case RestartState::Stopping:
-        if (m_restartTimer >= 2)
-        { // Small delay before stopping
-            try
-            {
-                m_lidar->Stop();
-                std::cout << "LiDAR stopped for restart" << std::endl;
-                std::cout.flush();
-                m_restartState = RestartState::Waiting;
-                m_restartTimer = 0;
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "LiDAR stop failed during restart: " << e.what() << std::endl;
-                std::cout.flush();
-                m_restartState = RestartState::None; // Abort restart
-            }
-        }
-        break;
-
-    case RestartState::Waiting:
-        if (m_restartTimer >= kRestartStopDelay)
+        try
         {
-            m_restartState = RestartState::Starting;
-            m_restartTimer = 0;
-        }
-        break;
-
-    case RestartState::Starting:
-        if (m_restartTimer >= 2)
-        { // Small delay before starting
-            try
-            {
-                m_lidar->Start();
-                std::cout << "LiDAR restarted successfully" << std::endl;
-                std::cout.flush();
-                m_consecutiveErrors = 0; // Reset error count
-                m_restartState = RestartState::None;
-                m_restartTimer = 0;
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "LiDAR start failed during restart: " << e.what() << std::endl;
-                std::cout.flush();
-                m_restartState = RestartState::None; // Abort restart
-            }
-        }
-        break;
-
-    default:
-        m_restartState = RestartState::None;
-        break;
-    }
-}
-
-void LidarSubsystem::UpdateScanData()
-{
-    std::lock_guard<std::mutex> lock(m_lidarMutex);
-    if (m_lidar) 
-    {
-        try 
-            {
-            m_currentScan = m_lidar->GetData();
-            m_hasValidData = true;
-            m_consecutiveErrors = 0;
+            m_lidar = std::make_unique<studica::Lidar>(m_port);
+            m_lidar->KalmanConfig(1e-5, 1e-1, 1.0);
+            m_lidar->EnableFilter(studica::Lidar::kKALMAN, true);
+            m_lidar->Start();
         }
         catch (const std::exception &e)
         {
-            m_consecutiveErrors++;
+            std::cerr << "LiDAR init failed: " << e.what() << std::endl;
+            m_disabled = true; // Disable LiDAR to prevent further crashes
+            m_lidar.reset();   // Clean up any partial initialization
+            // Don't throw - allow robot to continue without LiDAR
+        }
+        catch (...)
+        {
+            std::cerr << "LiDAR init failed with unknown exception" << std::endl;
+            m_disabled = true;
+            m_lidar.reset();
+        }
+    }
+}
 
+void LidarSubsystem::UpdateLidar()
+{
+    std::lock_guard<std::mutex> lock(m_lidarMutex);
+
+    if (m_disabled)
+    {
+        // LiDAR has been disabled - skip update
+        m_hasValidData = false;
+        return;
+    }
+
+    if (m_lidar)
+    {
+        try
+        {
+            // WARNING: GetData() can block for up to 200+ seconds if USB device is slow/failing
+            // There's no timeout mechanism in Studica library, so we rely on exception handling
+            m_currentScan = m_lidar->GetData();
+            m_hasValidData = true;
+        }
+        catch (const std::exception &e)
+        {
             // Log error but don't spam console
-            if (m_consecutiveErrors == 1 || m_consecutiveErrors % 50 == 0)
+            static int errorCount = 0;
+            if (++errorCount % 50 == 0) // Log every 50th error
             {
-                std::cout << "LiDAR scan update error (attempt " << m_consecutiveErrors << "): " << e.what() << std::endl;
-                std::cout.flush();
-            }
+                std::cerr << "LiDAR GetData() error: " << e.what()
+                          << " (count=" << errorCount << ")" << std::endl;
 
+                // After 500 errors (10 minutes at 50Hz), disable LiDAR permanently
+                if (errorCount >= 500)
+                {
+                    std::cerr << "LiDAR: Too many errors, disabling permanently" << std::endl;
+                    m_disabled = true;
+                    m_lidar->Stop();
+                    m_lidar.reset();
+                }
+            }
             m_hasValidData = false;
-
-            // Try to restart scanning after multiple consecutive errors (non-blocking)
-            if (m_consecutiveErrors >= 10 && m_consecutiveErrors % 20 == 0 && m_restartState == RestartState::None)
+        }
+        catch (...)
+        {
+            static int unknownErrorCount = 0;
+            if (++unknownErrorCount % 50 == 0)
             {
-                std::cout << "Initiating automatic LiDAR restart..." << std::endl;
-                std::cout.flush();
-                RestartScan(); // This will use the non-blocking restart
+                std::cerr << "LiDAR GetData() unknown error (count="
+                          << unknownErrorCount << ")" << std::endl;
+
+                // After 500 errors, disable LiDAR permanently
+                if (unknownErrorCount >= 500)
+                {
+                    std::cerr << "LiDAR: Too many unknown errors, disabling permanently" << std::endl;
+                    m_disabled = true;
+                    try
+                    {
+                        m_lidar->Stop();
+                    }
+                    catch (...)
+                    {
+                    }
+                    m_lidar.reset();
+                }
             }
+            m_hasValidData = false;
         }
     }
     else
     {
         m_hasValidData = false;
-        if (m_consecutiveErrors == 0)
-        {
-            std::cout << "LiDAR not initialized!" << std::endl;
-            std::cout.flush();
-        }
-        m_consecutiveErrors++;
     }
-}
-
-std::vector<LidarSubsystem::LidarPoint> LidarSubsystem::GetScanData()
-{
-    std::vector<LidarPoint> points;
-
-    if (!m_hasValidData)
-    {
-        UpdateScanData();
-    }
-
-    if (m_hasValidData)
-    {
-        points.reserve(360);
-        for (int i = 0; i < 360; ++i)
-        {
-            double distance = MMtoCM(m_currentScan.distance[i]);
-            bool valid = IsValidDistance(distance);
-            points.emplace_back(m_currentScan.angle[i], distance, valid);
-        }
-    }
-
-    return points;
 }
 
 double LidarSubsystem::GetDistanceAtAngle(double angle, double tolerance)
 {
-    angle = NormalizeAngle(angle);
+    std::lock_guard<std::mutex> lock(m_lidarMutex);
 
-    if (!m_hasValidData)
-    {
-        UpdateScanData();
-    }
+    angle = NormalizeAngle(angle);
 
     if (!m_hasValidData)
     {
@@ -273,189 +175,4 @@ double LidarSubsystem::GetDistanceAtAngle(double angle, double tolerance)
     }
 
     return bestDistance;
-}
-
-double LidarSubsystem::GetClosestDistance(double startAngle, double endAngle)
-{
-    startAngle = NormalizeAngle(startAngle);
-    endAngle = NormalizeAngle(endAngle);
-
-    if (!m_hasValidData)
-    {
-        UpdateScanData();
-    }
-
-    if (!m_hasValidData)
-    {
-        return -1.0;
-    }
-
-    double minDistance = kMaxRange;
-    bool foundValid = false;
-
-    for (int i = 0; i < 360; ++i)
-    {
-        double angle = m_currentScan.angle[i];
-
-        // Handle angle wrap-around
-        bool inRange = false;
-        if (startAngle <= endAngle)
-        {
-            inRange = (angle >= startAngle && angle <= endAngle);
-        }
-        else
-        {
-            inRange = (angle >= startAngle || angle <= endAngle);
-        }
-
-        if (inRange)
-        {
-            double distance = MMtoCM(m_currentScan.distance[i]);
-            if (IsValidDistance(distance) && distance < minDistance)
-            {
-                minDistance = distance;
-                foundValid = true;
-            }
-        }
-    }
-
-    return foundValid ? minDistance : -1.0;
-}
-
-double LidarSubsystem::GetFrontDistance(double fieldOfView)
-{
-    double halfFOV = fieldOfView / 2.0;
-    return GetClosestDistance(360 - halfFOV, halfFOV);
-}
-
-bool LidarSubsystem::IsObstacleDetected(double angle, double threshold, double fieldOfView)
-{
-    double halfFOV = fieldOfView / 2.0;
-    double startAngle = NormalizeAngle(angle - halfFOV);
-    double endAngle = NormalizeAngle(angle + halfFOV);
-
-    double closestDistance = GetClosestDistance(startAngle, endAngle);
-    return (closestDistance > 0 && closestDistance < threshold);
-}
-
-bool LidarSubsystem::IsPathClear(double threshold, double fieldOfView)
-{
-    return !IsObstacleDetected(0, threshold, fieldOfView);
-}
-
-int LidarSubsystem::GetValidPointCount()
-{
-    if (!m_hasValidData)
-    {
-        UpdateScanData();
-    }
-
-    if (!m_hasValidData)
-    {
-        return 0;
-    }
-
-    int count = 0;
-    for (int i = 0; i < 360; ++i)
-    {
-        double distance = MMtoCM(m_currentScan.distance[i]);
-        if (IsValidDistance(distance))
-        {
-            count++;
-        }
-    }
-    return count;
-}
-
-bool LidarSubsystem::IsScanning()
-{
-    return (m_lidar != nullptr && m_hasValidData);
-}
-
-void LidarSubsystem::EnableFilter(studica::Lidar::Filter filter, bool enable)
-{
-    if (m_lidar)
-    {
-        m_lidar->EnableFilter(filter, enable);
-        std::cout << "LiDAR filter " << static_cast<int>(filter) << (enable ? " enabled" : " disabled") << std::endl;
-        std::cout.flush();
-    }
-}
-
-void LidarSubsystem::ConfigureKalmanFilter(float q, float r, float p)
-{
-    if (m_lidar)
-    {
-        m_lidar->KalmanConfig(q, r, p);
-        std::cout << "LiDAR Kalman filter configured: Q=" << q << ", R=" << r << ", P=" << p << std::endl;
-        std::cout.flush();
-    }
-}
-
-double LidarSubsystem::MMtoCM(double mm)
-{
-    return mm / 10.0;
-}
-
-bool LidarSubsystem::IsValidDistance(double distance)
-{
-    return (distance >= kMinRange && distance <= kMaxRange && distance > 0);
-}
-
-double LidarSubsystem::NormalizeAngle(double angle)
-{
-    while (angle < 0)
-        angle += 360;
-    while (angle >= 360)
-        angle -= 360;
-    return angle;
-}
-
-void LidarSubsystem::UpdateDashboard()
-{
-    // Update scan data
-    UpdateScanData();
-
-    double frontDistance = GetFrontDistance();
-    int validPoints = GetValidPointCount();
-    bool pathClear = IsPathClear();
-
-    SmartDashboard::PutNumber("LiDAR Front Distance (cm)", frontDistance);
-    SmartDashboard::PutNumber("LiDAR Valid Points", validPoints);
-    SmartDashboard::PutBoolean("LiDAR Path Clear", pathClear);
-    SmartDashboard::PutBoolean("LiDAR Scanning", IsScanning());
-    SmartDashboard::PutBoolean("LiDAR Has Valid Data", m_hasValidData);
-    SmartDashboard::PutBoolean("LiDAR Initialized", m_lidar != nullptr);
-    SmartDashboard::PutNumber("LiDAR Error Count", m_consecutiveErrors);
-
-    // Additional directional measurements
-    SmartDashboard::PutNumber("LiDAR Left Distance (cm)", GetDistanceAtAngle(90));
-    SmartDashboard::PutNumber("LiDAR Right Distance (cm)", GetDistanceAtAngle(270));
-    SmartDashboard::PutNumber("LiDAR Rear Distance (cm)", GetDistanceAtAngle(180));
-}
-
-void LidarSubsystem::Periodic()
-{
-    m_periodicCounter++;          // Track timing for restart cooldown
-    ProcessRestartStateMachine(); // Handle non-blocking restart
-    UpdateDashboard();
-}
-
-void LidarSubsystem::InitSendable(SendableBuilder &builder)
-{
-    builder.SetSmartDashboardType("Studica LiDAR Subsystem");
-    builder.AddDoubleProperty("Front Distance (cm)", [this]
-                              { return GetFrontDistance(); }, nullptr);
-    builder.AddDoubleProperty("Left Distance (cm)", [this]
-                              { return GetDistanceAtAngle(90); }, nullptr);
-    builder.AddDoubleProperty("Right Distance (cm)", [this]
-                              { return GetDistanceAtAngle(270); }, nullptr);
-    builder.AddDoubleProperty("Rear Distance (cm)", [this]
-                              { return GetDistanceAtAngle(180); }, nullptr);
-    builder.AddBooleanProperty("Path Clear", [this]
-                               { return IsPathClear(); }, nullptr);
-    builder.AddBooleanProperty("Is Scanning", [this]
-                               { return IsScanning(); }, nullptr);
-    builder.AddDoubleProperty("Valid Points", [this]
-                              { return GetValidPointCount(); }, nullptr);
 }

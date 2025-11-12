@@ -10,6 +10,12 @@
 #include <thread>
 #include <chrono>
 
+// uncomment if lidar keeps crashing
+// #define DISABLE_LIDAR
+
+// thread stopper
+std::atomic<bool> SensorManager::EnableSensorThread{false};
+
 SensorManager::SensorManager()
 {
     stopThread = false;
@@ -17,17 +23,16 @@ SensorManager::SensorManager()
     ultraSonic = std::make_unique<frc::UltrasonicSubsystem>(0, 1, 2, 3);
     infraRed = std::make_unique<frc::IRRangeSubsystem>(0, 1);
     lineFollower = std::make_unique<LineFollower>(0, 1, 2, 3, 5.0f);
-    lidar = nullptr; 
+
+#ifndef DISABLE_LIDAR
+    lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
+#else
+    std::cerr << "WARNING: LiDAR is DISABLED at compile time" << std::endl;
+#endif
 }
 SensorManager::~SensorManager()
 {
     stopThread = true;
-
-    if (lidar)
-    {
-        lidar->StopScan();
-        std::cout << "SensorManager: Stopping Lidar Scanning" << std::endl;
-    }
 
     if (workerThread.joinable())
         workerThread.join();
@@ -35,55 +40,15 @@ SensorManager::~SensorManager()
 
 void SensorManager::SensorWorker()
 {
-    int initCounter = 0;
-    const int initAttemptInterval = 200; // attempt every N loops (~200*update_rate ms)
     while (!stopThread.load())
     {
-        // Try LiDAR initialization in the worker thread (isolates JNI/native threads)
-        if (!lidar)
-        {
-            if ((++initCounter % initAttemptInterval) == 0)
-            {
-                try
-                {
-                    std::lock_guard<std::mutex> lock(m_sensorMutex);
-                    if (!lidar) // double-check under lock
-                    {
-                        std::cout << "SensorManager: Attempting LiDAR init in worker thread..." << std::endl;
-                        lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
-                        lidar->Init();
-                        lidar->StartScan();
-                        m_lidarReady.store(true);
-                        std::cout << "SensorManager: LiDAR initialized successfully in worker." << std::endl;
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    std::lock_guard<std::mutex> lock(m_sensorMutex);
-                    std::cout << "SensorManager: LiDAR init failed in worker: " << e.what() << std::endl;
-                    lidar = nullptr;
-                    m_lidarReady.store(false);
-                }
-            }
-        }
-
+        try
         {
             std::lock_guard<std::mutex> lock(m_sensorMutex);
-            if (lidar && m_lidarReady.load())
+
+            if (lidar)
             {
-                try
-                {
-                    lidar->Periodic();
-                }
-                catch (const std::exception &e)
-                {
-                    std::cout << "LiDAR periodic error: " << e.what() << std::endl;
-                    // Mark not ready and let init logic try restart later
-                    m_lidarReady.store(false);
-                    // stop the scan to allow restart attempt next time
-                    try { lidar->StopScan(); } catch (...) {}
-                    lidar = nullptr;
-                }
+                lidar->UpdateLidar();
             }
             if (ultraSonic)
             {
@@ -96,9 +61,27 @@ void SensorManager::SensorWorker()
             if (lineFollower)
             {
                 lineFollower->update();
-                lineFollower->UpdateShuffleboard(10);
             }
         }
+        catch (const std::exception &e)
+        {
+            // Catch any exception to prevent thread termination
+            static int errorCount = 0;
+            if (++errorCount % 100 == 0) // Log every 100th error to avoid spam
+            {
+                std::cerr << "SensorWorker exception: " << e.what() << " (count=" << errorCount << ")\n";
+            }
+        }
+        catch (...)
+        {
+            // Catch-all for non-standard exceptions
+            static int unknownErrorCount = 0;
+            if (++unknownErrorCount % 100 == 0)
+            {
+                std::cerr << "SensorWorker unknown exception (count=" << unknownErrorCount << ")\n";
+            }
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
     }
 }
@@ -113,40 +96,72 @@ void SensorManager::InitializeSensors()
     {
         infraRed->Init();
     }
-
-    // Do NOT initialize LiDAR here on the main thread - initialization will be attempted
-    // inside the worker thread to isolate JNI threads and allow retries.
+#ifndef DISABLE_LIDAR
+    if (lidar)
     {
-        std::lock_guard<std::mutex> lock(m_sensorMutex);
-        lidar = nullptr;
-        m_lidarReady.store(false);
+        try
+        {
+            lidar->Init();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "SensorManager: LiDAR init failed, continuing without it: "
+                      << e.what() << std::endl;
+        }
+        catch (...)
+        {
+            std::cerr << "SensorManager: LiDAR init failed with unknown error" << std::endl;
+        }
     }
+#endif
 }
 
 void SensorManager::SensorManagerStartThread()
 {
-    // Start the worker thread. LiDAR initialization will be attempted inside the worker.
+    if (workerThread.joinable())
+    {
+        return;
+    }
+
+    stopThread = false;
     workerThread = std::thread(&SensorManager::SensorWorker, this);
     LOG_THREAD("Sensor Thread initialized.");
 }
 
+void SensorManager::SensorManagerStopThread()
+{
+    if (!workerThread.joinable())
+    {
+        return;
+    }
+    stopThread = true;
+
+    if (workerThread.joinable())
+    {
+        workerThread.join();
+    }
+}
+
 frc::UltrasonicSubsystem *SensorManager::GetUltrasonicSubsystem()
 {
+    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return ultraSonic.get();
 }
 
 frc::IRRangeSubsystem *SensorManager::GetIRRangeSubsystem()
 {
+    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return infraRed.get();
 }
 
 frc::LidarSubsystem *SensorManager::GetLidarSubsystem()
 {
     std::lock_guard<std::mutex> lock(m_sensorMutex);
-    return m_lidarReady.load() ? lidar.get() : nullptr;
+    return lidar.get();
 }
 
 LineFollower *SensorManager::GetLineFollower()
 {
+    std::lock_guard<std::mutex> lock(m_sensorMutex);
     return lineFollower.get();
 }

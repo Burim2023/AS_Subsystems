@@ -17,6 +17,7 @@ public:
     SensorManager();
     ~SensorManager();
     void SensorManagerStartThread();
+    void SensorManagerStopThread();
     void SensorWorker();
     void InitializeSensors();
 
@@ -25,10 +26,11 @@ public:
     frc::LidarSubsystem *GetLidarSubsystem();
     LineFollower *GetLineFollower();
 
+    // Simple flag to enable/disable sensor thread
+    static std::atomic<bool> EnableSensorThread;
+
 private:
     std::mutex m_sensorMutex;
-    std::atomic<bool> m_lidarReady{false};
-
     std::thread workerThread;
     std::atomic<bool> stopThread;
 
