@@ -35,13 +35,55 @@ SensorManager::~SensorManager()
 
 void SensorManager::SensorWorker()
 {
+    int initCounter = 0;
+    const int initAttemptInterval = 200; // attempt every N loops (~200*update_rate ms)
     while (!stopThread.load())
     {
+        // Try LiDAR initialization in the worker thread (isolates JNI/native threads)
+        if (!lidar)
+        {
+            if ((++initCounter % initAttemptInterval) == 0)
+            {
+                try
+                {
+                    std::lock_guard<std::mutex> lock(m_sensorMutex);
+                    if (!lidar) // double-check under lock
+                    {
+                        std::cout << "SensorManager: Attempting LiDAR init in worker thread..." << std::endl;
+                        lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
+                        lidar->Init();
+                        lidar->StartScan();
+                        m_lidarReady.store(true);
+                        std::cout << "SensorManager: LiDAR initialized successfully in worker." << std::endl;
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    std::lock_guard<std::mutex> lock(m_sensorMutex);
+                    std::cout << "SensorManager: LiDAR init failed in worker: " << e.what() << std::endl;
+                    lidar = nullptr;
+                    m_lidarReady.store(false);
+                }
+            }
+        }
+
         {
             std::lock_guard<std::mutex> lock(m_sensorMutex);
             if (lidar && m_lidarReady.load())
             {
-                lidar->Periodic();
+                try
+                {
+                    lidar->Periodic();
+                }
+                catch (const std::exception &e)
+                {
+                    std::cout << "LiDAR periodic error: " << e.what() << std::endl;
+                    // Mark not ready and let init logic try restart later
+                    m_lidarReady.store(false);
+                    // stop the scan to allow restart attempt next time
+                    try { lidar->StopScan(); } catch (...) {}
+                    lidar = nullptr;
+                }
             }
             if (ultraSonic)
             {
@@ -72,27 +114,18 @@ void SensorManager::InitializeSensors()
         infraRed->Init();
     }
 
-    try
-    {
-        std::cout << "SensorManager: Starting LiDAR initialization in background..." << std::endl;
-        std::lock_guard<std::mutex> lock(m_sensorMutex); // Protect creation
-        lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
-        lidar->Init();
-        lidar->StartScan();
-        m_lidarReady.store(true);
-        std::cout << "SensorManager: LiDAR initialized successfully" << std::endl;
-    }
-    catch (const std::exception &e)
+    // Do NOT initialize LiDAR here on the main thread - initialization will be attempted
+    // inside the worker thread to isolate JNI threads and allow retries.
     {
         std::lock_guard<std::mutex> lock(m_sensorMutex);
-        std::cout << "SensorManager: LiDAR initialization failed: " << e.what() << std::endl;
         lidar = nullptr;
         m_lidarReady.store(false);
     }
 }
+
 void SensorManager::SensorManagerStartThread()
 {
-    InitializeSensors();
+    // Start the worker thread. LiDAR initialization will be attempted inside the worker.
     workerThread = std::thread(&SensorManager::SensorWorker, this);
     LOG_THREAD("Sensor Thread initialized.");
 }

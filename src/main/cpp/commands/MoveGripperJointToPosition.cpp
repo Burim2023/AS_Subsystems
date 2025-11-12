@@ -10,6 +10,11 @@ MoveGripperJointToPosition::MoveGripperJointToPosition(GripperJointSubsystem* su
 
 void MoveGripperJointToPosition::Initialize() {
     // Start the movement to the target angle using existing methods
+    if (!m_gripperJoint) {
+        std::cout << "Error: MoveGripperJointToPosition initialized with null subsystem" << std::endl;
+        return;
+    }
+
     if (m_targetAngle == JOINT_UP_ANGLE) {
         m_gripperJoint->SetSpeedNormal();
         m_gripperJoint->SetGripperUpAngle();
@@ -23,11 +28,14 @@ void MoveGripperJointToPosition::Initialize() {
         m_gripperJoint->SetSpeedNormal();
         m_gripperJoint->SetGripperDownAngle();
     }
+
     std::cout << "MoveGripperToPosition: Starting movement to " << m_targetAngle 
               << " degrees" << (m_holdPosition ? " (holding)" : "") << std::endl;
 }
 
 void MoveGripperJointToPosition::Execute() {
+    if (!m_gripperJoint) return;
+
     if (m_holdPosition) {
         // Keep commanding the position every cycle to hold it
         if (m_targetAngle == JOINT_UP_ANGLE) {
@@ -44,6 +52,8 @@ void MoveGripperJointToPosition::Execute() {
 }
 
 bool MoveGripperJointToPosition::IsFinished() {
+    if (!m_gripperJoint) return true; // consider finished if subsystem missing
+
     if (m_holdPosition) {
         // If holding, never finish (must be interrupted)
         return false;
@@ -54,6 +64,11 @@ bool MoveGripperJointToPosition::IsFinished() {
 }
 
 void MoveGripperJointToPosition::End(bool interrupted) {
+    if (!m_gripperJoint) {
+        std::cout << "MoveGripperToPosition: Ending but subsystem is null" << std::endl;
+        return;
+    }
+
     if (interrupted) {
         std::cout << "MoveGripperToPosition: Command was interrupted" << std::endl;
     } else {

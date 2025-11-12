@@ -41,6 +41,13 @@ void AppleGripperCheckCommand::Initialize() {
 
 void AppleGripperCheckCommand::Execute() {
     // Use the correct namespace "Camera/" instead of GetNamespace()
+    if (!m_camera) {
+        std::cout << "AppleGripperCheckCommand: camera subsystem is null, aborting detection" << std::endl;
+        m_appleDetected = false;
+        m_appleDistance = -1.0;
+        return;
+    }
+
     m_appleDetected = frc::SmartDashboard::GetBoolean("Camera/Apple/Found", false);
     
     if (m_appleDetected) {
@@ -50,7 +57,12 @@ void AppleGripperCheckCommand::Execute() {
         
         if (appleCx >= 0 && appleCy >= 0) {
             // Get depth value using the camera subsystem method
-            m_appleDistance = m_camera->GetAppleDistance();
+            try {
+                m_appleDistance = m_camera->GetAppleDistance();
+            } catch (const std::exception &e) {
+                std::cout << "AppleGripperCheckCommand: Exception calling GetAppleDistance(): " << e.what() << std::endl;
+                m_appleDistance = -1.0;
+            }
             
             // Convert to millimeters if the method returns centimeters
             if (m_appleDistance > 0 && m_appleDistance < 100) {

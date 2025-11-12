@@ -3,36 +3,67 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
 #include "subsystems/amcu/AMCU.h"
 #include "Constants.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/sensor/SensorManager.h"
+#include "SignalHandler.h"
+#include <networktables/NetworkTableInstance.h>
 
-// #include "commands/SpeedDriveCommand.h"
+//#include "subsystems/elevator/ArmSubsystem.h"
+//#include "subsystems/joystick/Gamepad.h"
 
-// Define static members of Robot class
-
-Robot *Robot::s_instance = nullptr;
+//Gamepad gamepad;
+//ArmSubsystem arm;
+// Robot class members (m_amcu, m_sensormanager etc.) are defined in Robot.h.
 
 void Robot::RobotInit()
 {
-  s_instance = this;
-  m_sensormanager = std::make_unique<SensorManager>();
-  m_amcu = std::make_unique<AMCU>();
+  // Install crash handler early (diagnostic only)
+  InstallCrashHandler();
 
-  SetupLogging();
-  InitLogging(m_sensormanager.get());
+  // Initialize SensorManager after WPILib is ready
+  m_sensormanager = std::make_unique<SensorManager>();
+
+  // FIXED: File logging for logs, NetworkTables for sensors
+  SetupLogging();                       // Redirects cout/cerr to file
+  InitLogging(m_sensormanager.get());   // Sets up NetworkTables for sensors
 
   m_sensormanager->InitializeSensors();
-  m_sensormanager->SensorManagerStartThread();
+  // Start sensor background thread only when explicitly enabled via NetworkTables.
+  // Default: disabled to avoid native JNI/LiDAR crashes while debugging.
+  {
+    auto cfg = nt::NetworkTableInstance::GetDefault().GetTable("Config");
+    bool enableSensors = cfg->GetBoolean("EnableSensorThread", false);
+    std::cout << "Config/EnableSensorThread = " << (enableSensors ? "true" : "false") << std::endl;
+    if (enableSensors) {
+      try {
+        m_sensormanager->SensorManagerStartThread();
+      } catch (const std::exception &e) {
+        std::cerr << "Failed to start SensorManager thread: " << e.what() << std::endl;
+      }
+    } else {
+      std::cout << "Sensor thread not started (Config/EnableSensorThread=false)" << std::endl;
+    }
+  }
 
-  // Forward SensorManager and AMCU to RobotContainer
-  m_container.SetSensorManager(m_sensormanager.get());
+  // Create AMCU if not already constructed (Robot.h likely default constructs it)
+  if (!m_amcu)
+    m_amcu = std::make_unique<AMCU>();
+
+  // Provide AMCU and sensor manager pointers to the container
   m_container.SetAMCU(m_amcu.get());
+  m_container.SetSensorManager(m_sensormanager.get());
 
-  m_amcu->initOmniDriveBase(Constants::kWheelRadius, Constants::kRobotRadius, Constants::kMotorLeft, Constants::kMotorRight, Constants::kMotorBack);
+  m_amcu->initOmniDriveBase(Constants::kWheelRadius,
+                            Constants::kRobotRadius,
+                            Constants::kMotorLeft,
+                            Constants::kMotorRight,
+                            Constants::kMotorBack);
 
+  // Initialize storage configuration values in NetworkTables
   InitializeStorageParameters();
 }
 
@@ -40,22 +71,22 @@ void Robot::RobotInit()
 void Robot::InitializeStorageParameters()
 {
   auto nt = nt::NetworkTableInstance::GetDefault().GetTable("Storage");
-  
+
   // Set storage height to 200mm (optimal for apple dropping)
   nt->PutNumber("HeightMM", 200.0);
-  
+
   // Set slot timing thresholds for pick time classification
   nt->PutNumber("T1", 1.5);   // 0-1.5s = Slot 0 (red apples)
   nt->PutNumber("T2", 2.2);   // 1.5-2.2s = Slot 1 (yellow apples), >2.2s = Slot 2 (green apples)
-  
+
   // Set slot position fractions (time-based positioning)
   nt->PutNumber("Slot0Frac", 0.17);  // 17% from back (closest to robot)
   nt->PutNumber("Slot1Frac", 0.50);  // 50% from back (middle)
   nt->PutNumber("Slot2Frac", 0.83);  // 83% from back (furthest from robot)
-  
+
   // Set operational parameters
   nt->PutNumber("DropDwellMs", 500.0);  // 500ms wait after gripper opens
-  
+
   std::cout << "Storage parameters initialized:" << std::endl;
   std::cout << "  - Storage Height: 200mm" << std::endl;
   std::cout << "  - Slot 0 (Red): 17% extension, <1.5s pick time" << std::endl;
@@ -65,41 +96,46 @@ void Robot::InitializeStorageParameters()
 
 void Robot::RobotPeriodic()
 {
-  UpdateLogging(m_sensormanager.get());
+  UpdateLogging(m_sensormanager.get()); // use raw pointer
 
   frc2::CommandScheduler::GetInstance().Run();
 
-  // if (auto *lf = m_container.GetLineFollower())
-  // {
-  //   try
-  //   {
-  //     lf->update();
-  //     lf->UpdateShuffleboard(10);
-  //   }
-  //   catch (const std::exception &e)
-  //   {
-  //     // Silently catch to prevent crashes, log occasionally
-  //     static int errorCount = 0;
-  //     if (++errorCount % 250 == 0)
-  //     { // Log every 5 seconds at 50Hz
-  //       std::cout << "LineFollower error: " << e.what() << std::endl;
-  //     }
-  //   }
-  // }
+  if (auto *lf = m_container.GetLineFollower())
+  {
+    lf->update();
+    lf->UpdateShuffleboard(10);
+  }
 }
 
 void Robot::DisabledInit()
 {
+  try
+  {
+    if (m_amcu) {
+      m_amcu->stop();
+      m_amcu->setSpeed(MOTOR_1, 0);
+      m_amcu->setSpeed(MOTOR_2, 0);
+      m_amcu->setSpeed(MOTOR_3, 0);
+      m_amcu->setSpeed(MOTOR_0, 0);
+    }
+
+    frc2::CommandScheduler::GetInstance().CancelAll();
+  }
+  catch (const std::exception &e)
+  {
+    std::cerr << e.what() << '\n';
+  }
+
   LOG_DISABLED(" Disabled.");
 }
 
 void Robot::DisabledPeriodic()
 {
+  // nothing for now
 }
 
 void Robot::AutonomousInit()
 {
-
   // Get the autonomous command from the container
   m_autonomousCommand = m_container.GetAutonomousCommand();
 
@@ -107,19 +143,30 @@ void Robot::AutonomousInit()
   if (m_autonomousCommand != nullptr)
   {
     m_autonomousCommand->Schedule();
-    LOG_INFO("Autonomous command scheduled")
+    LOG_INFO("Autonomous command scheduled");
+  }
+
+  if (m_amcu) {
+    m_amcu->stop();
+    m_amcu->setSpeed(MOTOR_1, 0);
+    m_amcu->setSpeed(MOTOR_2, 0);
+    m_amcu->setSpeed(MOTOR_3, 0);
   }
 
   last_mode = {LOG_PURPLE, "[AUTONOMOUS]"};
   LOG_AUTONOMOUS("Enabled");
 }
 
-void Robot::AutonomousPeriodic() {}
+void Robot::AutonomousPeriodic()
+{
+  // CommandScheduler runs from RobotPeriodic
+}
 
 void Robot::TeleopInit()
 {
   last_mode = {LOG_CYAN, "[TELEOP]"};
   LOG_TELEOP("Enabled.");
+  
 }
 
 void Robot::TeleopPeriodic()
@@ -128,6 +175,7 @@ void Robot::TeleopPeriodic()
   {
     if (auto *lf = m_container.GetLineFollower())
     {
+      lf->update();
       lf->UpdateShuffleboard(10);
     }
     else
@@ -139,16 +187,23 @@ void Robot::TeleopPeriodic()
   {
     std::cout << e.what() << '\n';
   }
+
+  // if (gamepad.GetXButton()) {
+  //   arm.SetServoAngleZero();
+  // }
+
 }
 
 void Robot::TestInit()
 {
-
   last_mode = {LOG_YELLOW, "[TEST]"};
   LOG_TEST("Enabled.");
 }
 
-void Robot::TestPeriodic() {}
+void Robot::TestPeriodic()
+{
+  // no-op: keep same robot logic, used by WPILib during Test mode
+}
 
 #ifndef RUNNING_FRC_TESTS
 int main() { return frc::StartRobot<Robot>(); }

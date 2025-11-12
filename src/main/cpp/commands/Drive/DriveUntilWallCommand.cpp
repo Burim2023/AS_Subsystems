@@ -54,7 +54,7 @@ void DriveUntilWallCommand::Execute()
     }
     if (auto *lidar = m_sensorManager->GetLidarSubsystem())
     {
-      lidarDist = lidar->GetFrontDistance();
+      lidarDist = lidar->GetDistanceAtAngle(0);
       frc::SmartDashboard::PutNumber("DriveUntilWall LiDAR (cm)", lidarDist);
     }
   }

@@ -35,13 +35,16 @@ RobotContainer::RobotContainer()
       m_qrCodeReaderCommandContinuous(&m_camera, QRCodeReaderCommand::ReadMode::CONTINUOUS_READ),
       m_driveSmartPickupGround(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu),
       // Apple detection commands - simplified
-      m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
-      m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
-      m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0),
-      m_storeAppleAuto(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper),                    // Auto-detection
-      m_storeAppleRed(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "red", 1.0),         // Red apple, 1.0s pick time
-      m_storeAppleYellow(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "yellow", 1.8),   // Yellow apple, 1.8s pick time
-      m_storeAppleGreen(m_extender, m_elevator, m_arm, m_gripperJoint, m_gripper, "green", 2.5)
+  m_checkAppleGrip(&m_camera, AppleGripperCheckCommand::CheckMode::QUICK_CHECK, 1.0),
+  m_waitForGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 5.0),
+  m_monitorGrip(&m_camera, AppleGripperCheckCommand::CheckMode::CONTINUOUS_MONITOR, 10.0),
+    
+   // Initialize StoreAppleCommand instances (stores all 3 apples automatically)
+  m_storeAppleAuto(&m_extender, &m_elevator, &m_arm, &m_gripperJoint, &m_gripper),
+  m_storeAppleRed(&m_extender, &m_elevator, &m_arm, &m_gripperJoint, &m_gripper),
+  m_storeAppleYellow(&m_extender, &m_elevator, &m_arm, &m_gripperJoint, &m_gripper),
+  m_storeAppleGreen(&m_extender, &m_elevator, &m_arm, &m_gripperJoint, &m_gripper),
+  m_competitionAuto(m_amcu, &m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, &m_extender)
 // m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
 {
 
@@ -112,6 +115,7 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Store Apple (Red)", &m_storeAppleRed);             // Manual red
   m_chooser.AddOption("Store Apple (Yellow)", &m_storeAppleYellow);       // Manual yellow
   m_chooser.AddOption("Store Apple (Green)", &m_storeAppleGreen); 
+  m_chooser.AddOption("Competition Auto", &m_competitionAuto);
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }
 

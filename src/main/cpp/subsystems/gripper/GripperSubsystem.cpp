@@ -32,15 +32,27 @@ double GripperSubsystem::GetGripperPosition() {
 }
 
 void GripperSubsystem::SetOpenGripper(){
-    GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);
+    if (GripperServo) {
+        GripperServo->SetAngle(GRIPPER_OPEN_ANGLE);
+    } else {
+        std::cout << "Warning: GripperServo is null in SetOpenGripper()" << std::endl;
+    }
 }
 
 void GripperSubsystem::SetClosedGripper() {
-    GripperServo->SetAngle(GRIPPER_CLOSED_ANGLE);
+    if (GripperServo) {
+        GripperServo->SetAngle(GRIPPER_CLOSED_ANGLE);
+    } else {
+        std::cout << "Warning: GripperServo is null in SetClosedGripper()" << std::endl;
+    }
 }
 
 void GripperSubsystem::SetServoAngleZero() {
-    GripperServo->SetAngle(0);
+    if (GripperServo) {
+        GripperServo->SetAngle(0);
+    } else {
+        std::cout << "Warning: GripperServo is null in SetServoAngleZero()" << std::endl;
+    }
 }
 
 void GripperSubsystem::UpdateDashboard() {
