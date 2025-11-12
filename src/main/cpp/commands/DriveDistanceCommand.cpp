@@ -1,13 +1,18 @@
 #include "commands/DriveDistanceCommand.h"
 #include <iostream>
 
-// Static member initialization
-// DriveDistanceCommand* DriveDistanceCommand::s_currentCommand = nullptr;
-
-DriveDistanceCommand::DriveDistanceCommand(AMCU* amcu, uint8_t xMeter, uint8_t yMeter, uint16_t omega_degree, double timeoutSeconds)
-    : m_amcu(amcu), m_xMeter(xMeter), m_yMeter(yMeter), m_omega_degree(omega_degree), m_timeout(timeoutSeconds) {
+DriveDistanceCommand::DriveDistanceCommand(AMCU* amcu, 
+                                          double xMeter, 
+                                          double yMeter, 
+                                          double omega_degree, 
+                                          double timeoutSeconds)
+    : m_amcu(amcu), 
+      m_xMeter(xMeter), 
+      m_yMeter(yMeter), 
+      m_omega_degree(omega_degree), 
+      m_timeout(timeoutSeconds) 
+{
     SetName("DriveDistanceCommand");
-    // AddRequirements if needed (e.g., drive subsystem)
 }
 
 void DriveDistanceCommand::Initialize() {
@@ -19,13 +24,28 @@ void DriveDistanceCommand::Initialize() {
         return;
     }
 
-    std::cout << "DriveDistanceCommand: Starting driveDistance(" << (int)m_xMeter << ", " << (int)m_yMeter 
-              << ", " << m_omega_degree << ") for " << m_timeout << "s" << std::endl;
-    m_amcu->driveDistance(m_xMeter, m_yMeter, m_omega_degree);
+    std::cout << "DriveDistanceCommand: Starting driveDistance(" 
+              << m_xMeter << "m, " 
+              << m_yMeter << "m, " 
+              << m_omega_degree << "°) for " 
+              << m_timeout << "s" << std::endl;
+    
+    // ✅ Option B: Direct meters - no scaling
+    // Cast double to uint8_t (will round down)
+    uint8_t xConverted = static_cast<uint8_t>(m_xMeter);
+    uint8_t yConverted = static_cast<uint8_t>(m_yMeter);
+    uint16_t omegaConverted = static_cast<uint16_t>(m_omega_degree);
+    
+    std::cout << "DriveDistanceCommand: Sending to AMCU: x=" 
+              << static_cast<int>(xConverted) << "m, y=" 
+              << static_cast<int>(yConverted) << "m, omega=" 
+              << omegaConverted << "°" << std::endl;
+    
+    m_amcu->driveDistance(xConverted, yConverted, omegaConverted);
 }
 
 void DriveDistanceCommand::Execute() {
-    // Optional: resend if needed, but driveDistance is typically one-shot
+    // AMCU handles the movement
 }
 
 void DriveDistanceCommand::End(bool interrupted) {
@@ -39,10 +59,3 @@ void DriveDistanceCommand::End(bool interrupted) {
 bool DriveDistanceCommand::IsFinished() {
     return m_timer.Get() >= m_timeout;
 }
-
-// // Static callback function
-// void DriveDistanceCommand::DriveCompleteCallback() {
-//     if (s_currentCommand) {
-//         s_currentCommand->m_driveComplete = true;
-//     }
-// }

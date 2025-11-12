@@ -60,8 +60,8 @@ void CompetitionAutonomousSequence::BuildSequence() {
         }),
 
         // ✅ Now m_amcu is valid!
-        SpeedDriveCommand(m_amcu, 5, 15, 0, 0),
-
+        //SpeedDriveCommand(m_amcu, 5, 15, 0, 0),
+        DriveDistanceCommand(m_amcu, 0, 0, 1, 10),
         frc2::WaitCommand(2.0_s),
 
         std::move(CalibrateExtender(m_extender)),

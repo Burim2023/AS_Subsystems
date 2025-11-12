@@ -7,8 +7,13 @@
 
 class DriveDistanceCommand : public frc2::CommandHelper<frc2::CommandBase, DriveDistanceCommand> {
 public:
-    // timeoutSeconds: estimated time to cover the distance (adjust based on speed)
-    DriveDistanceCommand(AMCU* amcu, uint8_t xMeter, uint8_t yMeter, uint16_t omega_degree, double timeoutSeconds);
+    // ✅ Accept double (meters) for user-friendly interface
+    DriveDistanceCommand(AMCU* amcu, 
+                        double xMeter,
+                        double yMeter,
+                        double omega_degree,
+                        double timeoutSeconds);
+    
     void Initialize() override;
     void Execute() override;
     bool IsFinished() override;
@@ -16,9 +21,9 @@ public:
 
 private:
     AMCU* m_amcu;
-    uint8_t m_xMeter;
-    uint8_t m_yMeter;
-    uint16_t m_omega_degree;
+    double m_xMeter;
+    double m_yMeter;
+    double m_omega_degree;
     double m_timeout;
     frc::Timer m_timer;
 };
