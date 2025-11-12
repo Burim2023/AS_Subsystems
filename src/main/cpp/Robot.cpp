@@ -12,13 +12,6 @@
 #include "SignalHandler.h"
 #include <networktables/NetworkTableInstance.h>
 
-//#include "subsystems/elevator/ArmSubsystem.h"
-//#include "subsystems/joystick/Gamepad.h"
-
-//Gamepad gamepad;
-//ArmSubsystem arm;
-// Robot class members (m_amcu, m_sensormanager etc.) are defined in Robot.h.
-
 void Robot::RobotInit()
 {
   // Install crash handler early (diagnostic only)
@@ -28,26 +21,11 @@ void Robot::RobotInit()
   m_sensormanager = std::make_unique<SensorManager>();
 
   // FIXED: File logging for logs, NetworkTables for sensors
-  SetupLogging();                       // Redirects cout/cerr to file
-  InitLogging(m_sensormanager.get());   // Sets up NetworkTables for sensors
-
+  SetupLogging(); // Redirects cout/cerr to file
+  InitLogging();  // Sets up NetworkTables for sensors
   m_sensormanager->InitializeSensors();
   // Start sensor background thread only when explicitly enabled via NetworkTables.
   // Default: disabled to avoid native JNI/LiDAR crashes while debugging.
-  {
-    auto cfg = nt::NetworkTableInstance::GetDefault().GetTable("Config");
-    bool enableSensors = cfg->GetBoolean("EnableSensorThread", false);
-    std::cout << "Config/EnableSensorThread = " << (enableSensors ? "true" : "false") << std::endl;
-    if (enableSensors) {
-      try {
-        m_sensormanager->SensorManagerStartThread();
-      } catch (const std::exception &e) {
-        std::cerr << "Failed to start SensorManager thread: " << e.what() << std::endl;
-      }
-    } else {
-      std::cout << "Sensor thread not started (Config/EnableSensorThread=false)" << std::endl;
-    }
-  }
 
   // Create AMCU if not already constructed (Robot.h likely default constructs it)
   if (!m_amcu)
@@ -76,16 +54,16 @@ void Robot::InitializeStorageParameters()
   nt->PutNumber("HeightMM", 200.0);
 
   // Set slot timing thresholds for pick time classification
-  nt->PutNumber("T1", 1.5);   // 0-1.5s = Slot 0 (red apples)
-  nt->PutNumber("T2", 2.2);   // 1.5-2.2s = Slot 1 (yellow apples), >2.2s = Slot 2 (green apples)
+  nt->PutNumber("T1", 1.5); // 0-1.5s = Slot 0 (red apples)
+  nt->PutNumber("T2", 2.2); // 1.5-2.2s = Slot 1 (yellow apples), >2.2s = Slot 2 (green apples)
 
   // Set slot position fractions (time-based positioning)
-  nt->PutNumber("Slot0Frac", 0.17);  // 17% from back (closest to robot)
-  nt->PutNumber("Slot1Frac", 0.50);  // 50% from back (middle)
-  nt->PutNumber("Slot2Frac", 0.83);  // 83% from back (furthest from robot)
+  nt->PutNumber("Slot0Frac", 0.17); // 17% from back (closest to robot)
+  nt->PutNumber("Slot1Frac", 0.50); // 50% from back (middle)
+  nt->PutNumber("Slot2Frac", 0.83); // 83% from back (furthest from robot)
 
   // Set operational parameters
-  nt->PutNumber("DropDwellMs", 500.0);  // 500ms wait after gripper opens
+  nt->PutNumber("DropDwellMs", 500.0); // 500ms wait after gripper opens
 
   std::cout << "Storage parameters initialized:" << std::endl;
   std::cout << "  - Storage Height: 200mm" << std::endl;
@@ -96,14 +74,72 @@ void Robot::InitializeStorageParameters()
 
 void Robot::RobotPeriodic()
 {
-  UpdateLogging(m_sensormanager.get()); // use raw pointer
+  static bool lastSensorState = false;
+  bool enableSensors = SensorManager::EnableSensorThread.load();
+
+  if (enableSensors != lastSensorState)
+  {
+    if (enableSensors)
+    {
+      try
+      {
+        m_sensormanager->SensorManagerStartThread();
+        std::cout << "[Robot] Sensor thread STARTED" << std::endl;
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[Robot] Failed to start sensor thread: " << e.what() << std::endl;
+      }
+    }
+    else
+    {
+      try
+      {
+        m_sensormanager->SensorManagerStopThread();
+        std::cout << "[Robot] Sensor thread STOPPED" << std::endl;
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[Robot] Failed to stop sensor thread: " << e.what() << std::endl;
+      }
+    }
+    lastSensorState = enableSensors;
+  }
+
+  // Update logging - throttled to avoid mutex contention with sensor thread
+  // UpdateLogging() now safely skips sensor reads when sensor thread is active
+  static int loggingTick = 0;
+  if (++loggingTick >= 10) // Every 200ms (10 * 20ms RobotPeriodic)
+  {
+    loggingTick = 0;
+    UpdateLogging(m_sensormanager.get());
+  }
 
   frc2::CommandScheduler::GetInstance().Run();
 
-  if (auto *lf = m_container.GetLineFollower())
+  // Only update line follower if sensor thread is NOT enabled
+  // Use lastSensorState to avoid race condition during state transitions
+  if (!lastSensorState)
   {
-    lf->update();
-    lf->UpdateShuffleboard(10);
+    if (auto *lf = m_container.GetLineFollower())
+    {
+      lf->update();
+      lf->UpdateShuffleboard(10);
+    }
+  }
+  else
+  {
+    // Sensor thread is running - publish NetworkTables from low-priority main loop
+    // This moves NT updates OUT of the time-critical sensor thread
+    static int shuffleboardTick = 0;
+    if (++shuffleboardTick >= 10) // Every 200ms (10 * 20ms RobotPeriodic)
+    {
+      shuffleboardTick = 0;
+      if (auto *lf = m_container.GetLineFollower())
+      {
+        lf->UpdateShuffleboard(1); // Force update (param=1 means update every call)
+      }
+    }
   }
 }
 
@@ -111,7 +147,8 @@ void Robot::DisabledInit()
 {
   try
   {
-    if (m_amcu) {
+    if (m_amcu)
+    {
       m_amcu->stop();
       m_amcu->setSpeed(MOTOR_1, 0);
       m_amcu->setSpeed(MOTOR_2, 0);
@@ -138,7 +175,7 @@ void Robot::AutonomousInit()
 {
   // Get the autonomous command from the container
   m_autonomousCommand = m_container.GetAutonomousCommand();
-
+  // }
   // Schedule the autonomous command (if one was selected)
   if (m_autonomousCommand != nullptr)
   {
@@ -146,7 +183,8 @@ void Robot::AutonomousInit()
     LOG_INFO("Autonomous command scheduled");
   }
 
-  if (m_amcu) {
+  if (m_amcu)
+  {
     m_amcu->stop();
     m_amcu->setSpeed(MOTOR_1, 0);
     m_amcu->setSpeed(MOTOR_2, 0);
@@ -166,32 +204,30 @@ void Robot::TeleopInit()
 {
   last_mode = {LOG_CYAN, "[TELEOP]"};
   LOG_TELEOP("Enabled.");
-  
 }
 
 void Robot::TeleopPeriodic()
 {
-  try
-  {
-    if (auto *lf = m_container.GetLineFollower())
-    {
-      lf->update();
-      lf->UpdateShuffleboard(10);
-    }
-    else
-    {
-      return;
-    }
-  }
-  catch (const std::exception &e)
-  {
-    std::cout << e.what() << '\n';
-  }
+  // try
+  // {
+  //   if (auto *lf = m_container.GetLineFollower())
+  //   {
+  //     lf->update();
+  //     lf->UpdateShuffleboard(10);
+  //   }
+  //   else
+  //   {
+  //     return;
+  //   }
+  // }
+  // catch (const std::exception &e)
+  // {
+  //   std::cout << e.what() << '\n';
+  // }
 
   // if (gamepad.GetXButton()) {
   //   arm.SetServoAngleZero();
   // }
-
 }
 
 void Robot::TestInit()

@@ -142,7 +142,7 @@ void ExtenderSubsystem::Periodic(){
     
     // Additional safety - stop if both switches pressed (shouldn't happen)
     if (frontPressed && backPressed) {
-        std::cout << "ERROR: Both limit switches pressed - EMERGENCY STOP" << std::endl;
+        // std::cout << "ERROR: Both limit switches pressed - EMERGENCY STOP" << std::endl;
         ExtenderServo.Set(Constants::EXTENDER_DRIVE_STOP);
         currentState = ExtenderState::Error;
     }
