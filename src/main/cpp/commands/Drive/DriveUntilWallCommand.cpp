@@ -1,4 +1,5 @@
 #include "commands/Drive/DriveUntilWallCommand.h"
+#include "subsystems/sensor/SensorManager.h"
 #include <iostream>
 #include <frc/smartdashboard/SmartDashboard.h>
 
@@ -28,6 +29,8 @@ void DriveUntilWallCommand::SetSensorManager(SensorManager *sensorManager)
 
 void DriveUntilWallCommand::Initialize()
 {
+  SensorManager::EnableSensorThread.store(true);
+  std::this_thread::sleep_for(200ms);
   m_finished = false;
   if (m_amcu)
   {
@@ -78,6 +81,7 @@ void DriveUntilWallCommand::Execute()
 
 bool DriveUntilWallCommand::IsFinished()
 {
+  SensorManager::EnableSensorThread.store(true);
   return m_finished;
 }
 

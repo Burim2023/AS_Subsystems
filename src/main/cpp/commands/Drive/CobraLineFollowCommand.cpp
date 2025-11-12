@@ -1,6 +1,8 @@
 #include "commands/Drive/CobraLineFollowCommand.h"
 #include "subsystems/sensor/LineFollower.h"
+#include "subsystems/sensor/SensorManager.h"
 #include "subsystems/amcu/AMCU.h"
+#include "Constants.h"
 
 #include <algorithm>
 #include <cmath>
@@ -16,6 +18,13 @@ CobraLineFollowCommand::CobraLineFollowCommand(
           [this]()
           {
             std::cout << "CobraLineFollow: start\n";
+
+            SensorManager::EnableSensorThread.store(true);
+            std::cout << "CobraLineFollow: Enabled sensor thread\n";
+
+            // Give the thread time to start and RobotPeriodic to stop calling update()
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
             if (!m_amcu)
               std::cout << "CobraLineFollow: AMCU is NULL!\n";
             if (!m_lf)
@@ -83,6 +92,11 @@ CobraLineFollowCommand::CobraLineFollowCommand(
           {
             if (m_amcu)
               m_amcu->stop();
+
+            // Disable sensor thread when command ends
+            SensorManager::EnableSensorThread.store(false);
+            std::cout << "CobraLineFollow: Disabled sensor thread\n";
+
             std::cout << "CobraLineFollow: end (interrupted="
                       << (interrupted ? "true" : "false") << ")\n";
           },
