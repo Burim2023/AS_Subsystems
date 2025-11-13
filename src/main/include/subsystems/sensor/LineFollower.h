@@ -5,10 +5,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <mutex>
+#include <fstream>  // ✅ Add for file I/O
 
 #include <networktables/NetworkTableEntry.h>
 #include <frc/shuffleboard/Shuffleboard.h>
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <wpi/json.h>  // ✅ Add for JSON support
 
 #include "studica/Cobra.h" 
 
@@ -16,12 +18,15 @@ class LineFollower
 {
 public:
   LineFollower(int ch0, int ch1, int ch2, int ch3, float vRef = 5.0f);
+  
   void update();
+  
   void setMinMax(double whiteV, double blackV)
   {
     m_white.fill(whiteV);
     m_black.fill(blackV);
   }
+  
   void setPerChannelMinMax(const std::array<double, 4> &whiteV,
                            const std::array<double, 4> &blackV)
   {
@@ -29,19 +34,22 @@ public:
     m_black = blackV;
   }
 
-  // Threshold for "Detected" (based on average darkness)
   void setMinSignal(double s) { m_minSignal = std::clamp(s, 0.0, 1.0); }
 
-  // One-touch calibration (call while aiming at the target):
-  void CaptureWhite(); // sets per-channel WHITE (floor) voltages
-  void CaptureBlack(); // sets per-channel BLACK (line) voltages
+  // One-touch calibration
+  void CaptureWhite();
+  void CaptureBlack();
 
-  // Optional: persist calibration across reboots via NetworkTables
+  // ✅ NEW: File-based persistence (recommended)
+  bool SaveCalibrationToFile(const std::string &filePath = "/home/lvuser/linefollower_cal.json");
+  bool LoadCalibrationFromFile(const std::string &filePath = "/home/lvuser/linefollower_cal.json");
+
+  // NetworkTables persistence (legacy - optional)
   void SaveCalibrationNT(const std::string &keyPrefix = "LF/");
   void LoadCalibrationNT(const std::string &keyPrefix = "LF/");
 
   void InitShuffleboard(const std::string &tabName = "Line");
-  void UpdateShuffleboard(int rateDiv = 10); // push every Nth call
+  void UpdateShuffleboard(int rateDiv = 10);
 
   std::array<double, 4> getVoltages() const
   {
@@ -79,18 +87,15 @@ private:
   studica::Cobra m_cobra;
   std::array<int, 4> m_ch{};
 
-  // Expected range
-  std::array<double, 4> m_white{{0.65, 0.65, 0.65, 0.65}}; // floor
-  std::array<double, 4> m_black{{1.20, 1.20, 1.20, 1.20}}; // tape
+  std::array<double, 4> m_white{{0.65, 0.65, 0.65, 0.65}};
+  std::array<double, 4> m_black{{1.20, 1.20, 1.20, 1.20}};
 
-  // Last readings
   std::array<double, 4> m_volt{{0, 0, 0, 0}};
   std::array<double, 4> m_dark{{0, 0, 0, 0}};
-  double m_signal = 0.0;     // avg darkness [0..1]
-  double m_posErr = 0.0;     // lateral error [-1..+1]
-  double m_minSignal = 0.80; // default detection threshold (tune 0.75..0.90)
+  double m_signal = 0.0;
+  double m_posErr = 0.0;
+  double m_minSignal = 0.80;
 
-  // Shuffleboard
   bool m_sbInit = false;
   std::string m_tabName = "Line";
   std::array<nt::NetworkTableEntry, 4> m_entVolt{};

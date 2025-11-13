@@ -1,5 +1,7 @@
 #include "subsystems/sensor/LineFollower.h"
 #include <frc/smartdashboard/SmartDashboard.h>
+#include <wpi/json.h>  // ✅ Add for JSON support
+#include <fstream>  // ✅ Add for file I/O
 
 // Constructor
 LineFollower::LineFollower(int ch0, int ch1, int ch2, int ch3, float vRef)
@@ -132,4 +134,62 @@ void LineFollower::UpdateShuffleboard(int rateDiv)
   m_entSignal.SetDouble(m_signal);
   m_entErr.SetDouble(m_posErr);
   m_entDetected.SetBoolean(m_signal >= m_minSignal);
+}
+
+// ✅ NEW: File-based persistence (recommended)
+bool LineFollower::SaveCalibrationToFile(const std::string &filePath)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  wpi::json jsonData;
+
+  // Fill JSON with current calibration data
+  for (int i = 0; i < 4; ++i)
+  {
+    jsonData["white"][i] = m_white[i];
+    jsonData["black"][i] = m_black[i];
+  }
+  jsonData["minSignal"] = m_minSignal;
+
+  // Write JSON to file
+  try
+  {
+    std::ofstream file(filePath);
+    if (!file.is_open())
+      return false;
+    file << jsonData.dump(4); // 4-space indentation
+    return true;
+  }
+  catch (...)
+  {
+    return false;
+  }
+}
+
+bool LineFollower::LoadCalibrationFromFile(const std::string &filePath)
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  wpi::json jsonData;
+
+  // Read JSON from file
+  try
+  {
+    std::ifstream file(filePath);
+    if (!file.is_open())
+      return false;
+    file >> jsonData;
+  }
+  catch (...)
+  {
+    return false;
+  }
+
+  // Parse JSON and update calibration data
+  for (int i = 0; i < 4; ++i)
+  {
+    m_white[i] = jsonData["white"][i].get<double>();
+    m_black[i] = jsonData["black"][i].get<double>();
+  }
+  m_minSignal = jsonData["minSignal"].get<double>();
+
+  return true;
 }
