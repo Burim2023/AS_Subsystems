@@ -4,6 +4,7 @@
 #include <memory>
 
 class AMCU;
+class SensorManager;  // ✅ Add forward declaration
 #include "subsystems/elevator/ArmSubsystem.h"
 #include "subsystems/gripper/GripperSubsystem.h"
 #include "subsystems/gripper/GripperJointSubsystem.h"
@@ -22,6 +23,7 @@ class AMCU;
 #include "commands/MoveElevatorToPosition.h"
 #include "commands/MoveArmToPosition.h"
 #include "commands/MoveGripperJointToPosition.h"
+#include "commands/Drive/DriveUntilWallCommand.h"
 
 /**
  * CompetitionAutonomousSequence
@@ -39,6 +41,7 @@ public:
     /**
      * Constructor
      * @param amcu Drive subsystem pointer
+     * @param sensorManager Sensor manager pointer  // ✅ Added
      * @param arm Arm subsystem pointer
      * @param gripper Gripper subsystem pointer
      * @param gripperJoint Gripper joint subsystem pointer
@@ -48,6 +51,7 @@ public:
      * @param storeSlot Slot index to store apple (0..2)
      */
     CompetitionAutonomousSequence(AMCU* amcu,
+                                  SensorManager* sensorManager,  // ✅ Added
                                   ArmSubsystem* arm,
                                   GripperSubsystem* gripper,
                                   GripperJointSubsystem* gripperJoint,
@@ -57,10 +61,12 @@ public:
 
     // ✅ Fixed: Add parameter to SetAMCU
     void SetAMCU(AMCU* amcu);
+    void SetSensorManager(SensorManager* sensorManager);  // ✅ Added
 
 private:
     // ✅ Add member variables
     AMCU* m_amcu;
+    SensorManager* m_sensorManager;  // ✅ Added
     ArmSubsystem* m_arm;
     GripperSubsystem* m_gripper;
     GripperJointSubsystem* m_gripperJoint;

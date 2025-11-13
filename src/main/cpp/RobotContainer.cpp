@@ -7,7 +7,7 @@ RobotContainer::RobotContainer()
     : m_amcu(nullptr),
       m_sensorManager(nullptr),
       m_wallAlignDriveCommand(nullptr, nullptr, 15.0, 15, 30),
-      m_driveUntilWallCommand(nullptr, nullptr, 15.0, 28.0, 15),
+      m_driveUntilWallCommand(nullptr, nullptr, 15.0, 15.0, 15),
       m_cobraLineFollowCommand(nullptr, 40.0, static_cast<uint8_t>(15), 0.30),
       m_autoPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_elevator),
       m_autoRetractAndLift(&m_arm, &m_extender),
@@ -41,7 +41,7 @@ RobotContainer::RobotContainer()
         
       // Initialize StoreAppleCommand instances (stores all 3 apples automatically)
       // 
-      m_competitionAuto(nullptr, &m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, &m_extender)
+      m_competitionAuto(nullptr, nullptr, &m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, &m_extender)
 // m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
 {
 
@@ -128,6 +128,7 @@ void RobotContainer::SetAMCU(AMCU *amcu_ptr)
   m_driveUntilWallCommand.SetAMCU(amcu_ptr);
   m_cobraLineFollowCommand.SetAMCU(amcu_ptr);
   m_competitionAuto.SetAMCU(amcu_ptr);
+  m_competitionAuto.SetSensorManager(m_sensorManager);
 
 }
 
@@ -139,6 +140,7 @@ void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
   {
     m_wallAlignDriveCommand.SetSensorManager(m_sensorManager);
     m_driveUntilWallCommand.SetSensorManager(m_sensorManager);
+    m_competitionAuto.SetSensorManager(m_sensorManager);
 
     if (m_sensorManager->GetLineFollower())
     {

@@ -13,7 +13,8 @@ public:
   DriveUntilWallCommand(AMCU *amcu,
                         SensorManager *sensorManager,
                         double usThresholdCm = 15.0,
-                        double lidarThresholdCm = 28.0,
+                        // double lidarThresholdCm = 28.0,
+                        double irThresholdCm = 15.0,
                         uint8_t driveSpeedCms = 20);
 
   void Initialize() override;
@@ -29,7 +30,8 @@ private:
   SensorManager *m_sensorManager{nullptr};
 
   double m_usThresholdCm{15.0};
-  double m_lidarThresholdCm{28.0};
+  // double m_lidarThresholdCm{28.0};
+  double m_irThresholdCm{15.0};
   uint8_t m_driveSpeedCms{20};
 
   bool m_finished{false};
