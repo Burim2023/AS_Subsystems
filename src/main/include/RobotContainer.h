@@ -74,7 +74,7 @@ public:
   frc2::Command *GetAutonomousCommand();
   frc::UltrasonicSubsystem  *GetUltrasonic(){ return m_sensorManager ? m_sensorManager->GetUltrasonicSubsystem() : nullptr; }
   frc::IRRangeSubsystem     *GetIRRange(){ return m_sensorManager ? m_sensorManager->GetIRRangeSubsystem() : nullptr; }
-  frc::LidarSubsystem       *GetLidar(){ return m_sensorManager ? m_sensorManager->GetLidarSubsystem() : nullptr; }
+  // frc::LidarSubsystem       *GetLidar(){ return m_sensorManager ? m_sensorManager->GetLidarSubsystem() : nullptr; }
   LineFollower *GetLineFollower() { return m_sensorManager ? m_sensorManager->GetLineFollower() : nullptr; }
 
   GripperJointSubsystem   &GetGripperJoint() { return m_gripperJoint; }

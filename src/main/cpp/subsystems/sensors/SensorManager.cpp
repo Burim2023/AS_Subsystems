@@ -1,6 +1,6 @@
 #include "subsystems/sensor/UltrasonicSubsystem.h"
 #include "subsystems/sensor/IRRangeSubsystem.h"
-#include "subsystems/sensor/LidarSubsystem.h"
+// #include "subsystems/sensor/LidarSubsystem.h"
 #include "subsystems/sensor/LineFollower.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/sensor/SensorManager.h"
@@ -9,9 +9,6 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-
-// uncomment if lidar keeps crashing
-// #define DISABLE_LIDAR
 
 // thread stopper
 std::atomic<bool> SensorManager::EnableSensorThread{false};
@@ -23,12 +20,6 @@ SensorManager::SensorManager()
     ultraSonic = std::make_unique<frc::UltrasonicSubsystem>(0, 1, 2, 3);
     infraRed = std::make_unique<frc::IRRangeSubsystem>(0, 1);
     lineFollower = std::make_unique<LineFollower>(0, 1, 2, 3, 5.0f);
-
-#ifndef DISABLE_LIDAR
-    lidar = std::make_unique<frc::LidarSubsystem>(studica::Lidar::kUSB1);
-#else
-    std::cerr << "WARNING: LiDAR is DISABLED at compile time" << std::endl;
-#endif
 }
 SensorManager::~SensorManager()
 {
@@ -57,12 +48,6 @@ void SensorManager::SensorWorker()
                 infraRed->UpdateInfraRed();
                 m_sensorCache.irLeft.store(infraRed->GetIRLeftDistance(), std::memory_order_relaxed);
                 m_sensorCache.irRight.store(infraRed->GetIRRightDistance(), std::memory_order_relaxed);
-            }
-
-            if (lidar)
-            {
-                lidar->UpdateLidar();
-                m_sensorCache.lidarFront.store(lidar->GetDistanceAtAngle(0), std::memory_order_relaxed);
             }
 
             if (lineFollower)
@@ -103,24 +88,6 @@ void SensorManager::InitializeSensors()
     {
         infraRed->Init();
     }
-#ifndef DISABLE_LIDAR
-    if (lidar)
-    {
-        try
-        {
-            lidar->Init();
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "SensorManager: LiDAR init failed, continuing without it: "
-                      << e.what() << std::endl;
-        }
-        catch (...)
-        {
-            std::cerr << "SensorManager: LiDAR init failed with unknown error" << std::endl;
-        }
-    }
-#endif
 }
 
 void SensorManager::SensorManagerStartThread()
@@ -157,11 +124,6 @@ frc::UltrasonicSubsystem *SensorManager::GetUltrasonicSubsystem()
 frc::IRRangeSubsystem *SensorManager::GetIRRangeSubsystem()
 {
     return infraRed.get();
-}
-
-frc::LidarSubsystem *SensorManager::GetLidarSubsystem()
-{
-    return lidar.get();
 }
 
 LineFollower *SensorManager::GetLineFollower()

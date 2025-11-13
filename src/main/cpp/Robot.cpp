@@ -14,18 +14,11 @@
 
 void Robot::RobotInit()
 {
-  // Install crash handler early (diagnostic only)
   InstallCrashHandler();
-
-  // Initialize SensorManager after WPILib is ready
   m_sensormanager = std::make_unique<SensorManager>();
-
-  // FIXED: File logging for logs, NetworkTables for sensors
-  SetupLogging(); // Redirects cout/cerr to file
-  InitLogging();  // Sets up NetworkTables for sensors
+  SetupLogging(); 
+  InitLogging();  
   m_sensormanager->InitializeSensors();
-  // Start sensor background thread only when explicitly enabled via NetworkTables.
-  // Default: disabled to avoid native JNI/LiDAR crashes while debugging.
 
   // Create AMCU if not already constructed (Robot.h likely default constructs it)
   if (!m_amcu)

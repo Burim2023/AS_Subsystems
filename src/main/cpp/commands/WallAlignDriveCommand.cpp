@@ -55,11 +55,11 @@ void WallAlignDriveCommand::Execute()
       return;
   }
   
-  auto* lidar = m_sensorManager->GetLidarSubsystem();
-  if (!lidar) {
-      std::cerr << "ERROR: LiDAR not available" << std::endl;
-      return;
-  }
+  // auto* lidar = m_sensorManager->GetLidarSubsystem();
+  // if (!lidar) {
+  //     std::cerr << "ERROR: LiDAR not available" << std::endl;
+  //     return;
+  // }
     
   if (m_sensorManager && m_sensorManager->GetUltrasonicSubsystem())
   {
