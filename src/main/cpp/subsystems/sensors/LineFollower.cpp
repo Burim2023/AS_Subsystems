@@ -1,7 +1,8 @@
 #include "subsystems/sensor/LineFollower.h"
 #include <frc/smartdashboard/SmartDashboard.h>
-#include <wpi/json.h>  // ✅ Add for JSON support
-#include <fstream>  // ✅ Add for file I/O
+#include <wpi/json.h>
+#include <fstream>
+#include <sstream>  // ✅ ADD THIS for std::stringstream
 
 // Constructor
 LineFollower::LineFollower(int ch0, int ch1, int ch2, int ch3, float vRef)
@@ -167,29 +168,56 @@ bool LineFollower::SaveCalibrationToFile(const std::string &filePath)
 
 bool LineFollower::LoadCalibrationFromFile(const std::string &filePath)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  wpi::json jsonData;
-
-  // Read JSON from file
-  try
-  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    
     std::ifstream file(filePath);
     if (!file.is_open())
-      return false;
-    file >> jsonData;
-  }
-  catch (...)
-  {
-    return false;
-  }
+    {
+        std::cerr << "Failed to open calibration file: " << filePath << std::endl;
+        return false;
+    }
 
-  // Parse JSON and update calibration data
-  for (int i = 0; i < 4; ++i)
-  {
-    m_white[i] = jsonData["white"][i].get<double>();
-    m_black[i] = jsonData["black"][i].get<double>();
-  }
-  m_minSignal = jsonData["minSignal"].get<double>();
+    try
+    {
+        // Read entire file into string
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        std::string fileContent = buffer.str();
+        file.close();
+        
+        // Parse JSON from string
+        wpi::json jsonData = wpi::json::parse(fileContent);
 
-  return true;
+        // Parse white values - FIX: Use m_white instead of white
+        if (jsonData.count("white") > 0)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                m_white[i] = jsonData["white"][i];  // was: white[i]
+            }
+        }
+
+        // Parse black values - FIX: Use m_black instead of black
+        if (jsonData.count("black") > 0)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                m_black[i] = jsonData["black"][i];  // was: black[i]
+            }
+        }
+
+        // Parse minSignal if present
+        if (jsonData.count("minSignal") > 0)
+        {
+            m_minSignal = jsonData["minSignal"];
+        }
+
+        std::cout << "✓ Calibration loaded successfully from " << filePath << std::endl;
+        return true;
+    }
+    catch (const wpi::json::exception &e)
+    {
+        std::cerr << "JSON parse error: " << e.what() << std::endl;
+        return false;
+    }
 }

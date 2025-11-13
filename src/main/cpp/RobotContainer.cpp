@@ -1,5 +1,6 @@
 #include "RobotContainer.h"
 #include <frc2/command/button/JoystickButton.h>
+#include <frc2/command/button/Button.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "Constants.h"
 
@@ -42,7 +43,6 @@ RobotContainer::RobotContainer()
       // Initialize StoreAppleCommand instances (stores all 3 apples automatically)
       // 
       m_competitionAuto(nullptr, nullptr, &m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, &m_extender)
-// m_pickupAndDerliverSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator, m_amcu, 0.5)
 {
 
   // Initialize all subsystems
@@ -72,56 +72,92 @@ RobotContainer::RobotContainer()
   m_chooser.AddOption("Gripper Pickup (Mid & Close)", &m_gripperPickup);
   m_chooser.AddOption("Gripper Pickup Sequence", &m_gripperPickupSequence);
   m_chooser.AddOption("Full Pick Sequence", &m_autoPickSequence);
-  // m_chooser.AddOption("Smart Pick Sequence", new SmartPickSequence(&m_arm, &m_gripper, &m_gripperJoint, &m_camera, &m_elevator));
   m_chooser.AddOption("Smart Pick Ground", &m_smartPickSequence);
   m_chooser.AddOption("Smart Pick Mid", &m_smartPickSequenceMid);
   m_chooser.AddOption("Smart Pick High", &m_smartPickSequenceHigh);
-  m_chooser.AddOption("Drive Smart Pickup", &m_driveSmartPickupGround); // FIXED: Use member variable instead of leaked new
-  // m_chooser.AddOption("Pickup&Deliver", &m_pickupAndDerliverSequence);
-
-  // Elevator commands
+  m_chooser.AddOption("Drive Smart Pickup", &m_driveSmartPickupGround);
   m_chooser.AddOption("Calibrate Elevator", &m_calibrateElevator);
   m_chooser.AddOption("Elevator to Ground", &m_elevatorGround);
   m_chooser.AddOption("Elevator to Low", &m_elevatorLow);
   m_chooser.AddOption("Elevator to High", &m_elevatorHigh);
   m_chooser.AddOption("Elevator Custom 60mm", &m_elevatorCustom);
   m_chooser.AddOption("Elevator Test Sequence", &m_elevatorTestSequence);
-
-  // Extender commands
   m_chooser.AddOption("Extender DEMO", &m_demoExtender);
   m_chooser.AddOption("Calibrate Extender", &m_calibrateExtenderOnly);
-
-  // Apple grip check commands
-  m_chooser.AddOption("Quick Apple Check", &m_checkAppleGrip); // Quick check (1s)
-  m_chooser.AddOption("Monitor Apple (5s)", &m_waitForGrip);   // Wait for successful grip (5s)
+  m_chooser.AddOption("Quick Apple Check", &m_checkAppleGrip);
+  m_chooser.AddOption("Monitor Apple (5s)", &m_waitForGrip);
   m_chooser.AddOption("Monitor Apple (10s)", &m_monitorGrip);
-
-  // Drive with Sensors
   m_chooser.AddOption("Drive with Sensor", &m_wallAlignDriveCommand);
   m_chooser.AddOption("Drive Until Wall", &m_driveUntilWallCommand);
   m_chooser.AddOption("Line Follow", &m_cobraLineFollowCommand);
-
-  //QR Code Reader
   m_chooser.AddOption("QR READ Single", &m_qrCodeReaderCommandSingle);
   m_chooser.AddOption("QR READ Timed", &m_qrCodeReaderCommandTimed);
   m_chooser.AddOption("QR READ Continuous", &m_qrCodeReaderCommandContinuous);
-  // m_chooser.AddOption("Retract and Lift", &m_autoRetractAndLift);
-
-  // ADD APPLE STORAGE OPTIONS TO CHOOSER:
-  // m_chooser.AddOption("Store Apple (Auto)", &m_storeAppleAuto);           // Camera detection
-  // m_chooser.AddOption("Store Apple (Red)", &m_storeAppleRed);             // Manual red
-  // m_chooser.AddOption("Store Apple (Yellow)", &m_storeAppleYellow);       // Manual yellow
-  // m_chooser.AddOption("Store Apple (Green)", &m_storeAppleGreen); 
   m_chooser.AddOption("Competition Auto", &m_competitionAuto);
+  
   frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 }
 
-void RobotContainer::ConfigureButtonBindings() {}
+void RobotContainer::ConfigureButtonBindings() 
+{
+    // Y button: Calibrate WHITE surface
+    frc2::Button([this] { return m_gamepad.GetYButton(); })
+        .WhenPressed(new frc2::InstantCommand([this]() {
+            std::cout << "\n=== CALIBRATING WHITE SURFACE ===" << std::endl;
+            if (m_sensorManager) {
+                m_sensorManager->CalibrateLineFollowerWhite();
+                std::cout << "✓ White calibration captured!" << std::endl;
+            }
+        }));
+    
+    // A button: Calibrate BLACK line
+    frc2::Button([this] { return m_gamepad.GetAButton(); })
+        .WhenPressed(new frc2::InstantCommand([this]() {
+            std::cout << "\n=== CALIBRATING BLACK LINE ===" << std::endl;
+            if (m_sensorManager) {
+                m_sensorManager->CalibrateLineFollowerBlack();
+                std::cout << "✓ Black calibration captured!" << std::endl;
+            }
+        }));
+    
+    // B button: SAVE calibration
+    frc2::Button([this] { return m_gamepad.GetBButton(); })
+        .WhenPressed(new frc2::InstantCommand([this]() {
+            std::cout << "\n=== SAVING CALIBRATION ===" << std::endl;
+            if (m_sensorManager) {
+                if (m_sensorManager->SaveLineFollowerCalibration()) {
+                    std::cout << "✓✓✓ SAVED SUCCESSFULLY ✓✓✓" << std::endl;
+                } else {
+                    std::cerr << "✗✗✗ SAVE FAILED ✗✗✗" << std::endl;
+                }
+            }
+        }));
+    
+    // X button: RELOAD calibration (test)
+    frc2::Button([this] { return m_gamepad.GetXButton(); })
+        .WhenPressed(new frc2::InstantCommand([this]() {
+            std::cout << "\n=== RELOADING CALIBRATION ===" << std::endl;
+            if (m_sensorManager && m_sensorManager->LoadLineFollowerCalibration()) {
+                std::cout << "✓ Reloaded from file" << std::endl;
+            }
+        }));
+    
+    // Start button: Show status
+    frc2::Button([this] { return m_gamepad.GetStartButton(); })
+        .WhenPressed(new frc2::InstantCommand([this]() {
+            if (m_sensorManager && m_sensorManager->GetLineFollower()) {
+                auto lf = m_sensorManager->GetLineFollower();
+                std::cout << "\n=== LINE FOLLOWER STATUS ===" << std::endl;
+                std::cout << "Signal: " << lf->getSignal() << std::endl;
+                std::cout << "Position Error: " << lf->getPositionError() << std::endl;
+                std::cout << "Line Detected: " << (lf->isLineDetected() ? "YES" : "NO") << std::endl;
+            }
+        }));
+}
 
 void RobotContainer::SetAMCU(AMCU *amcu_ptr)
 {
   m_amcu = amcu_ptr;
-
   m_elevator.Init(amcu_ptr);
   m_testSequence.SetAMCU(amcu_ptr);
   m_wallAlignDriveCommand.SetAMCU(amcu_ptr);
@@ -129,7 +165,6 @@ void RobotContainer::SetAMCU(AMCU *amcu_ptr)
   m_cobraLineFollowCommand.SetAMCU(amcu_ptr);
   m_competitionAuto.SetAMCU(amcu_ptr);
   m_competitionAuto.SetSensorManager(m_sensorManager);
-
 }
 
 void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
@@ -159,8 +194,8 @@ void RobotContainer::SetSensorManager(SensorManager *sensor_ptr)
 RobotContainer::~RobotContainer()
 {
   if (m_camera.IsRunning()) {
-        m_camera.Stop();
-    }
+    m_camera.Stop();
+  }
 }
 
 frc2::Command *RobotContainer::GetAutonomousCommand()

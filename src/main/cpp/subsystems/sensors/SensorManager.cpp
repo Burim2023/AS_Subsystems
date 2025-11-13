@@ -1,6 +1,5 @@
 #include "subsystems/sensor/UltrasonicSubsystem.h"
 #include "subsystems/sensor/IRRangeSubsystem.h"
-// #include "subsystems/sensor/LidarSubsystem.h"
 #include "subsystems/sensor/LineFollower.h"
 #include "web-ds-logger/cpp/networktables/LoggingSystem.h"
 #include "subsystems/sensor/SensorManager.h"
@@ -20,17 +19,24 @@ SensorManager::SensorManager()
     ultraSonic = std::make_unique<frc::UltrasonicSubsystem>(0, 1, 2, 3);
     infraRed = std::make_unique<frc::IRRangeSubsystem>(0, 1);
     lineFollower = std::make_unique<LineFollower>(0, 1, 2, 3, 5.0f);
+    
+    std::cout << "SensorManager: Constructed (no LiDAR)" << std::endl;
 }
+
 SensorManager::~SensorManager()
 {
     stopThread = true;
 
     if (workerThread.joinable())
         workerThread.join();
+    
+    std::cout << "SensorManager: Destroyed" << std::endl;
 }
 
 void SensorManager::SensorWorker()
 {
+    std::cout << "SensorManager: Worker thread started" << std::endl;
+    
     while (!stopThread.load())
     {
         try
@@ -50,23 +56,23 @@ void SensorManager::SensorWorker()
                 m_sensorCache.irRight.store(infraRed->GetIRRightDistance(), std::memory_order_relaxed);
             }
 
+            // ✅ Update LineFollower
             if (lineFollower)
             {
                 lineFollower->update();
+                lineFollower->UpdateShuffleboard(5);  // Update every 5 cycles
             }
         }
         catch (const std::exception &e)
         {
-            // Catch any exception to prevent thread termination
             static int errorCount = 0;
-            if (++errorCount % 100 == 0) // Log every 100th error to avoid spam
+            if (++errorCount % 100 == 0)
             {
                 std::cerr << "SensorWorker exception: " << e.what() << " (count=" << errorCount << ")\n";
             }
         }
         catch (...)
         {
-            // Catch-all for non-standard exceptions
             static int unknownErrorCount = 0;
             if (++unknownErrorCount % 100 == 0)
             {
@@ -76,18 +82,44 @@ void SensorManager::SensorWorker()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SENSOR_UPDATE_RATE));
     }
+    
+    std::cout << "SensorManager: Worker thread stopped" << std::endl;
 }
 
 void SensorManager::InitializeSensors()
 {
+    std::cout << "SensorManager: Initializing sensors..." << std::endl;
+    
     if (ultraSonic)
     {
         ultraSonic->Init();
+        std::cout << "  ✓ Ultrasonic initialized" << std::endl;
     }
+    
     if (infraRed)
     {
         infraRed->Init();
+        std::cout << "  ✓ Infrared initialized" << std::endl;
     }
+    
+    // ✅ Initialize LineFollower
+    if (lineFollower)
+    {
+        lineFollower->InitShuffleboard("Line Follower");
+        
+        // Try to load saved calibration
+        if (LoadLineFollowerCalibration())
+        {
+            std::cout << "  ✓ LineFollower calibration loaded from file" << std::endl;
+        }
+        else
+        {
+            std::cout << "  ⚠ LineFollower using default calibration" << std::endl;
+            std::cout << "    Run calibration: Y (white) → A (black) → B (save)" << std::endl;
+        }
+    }
+    
+    std::cout << "SensorManager: All sensors initialized" << std::endl;
 }
 
 void SensorManager::SensorManagerStartThread()
@@ -129,4 +161,62 @@ frc::IRRangeSubsystem *SensorManager::GetIRRangeSubsystem()
 LineFollower *SensorManager::GetLineFollower()
 {
     return lineFollower.get();
+}
+
+// ✅ NEW: LineFollower calibration methods
+void SensorManager::CalibrateLineFollowerWhite()
+{
+    if (!lineFollower)
+    {
+        std::cerr << "SensorManager: ERROR - LineFollower not initialized!" << std::endl;
+        return;
+    }
+    
+    lineFollower->CaptureWhite();
+    std::cout << "SensorManager: ✓ White surface calibration captured" << std::endl;
+}
+
+void SensorManager::CalibrateLineFollowerBlack()
+{
+    if (!lineFollower)
+    {
+        std::cerr << "SensorManager: ERROR - LineFollower not initialized!" << std::endl;
+        return;
+    }
+    
+    lineFollower->CaptureBlack();
+    std::cout << "SensorManager: ✓ Black line calibration captured" << std::endl;
+}
+
+bool SensorManager::SaveLineFollowerCalibration()
+{
+    if (!lineFollower)
+    {
+        std::cerr << "SensorManager: ERROR - LineFollower not initialized!" << std::endl;
+        return false;
+    }
+    
+    std::cout << "SensorManager: Saving LineFollower calibration..." << std::endl;
+    
+    if (lineFollower->SaveCalibrationToFile(CALIBRATION_FILE))
+    {
+        std::cout << "SensorManager: ✓ Calibration saved to " << CALIBRATION_FILE << std::endl;
+        return true;
+    }
+    else
+    {
+        std::cerr << "SensorManager: ✗ Failed to save calibration!" << std::endl;
+        return false;
+    }
+}
+
+bool SensorManager::LoadLineFollowerCalibration()
+{
+    if (!lineFollower)
+    {
+        std::cerr << "SensorManager: ERROR - LineFollower not initialized!" << std::endl;
+        return false;
+    }
+    
+    return lineFollower->LoadCalibrationFromFile(CALIBRATION_FILE);
 }

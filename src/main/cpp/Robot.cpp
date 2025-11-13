@@ -138,6 +138,11 @@ void Robot::RobotPeriodic()
 
 void Robot::DisabledInit()
 {
+
+  // ✅ Disable sensor thread
+  SensorManager::EnableSensorThread.store(false);
+  std::cout << "[DisabledInit] Sensor thread disabled" << std::endl;
+  
   try
   {
     if (m_amcu)
@@ -195,6 +200,10 @@ void Robot::AutonomousPeriodic()
 
 void Robot::TeleopInit()
 {
+  // ✅ Enable sensor thread
+  SensorManager::EnableSensorThread.store(true);
+  std::cout << "[TeleopInit] Sensor thread enabled" << std::endl;
+  
   last_mode = {LOG_CYAN, "[TELEOP]"};
   LOG_TELEOP("Enabled.");
 }

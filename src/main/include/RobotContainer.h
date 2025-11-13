@@ -96,6 +96,7 @@ private:
   Gamepad               m_gamepad;
   SensorManager         *m_sensorManager = nullptr;
   AMCU                  *m_amcu = nullptr;
+  
 
   // Autonomous Chooser
   frc::SendableChooser<frc2::Command *> m_chooser;
