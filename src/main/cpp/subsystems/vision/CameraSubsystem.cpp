@@ -358,24 +358,6 @@ void CameraSubsystem::VisionThread_() {
       cv::putText(processedFrame, "ID=" + std::to_string(best.id),
                   best.corners[0] + cv::Point2f(0, -8),
                   cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
-
-      // Optional: Pose estimation if you have intrinsics (cameraMatrix, distCoeffs) and marker size
-      /*
-      static cv::Mat cameraMatrix;  // 3x3
-      static cv::Mat distCoeffs;    // 1x5 or 1x8
-      const double markerLength = 0.05; // 5 cm
-      if (!cameraMatrix.empty() && !distCoeffs.empty()) {
-        std::vector<cv::Vec3d> rvecs, tvecs;
-        cv::aruco::estimatePoseSingleMarkers(std::vector<std::vector<cv::Point2f>>{best.corners},
-                                             markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
-        if (!rvecs.empty()) {
-          cv::aruco::drawAxis(processedFrame, cameraMatrix, distCoeffs, rvecs[0], tvecs[0], float(markerLength));
-          frc::SmartDashboard::PutNumber(m_ns + "Aruco/TX_m", tvecs[0][0]);
-          frc::SmartDashboard::PutNumber(m_ns + "Aruco/TY_m", tvecs[0][1]);
-          frc::SmartDashboard::PutNumber(m_ns + "Aruco/TZ_m", tvecs[0][2]);
-        }
-      }
-      */
     } else {
       m_impl->lastArucoId.store(-1);
       frc::SmartDashboard::PutNumber(m_ns + "Aruco/Id", -1);
